@@ -78,9 +78,6 @@ def progress_bar(current, total, msg=None):
     if msg:
         L.append(' | ' + msg)
 
-    # print(msg)
-    # print(L)
-    # sys.exit(1)
     msg = ''.join(L)
     sys.stdout.write(msg)
     for i in range(term_width - int(TOTAL_BAR_LENGTH) - len(msg) - 3):
