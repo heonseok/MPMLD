@@ -1,10 +1,12 @@
-from models import *
+import json
+import os
+import sys
+
 import numpy as np
 import torch.backends.cudnn as cudnn
 import torch.optim as optim
-import os
-import json
-import sys
+from models import *
+
 from utils import progress_bar
 
 
@@ -155,11 +157,10 @@ class Classifier(object):
             sys.exit(1)
         testloader = torch.utils.data.DataLoader(testset, batch_size=self.test_batch_size, shuffle=False, num_workers=2)
         test_acc = self.inference(testloader, epoch=-1, type='test')
-        result_dict = {
-            'train_acc': self.train_acc,
-            'valid_acc': self.best_valid_acc,
-            'test_acc': test_acc,
+        acc_dict = {
+            'train': self.train_acc,
+            'valid': self.best_valid_acc,
+            'test': test_acc,
         }
-        print(result_dict)
-        np.save(os.path.join(self.model_path, 'acc.npy'), result_dict)
-
+        print(acc_dict)
+        np.save(os.path.join(self.model_path, 'acc.npy'), acc_dict)
