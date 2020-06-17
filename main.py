@@ -21,7 +21,7 @@ parser.add_argument('--model_type', type=str, default='ResNet18', choices=['VGG1
 parser.add_argument('--epochs', type=int, default=500)
 parser.add_argument('--early_stop', type=str2bool, default='t')
 parser.add_argument('--early_stop_observation_period', type=int, default=20)
-parser.add_argument('--repeat_idx', type=int, default=1)
+parser.add_argument('--repeat_idx', type=int, default=0)
 parser.add_argument('--gpu_id', type=int, default=0)
 args = parser.parse_args()
 
@@ -36,14 +36,21 @@ if not os.path.exists(args.data_path):
 
 trainset, testset = load_dataset(args.dataset, args.data_path)
 
-cls_trainset = Subset(trainset, range(args.setsize))
-cls_validset = Subset(trainset, range(args.setsize, 2 * args.setsize))
-cls_testset = Subset(testset, range(args.setsize))
+subset0 = Subset(trainset, range(args.setsize))
+subset1 = Subset(trainset, range(args.setsize, 2 * args.setsize))
+subset2 = Subset(trainset, range(args.setsize))
 
-print('Cls trainset  :', len(cls_trainset))
-print('Cls validtset :', len(cls_validset))
-print('Cls testset   :', len(cls_testset))
+cls_datasets = {
+    'train': subset0,
+    'valid': subset1,
+    'test': subset2,
+}
+
+for dataset_type, dataset in cls_datasets.items():
+    print('Cls {:<5} : {}'.format(dataset_type, len(dataset)))
 
 cls_model = Classifier(args)
-# cls_model.train(cls_trainset, cls_validset)
-cls_model.test(cls_testset)
+# cls_model.train(cls_datasets['train'], cls_datasets['valid'])
+# cls_model.test(cls_datasets['test'])
+
+cls_model.log_prediction_score(cls_datasets)

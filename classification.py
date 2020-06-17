@@ -59,7 +59,7 @@ class Classifier(object):
         self.optimizer = optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4)
 
     def load(self):
-        print('==> Loading checkpoint {}'.format(self.model_name))
+        print('====> Loading checkpoint {}'.format(self.model_name))
         checkpoint = torch.load(os.path.join(self.model_path, 'ckpt.pth'))
         self.net.load_state_dict(checkpoint['net'])
         self.best_valid_acc = checkpoint['best_valid_acc']
@@ -131,7 +131,6 @@ class Classifier(object):
                 self.train_flag = False
 
         elif type == 'test':
-            # print('Test acc : {}'.format(acc))
             return acc
 
     def train(self, trainset, validset):
@@ -164,3 +163,33 @@ class Classifier(object):
         }
         print(acc_dict)
         np.save(os.path.join(self.model_path, 'acc.npy'), acc_dict)
+
+    # ---- For MIA ---- #
+    def log_prediction_score(self, dataset_dict):
+        print('==> Logging prediction scores')
+        try:
+            self.load()
+        except FileNotFoundError:
+            print('There is no pre-trained model; First, train the classifier.')
+            sys.exit(1)
+        self.net.eval()
+
+        print(self.model_path)
+        prediction_score_path = os.path.join(self.model_path, 'prediction_scores')
+        if not os.path.exists(prediction_score_path):
+            os.mkdir(prediction_score_path)
+
+        for dataset_type, dataset in dataset_dict.items():
+            loader = torch.utils.data.DataLoader(dataset, batch_size=self.test_batch_size, shuffle=False, num_workers=2)
+            prediction_scores = []
+            with torch.no_grad():
+                for batch_idx, (inputs, targets) in enumerate(loader):
+                    inputs, targets = inputs.to(self.device), targets.to(self.device)
+                    outputs = self.net(inputs)
+                    prediction_scores_batch = torch.softmax(outputs, dim=1).cpu().numpy()
+                    if len(prediction_scores) == 0:
+                        prediction_scores = prediction_scores_batch
+                    else:
+                        prediction_scores = np.vstack((prediction_scores, prediction_scores_batch))
+
+            np.save(os.path.join(prediction_score_path, '{}.npy'.format(dataset_type)), prediction_scores)

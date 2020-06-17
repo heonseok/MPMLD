@@ -17,11 +17,14 @@ def plot_clf_acc(clf_model):
         df = df.append(acc, ignore_index=True)
     df = df[['train', 'valid', 'test']]
     sns.boxplot(data=df)
+    plt.ylabel('Classification accuracy', fontdict={'size': 20})
+    plt.xticks(fontsize=15)
+    plt.tight_layout()
     plt.show()
 
 
 clf_model_list = [
-    'ResNet18_setsize1000'
+    'ResNet18_setsize1000',
 ]
 
 for clf_model in clf_model_list:
