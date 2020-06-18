@@ -4,7 +4,7 @@ import os
 import torch
 from torch.utils.data import Subset
 
-from classification import Classifier
+from attack import Attacker
 from data import load_dataset
 from utils import str2bool
 
@@ -23,6 +23,7 @@ parser.add_argument('--early_stop', type=str2bool, default='t')
 parser.add_argument('--early_stop_observation_period', type=int, default=20)
 parser.add_argument('--repeat_idx', type=int, default=0)
 parser.add_argument('--gpu_id', type=int, default=0)
+parser.add_argument('--attack_type', type=str, default='stat', choices=['stat', 'black', 'white'])
 args = parser.parse_args()
 
 torch.cuda.set_device(args.gpu_id)
@@ -38,19 +39,19 @@ trainset, testset = load_dataset(args.dataset, args.data_path)
 
 subset0 = Subset(trainset, range(args.setsize))
 subset1 = Subset(trainset, range(args.setsize, 2 * args.setsize))
-subset2 = Subset(trainset, range(args.setsize))
+subset2 = Subset(trainset, range(2 * args.setsize, 3 * args.setsize))
 
 cls_datasets = {
     'train': subset0,
     'valid': subset1,
     'test': subset2,
 }
-
 for dataset_type, dataset in cls_datasets.items():
     print('Cls {:<5} : {}'.format(dataset_type, len(dataset)))
-
-cls_model = Classifier(args)
+# cls_model = Classifier(args)
 # cls_model.train(cls_datasets['train'], cls_datasets['valid'])
 # cls_model.test(cls_datasets['test'])
+# cls_model.log_prediction_score(cls_datasets)
 
-cls_model.log_prediction_score(cls_datasets)
+attack_model = Attacker(args)
+# attack_model

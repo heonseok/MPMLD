@@ -17,8 +17,11 @@ def plot_clf_acc(clf_model):
         df = df.append(acc, ignore_index=True)
     df = df[['train', 'valid', 'test']]
     sns.boxplot(data=df)
-    plt.ylabel('Classification accuracy', fontdict={'size': 20})
+    plt.ylabel('Classification accuracy', fontdict={'size': 18})
+    plt.title(clf_model, fontdict={'size': 20})
     plt.xticks(fontsize=15)
+    plt.yticks(fontsize=15)
+    plt.axhline(50, ls='--', c='r')
     plt.tight_layout()
     plt.show()
 

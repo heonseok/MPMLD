@@ -1,15 +1,11 @@
-'''Some helper functions for PyTorch, including:
-    - get_mean_and_std: calculate the mean and std value of dataset.
-    - msr_init: net parameter initialization.
-    - progress_bar: progress bar mimic xlua.progress.
-'''
 import os
 import sys
 import time
-import math
 
+import numpy as np
 import torch.nn as nn
 import torch.nn.init as init
+from sklearn import metrics
 
 
 def get_mean_and_std(dataset):
@@ -133,3 +129,17 @@ def str2bool(s):
         return True
     elif s.lower() in ('no', 'n', '0', 'false', 'f'):
         return False
+
+
+def classify_membership(data_in, data_out):
+    data_concat = np.concatenate((data_in, data_out))
+    sorted_idx = np.argsort(data_concat)
+    inout_truth = np.concatenate((np.ones_like(data_in), np.zeros_like(data_out)))
+    inout_truth_sorted = inout_truth[sorted_idx]
+
+    inout_pred = np.concatenate((np.ones_like(data_out), np.zeros_like(data_in)))
+
+    acc = metrics.accuracy_score(inout_truth_sorted, inout_pred)
+    auroc = metrics.roc_auc_score(inout_truth_sorted, inout_pred)
+
+    return acc, auroc

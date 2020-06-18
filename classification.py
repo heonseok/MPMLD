@@ -19,17 +19,17 @@ class Classifier(object):
         self.early_stop = args.early_stop
         self.early_stop_observation_period = args.early_stop_observation_period
 
-        self.model_name = os.path.join('{}_setsize{}'.format(args.model_type, args.setsize),
-                                       'repeat{}'.format(args.repeat_idx))
-        self.model_path = os.path.join(args.base_path, 'classifier', self.model_name)
-        if not os.path.exists(self.model_path):
-            os.makedirs(self.model_path)
+        self.cls_name = os.path.join('{}_setsize{}'.format(args.model_type, args.setsize),
+                                     'repeat{}'.format(args.repeat_idx))
+        self.cls_path = os.path.join(args.base_path, 'classifier', self.cls_name)
+        if not os.path.exists(self.cls_path):
+            os.makedirs(self.cls_path)
 
-        with open(os.path.join(self.model_path, 'descriptions.txt'), 'w') as f:
+        with open(os.path.join(self.cls_path, 'descriptions.txt'), 'w') as f:
             json.dump(args.__dict__, f, indent=2)
 
         # Model
-        print('==> Building {}'.format(self.model_name))
+        print('==> Building {}'.format(self.cls_name))
         if 'VGG' in args.model_type:
             print('VGG(\'' + args.model_type + '\')')
             net = eval('VGG(\'' + args.model_type + '\')')
@@ -59,8 +59,8 @@ class Classifier(object):
         self.optimizer = optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4)
 
     def load(self):
-        print('====> Loading checkpoint {}'.format(self.model_name))
-        checkpoint = torch.load(os.path.join(self.model_path, 'ckpt.pth'))
+        print('====> Loading checkpoint {}'.format(self.cls_name))
+        checkpoint = torch.load(os.path.join(self.cls_path, 'ckpt.pth'))
         self.net.load_state_dict(checkpoint['net'])
         self.best_valid_acc = checkpoint['best_valid_acc']
         self.train_acc = checkpoint['train_acc']
@@ -119,7 +119,7 @@ class Classifier(object):
                     'train_acc': self.train_acc,
                     'epoch': epoch,
                 }
-                torch.save(state, os.path.join(self.model_path, 'ckpt.pth'))
+                torch.save(state, os.path.join(self.cls_path, 'ckpt.pth'))
                 self.best_valid_acc = acc
                 self.early_stop_count = 0
             else:
@@ -134,7 +134,7 @@ class Classifier(object):
             return acc
 
     def train(self, trainset, validset):
-        print('==> Start training {}'.format(self.model_name))
+        print('==> Start training {}'.format(self.cls_name))
         self.train_flag = True
         trainloader = torch.utils.data.DataLoader(trainset, batch_size=self.train_batch_size, shuffle=True,
                                                   num_workers=2)
@@ -148,7 +148,7 @@ class Classifier(object):
                 break
 
     def test(self, testset):
-        print('==> Test {}'.format(self.model_name))
+        print('==> Test {}'.format(self.cls_name))
         try:
             self.load()
         except FileNotFoundError:
@@ -162,7 +162,7 @@ class Classifier(object):
             'test': test_acc,
         }
         print(acc_dict)
-        np.save(os.path.join(self.model_path, 'acc.npy'), acc_dict)
+        np.save(os.path.join(self.cls_path, 'acc.npy'), acc_dict)
 
     # ---- For MIA ---- #
     def log_prediction_score(self, dataset_dict):
@@ -174,22 +174,30 @@ class Classifier(object):
             sys.exit(1)
         self.net.eval()
 
-        print(self.model_path)
-        prediction_score_path = os.path.join(self.model_path, 'prediction_scores')
-        if not os.path.exists(prediction_score_path):
-            os.mkdir(prediction_score_path)
+        # print(self.cls_path)
+        # prediction_score_path = os.path.join(self.cls_path, 'prediction_scores')
+        # if not os.path.exists(prediction_score_path):
+        #     os.mkdir(prediction_score_path)
 
+        prediction_score_dict = {}
         for dataset_type, dataset in dataset_dict.items():
             loader = torch.utils.data.DataLoader(dataset, batch_size=self.test_batch_size, shuffle=False, num_workers=2)
             prediction_scores = []
+            labels = []
             with torch.no_grad():
                 for batch_idx, (inputs, targets) in enumerate(loader):
-                    inputs, targets = inputs.to(self.device), targets.to(self.device)
+                    inputs = inputs.to(self.device)
                     outputs = self.net(inputs)
                     prediction_scores_batch = torch.softmax(outputs, dim=1).cpu().numpy()
+                    labels_batch = targets.numpy()
                     if len(prediction_scores) == 0:
                         prediction_scores = prediction_scores_batch
+                        labels = labels_batch
                     else:
                         prediction_scores = np.vstack((prediction_scores, prediction_scores_batch))
+                        labels = np.concatenate((labels, labels_batch))
 
-            np.save(os.path.join(prediction_score_path, '{}.npy'.format(dataset_type)), prediction_scores)
+            # print(prediction_score_path)
+            prediction_score_dict[dataset_type] = {'preds': prediction_scores, 'labels': labels}
+        # np.save(os.path.join(prediction_score_path, '{}.npy'.format(dataset_type)), prediction_scores)
+        np.save(os.path.join(self.cls_path, 'prediction_scores.npy'), prediction_score_dict)
