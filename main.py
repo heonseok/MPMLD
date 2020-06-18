@@ -7,6 +7,7 @@ from torch.utils.data import Subset
 from attack import Attacker
 from data import load_dataset
 from utils import str2bool
+from classification import Classifier
 
 parser = argparse.ArgumentParser(description='Membership Privacy-preserving Machine Learning models by Disentanglement')
 parser.add_argument('--dataset', type=str, default='CIFAR-10', choices=['CIFAR-10'])
@@ -60,5 +61,4 @@ if args.train_target_classifier:
 
 if args.train_attack_model:
     attack_model = Attacker(args)
-    attack_model.
-    # attack_model
+    attack_model.statistical_attack()
