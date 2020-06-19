@@ -133,17 +133,19 @@ class Classifier(object):
         elif type == 'test':
             return acc
 
-    def train(self, trainset, validset):
+    def train(self, trainset, validset=None):
         print('==> Start training {}'.format(self.cls_name))
         self.train_flag = True
         trainloader = torch.utils.data.DataLoader(trainset, batch_size=self.train_batch_size, shuffle=True,
                                                   num_workers=2)
-        validloader = torch.utils.data.DataLoader(validset, batch_size=self.valid_batch_size, shuffle=True,
-                                                  num_workers=2)
+        if self.early_stop:
+            validloader = torch.utils.data.DataLoader(validset, batch_size=self.valid_batch_size, shuffle=True,
+                                                      num_workers=2)
         for epoch in range(self.start_epoch, self.start_epoch + self.epochs):
             if self.train_flag:
                 self.train_epoch(trainloader, epoch)
-                self.inference(validloader, epoch, type='valid')
+                if self.early_stop:
+                    self.inference(validloader, epoch, type='valid')
             else:
                 break
 
@@ -174,11 +176,6 @@ class Classifier(object):
             sys.exit(1)
         self.net.eval()
 
-        # print(self.cls_path)
-        # prediction_score_path = os.path.join(self.cls_path, 'prediction_scores')
-        # if not os.path.exists(prediction_score_path):
-        #     os.mkdir(prediction_score_path)
-
         prediction_score_dict = {}
         for dataset_type, dataset in dataset_dict.items():
             loader = torch.utils.data.DataLoader(dataset, batch_size=self.test_batch_size, shuffle=False, num_workers=2)
@@ -197,7 +194,5 @@ class Classifier(object):
                         prediction_scores = np.vstack((prediction_scores, prediction_scores_batch))
                         labels = np.concatenate((labels, labels_batch))
 
-            # print(prediction_score_path)
             prediction_score_dict[dataset_type] = {'preds': prediction_scores, 'labels': labels}
-        # np.save(os.path.join(prediction_score_path, '{}.npy'.format(dataset_type)), prediction_scores)
         np.save(os.path.join(self.cls_path, 'prediction_scores.npy'), prediction_score_dict)

@@ -1,4 +1,5 @@
 import os
+from torch.utils.data import Dataset
 import sys
 import time
 
@@ -143,3 +144,15 @@ def classify_membership(data_in, data_out):
     auroc = metrics.roc_auc_score(inout_truth_sorted, inout_pred)
 
     return acc, auroc
+
+
+class CustomDataset(Dataset):
+    def __init__(self, data, targets):
+        self.data = data
+        self.targets = targets
+
+    def __len__(self):
+        return len(self.data)
+
+    def __getitem__(self, idx):
+        return self.data[idx], self.targets[idx]

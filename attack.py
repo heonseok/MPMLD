@@ -1,16 +1,30 @@
 import os
 
 import numpy as np
-from scipy.stats import entropy
+# from scipy.stats import entropy
 import torch
 import sys
+import torch.optim as optim
+import torch.backends.cudnn as cudnn
 
 from utils import classify_membership
 from utils import progress_bar
+from utils import CustomDataset
+from torch.utils.data import ConcatDataset
+import torch.nn as nn
+from module import SimpleNet
+from sklearn import metrics
 
 
 class Attacker(object):
     def __init__(self, args):
+        self.train_batch_size = args.train_batch_size
+        self.valid_batch_size = args.valid_batch_size
+        self.test_batch_size = args.test_batch_size
+        self.epochs = args.epochs
+        self.early_stop = args.early_stop
+        self.early_stop_observation_period = args.early_stop_observation_period
+
         self.cls_name = os.path.join('{}_setsize{}'.format(args.model_type, args.setsize),
                                      'repeat{}'.format(args.repeat_idx))
         self.cls_path = os.path.join(args.base_path, 'classifier', self.cls_name)
@@ -19,13 +33,37 @@ class Attacker(object):
         if not os.path.exists(self.attack_path):
             os.makedirs(self.attack_path)
 
-    def statistical_attack(self):
-        prediction_scores = np.load(os.path.join(self.cls_path, 'prediction_scores.npy'), allow_pickle=True).item()
+        # # Model
+        # print('==> Building {}'.format(self.cls_name))
+        # if 'VGG' in args.model_type:
+        #     print('VGG(\'' + args.model_type + '\')')
+        #     net = eval('VGG(\'' + args.model_type + '\')')
+        # else:
+        #     net = eval(args.model_type + '()')
+        net = SimpleNet(20)
 
-        train_entropy = entropy(prediction_scores['train']['preds'], base=2, axis=1)
-        test_entropy = entropy(prediction_scores['test']['preds'], base=2, axis=1)
-        acc, _ = classify_membership(train_entropy, test_entropy)
-        np.save(os.path.join(self.attack_path, 'acc_stat.npy'), acc)
+        self.start_epoch = 0
+        self.best_valid_acc = 0
+        self.train_acc = 0
+        self.early_stop_count = 0
+
+        self.device = torch.device("cuda:{}".format(args.gpu_id))
+        self.net = net.to(self.device)
+        if self.device == 'cuda':
+            cudnn.benchmark = True
+
+        if args.resume:
+            print('==> Resuming from checkpoint..')
+            try:
+                self.load()
+            except FileNotFoundError:
+                print('There is no pre-trained model; Train model from scratch')
+
+        self.train_flag = False
+
+        self.criterion = nn.BCELoss()
+        # self.criterion = nn.CrossEntropyLoss()
+        self.optimizer = optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4)
 
     #########################
     # -- Base operations -- #
@@ -44,23 +82,40 @@ class Attacker(object):
         train_loss = 0
         correct = 0
         total = 0
+        predicted = []
+        labels = []
         for batch_idx, (inputs, targets) in enumerate(trainloader):
             inputs, targets = inputs.to(self.device), targets.to(self.device)
             self.optimizer.zero_grad()
             outputs = self.net(inputs)
-            loss = self.criterion(outputs, targets)
+            loss = self.criterion(outputs.squeeze(), targets)
             loss.backward()
             self.optimizer.step()
 
             train_loss += loss.item()
-            _, predicted = outputs.max(1)
-            total += targets.size(0)
-            correct += predicted.eq(targets).sum().item()
 
-            progress_bar(batch_idx, len(trainloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
-                         % (train_loss / (batch_idx + 1), 100. * correct / total, correct, total))
+            predicted_batch = outputs.cpu().detach().squeeze().numpy()
+            labels_batch = targets.cpu().detach().numpy()
 
-        self.train_acc = 100. * correct / total
+            if batch_idx == 0:
+                predicted = predicted_batch
+                labels = labels_batch
+            else:
+                predicted = np.concatenate((predicted, predicted_batch))
+                labels = np.concatenate((labels, labels_batch))
+
+            # sys.exit(1)
+            # _, predicted = outputs.max(1)
+            # total += targets.size(0)
+            # correct += predicted.eq(targets).sum().item()
+            #
+            # progress_bar(batch_idx, len(trainloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
+            #              % (train_loss / (batch_idx + 1), 100. * correct / total, correct, total))
+
+        # self.train_acc = 100. * correct / total
+        auroc = metrics.roc_auc_score(labels, predicted)
+        acc = metrics.accuracy_score(labels, np.round(predicted))
+        print(auroc, acc)
 
     def inference(self, loader, epoch, type='valid'):
         self.net.eval()
@@ -105,17 +160,19 @@ class Attacker(object):
         elif type == 'test':
             return acc
 
-    def train(self, trainset, validset):
+    def train(self, trainset, validset=None):
         print('==> Start training {}'.format(self.cls_name))
         self.train_flag = True
         trainloader = torch.utils.data.DataLoader(trainset, batch_size=self.train_batch_size, shuffle=True,
                                                   num_workers=2)
-        validloader = torch.utils.data.DataLoader(validset, batch_size=self.valid_batch_size, shuffle=True,
-                                                  num_workers=2)
+        if self.early_stop:
+            validloader = torch.utils.data.DataLoader(validset, batch_size=self.valid_batch_size, shuffle=True,
+                                                      num_workers=2)
         for epoch in range(self.start_epoch, self.start_epoch + self.epochs):
             if self.train_flag:
                 self.train_epoch(trainloader, epoch)
-                self.inference(validloader, epoch, type='valid')
+                if self.early_stop:
+                    self.inference(validloader, epoch, type='valid')
             else:
                 break
 
@@ -135,3 +192,35 @@ class Attacker(object):
         }
         print(acc_dict)
         np.save(os.path.join(self.cls_path, 'acc.npy'), acc_dict)
+
+    ###########################
+    # -- Attack operations -- #
+    ###########################
+    def statistical_attack(self):
+        prediction_scores = np.load(os.path.join(self.cls_path, 'prediction_scores.npy'), allow_pickle=True).item()
+
+        # train_entropy = entropy(prediction_scores['train']['preds'], base=2, axis=1)
+        # test_entropy = entropy(prediction_scores['test']['preds'], base=2, axis=1)
+        # acc, _ = classify_membership(train_entropy, test_entropy)
+        # np.save(os.path.join(self.attack_path, 'acc_stat.npy'), acc)
+
+        # todo: sort by confidence score
+
+    def black_box_attack(self):
+        prediction_scores = np.load(os.path.join(self.cls_path, 'prediction_scores.npy'), allow_pickle=True).item()
+
+        in_features = self.build_inout_features(prediction_scores['train'])
+        out_features = self.build_inout_features(prediction_scores['test'])
+
+        in_dataset = CustomDataset(in_features, torch.ones(in_features.shape[0]))
+        out_dataset = CustomDataset(out_features, torch.zeros(out_features.shape[0]))
+        inout_dataset = ConcatDataset([in_dataset, out_dataset])
+        print(inout_dataset)
+
+        self.train(inout_dataset)
+
+    def build_inout_features(self, prediction_scores):
+        preds = torch.Tensor(prediction_scores['preds'])
+        labels = prediction_scores['labels']
+        labels_onehot = torch.zeros((1000, 10)).scatter_(1, torch.LongTensor(labels).reshape((-1, 1)), 1)
+        return torch.cat((preds, labels_onehot), axis=1)

@@ -19,8 +19,8 @@ parser.add_argument('--train_batch_size', type=int, default=100)
 parser.add_argument('--valid_batch_size', type=int, default=100)
 parser.add_argument('--test_batch_size', type=int, default=100)
 parser.add_argument('--model_type', type=str, default='ResNet18', choices=['VGG19', 'ResNet18'])
-parser.add_argument('--epochs', type=int, default=500)
-parser.add_argument('--early_stop', type=str2bool, default='t')
+parser.add_argument('--epochs', type=int, default=50)
+parser.add_argument('--early_stop', type=str2bool, default='0')
 parser.add_argument('--early_stop_observation_period', type=int, default=20)
 parser.add_argument('--repeat_idx', type=int, default=0)
 parser.add_argument('--gpu_id', type=int, default=0)
@@ -62,3 +62,5 @@ if args.train_target_classifier:
 if args.train_attack_model:
     attack_model = Attacker(args)
     attack_model.statistical_attack()
+    attack_model.black_box_attack()
+

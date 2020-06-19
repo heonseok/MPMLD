@@ -24,3 +24,4 @@ def load_dataset(dataset, data_path):
             root=data_path, train=False, download=True, transform=transform_test)
 
     return trainset, testset
+
