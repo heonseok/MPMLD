@@ -19,9 +19,11 @@ class Classifier(object):
         self.early_stop = args.early_stop
         self.early_stop_observation_period = args.early_stop_observation_period
 
-        self.cls_name = os.path.join('{}_setsize{}'.format(args.model_type, args.setsize),
-                                     'repeat{}'.format(args.repeat_idx))
-        self.cls_path = os.path.join(args.base_path, 'classifier', self.cls_name)
+        self.cls_name = args.cls_name
+        self.cls_path = args.cls_path
+        # self.cls_name = os.path.join('{}_setsize{}'.format(args.model_type, args.setsize),
+        #                              'repeat{}'.format(args.repeat_idx))
+        # self.cls_path = os.path.join(args.base_path, 'classifier', self.cls_name)
         if not os.path.exists(self.cls_path):
             os.makedirs(self.cls_path)
 
@@ -67,7 +69,6 @@ class Classifier(object):
         self.start_epoch = checkpoint['epoch']
 
     def train_epoch(self, trainloader, epoch):
-        print('\nEpoch: %d' % epoch)
         self.net.train()
         train_loss = 0
         correct = 0
@@ -85,8 +86,8 @@ class Classifier(object):
             total += targets.size(0)
             correct += predicted.eq(targets).sum().item()
 
-            progress_bar(batch_idx, len(trainloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
-                         % (train_loss / (batch_idx + 1), 100. * correct / total, correct, total))
+            # progress_bar(batch_idx, len(trainloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
+            #              % (train_loss / (batch_idx + 1), 100. * correct / total, correct, total))
 
         self.train_acc = 100. * correct / total
 
@@ -106,11 +107,12 @@ class Classifier(object):
                 total += targets.size(0)
                 correct += predicted.eq(targets).sum().item()
 
-                progress_bar(batch_idx, len(loader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
-                             % (test_loss / (batch_idx + 1), 100. * correct / total, correct, total))
+                # progress_bar(batch_idx, len(loader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
+                #              % (test_loss / (batch_idx + 1), 100. * correct / total, correct, total))
 
         acc = 100. * correct / total
         if type == 'valid':
+            print('\nEpoch: {:>3}, Train Acc: {}, Valid Acc: {}'.format(epoch, self.train_acc, acc))
             if acc > self.best_valid_acc:
                 print('Saving..')
                 state = {
@@ -167,8 +169,8 @@ class Classifier(object):
         np.save(os.path.join(self.cls_path, 'acc.npy'), acc_dict)
 
     # ---- For MIA ---- #
-    def log_prediction_score(self, dataset_dict):
-        print('==> Logging prediction scores')
+    def extract_features(self, dataset_dict):
+        print('==> Extract features')
         try:
             self.load()
         except FileNotFoundError:
@@ -176,7 +178,7 @@ class Classifier(object):
             sys.exit(1)
         self.net.eval()
 
-        prediction_score_dict = {}
+        features_dict = {}
         for dataset_type, dataset in dataset_dict.items():
             loader = torch.utils.data.DataLoader(dataset, batch_size=self.test_batch_size, shuffle=False, num_workers=2)
             prediction_scores = []
@@ -194,5 +196,8 @@ class Classifier(object):
                         prediction_scores = np.vstack((prediction_scores, prediction_scores_batch))
                         labels = np.concatenate((labels, labels_batch))
 
-            prediction_score_dict[dataset_type] = {'preds': prediction_scores, 'labels': labels}
-        np.save(os.path.join(self.cls_path, 'prediction_scores.npy'), prediction_score_dict)
+            features_dict[dataset_type] = {
+                'preds': prediction_scores,
+                'labels': labels
+            }
+        np.save(os.path.join(self.cls_path, 'features.npy'), features_dict)

@@ -25,6 +25,7 @@ def plot_clf_acc(clf_model):
     plt.tight_layout()
     plt.show()
 
+
 def plot_attack_acc(clf_model):
     clf_path = os.path.join(base_path, 'classifier', clf_model)
     df = pd.DataFrame()
@@ -42,6 +43,7 @@ def plot_attack_acc(clf_model):
     plt.tight_layout()
     plt.show()
 
+
 def vis_classification_result():
     clf_model_list = [
         'ResNet18_setsize1000',
@@ -50,14 +52,16 @@ def vis_classification_result():
     for clf_model in clf_model_list:
         plot_clf_acc(clf_model)
 
+
 def vis_attack_result():
-    clf_model_list=[
+    clf_model_list = [
         'ResNet18_setsize1000',
     ]
 
     for clf_model in clf_model_list:
         plot_attack_acc(clf_model)
 
+
 if __name__ == "__main__":
-    # vis_classification_result()
-    vis_attack_result()
+    vis_classification_result()
+    # vis_attack_result()

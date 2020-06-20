@@ -1,5 +1,8 @@
 import os
+from torch.utils.data import ConcatDataset
+import torch
 from torch.utils.data import Dataset
+from torch.utils.data import Subset
 import sys
 import time
 
@@ -156,3 +159,34 @@ class CustomDataset(Dataset):
 
     def __getitem__(self, idx):
         return self.data[idx], self.targets[idx]
+
+
+def concat_datasets(in_dataset, out_dataset, start, end):
+    return ConcatDataset([
+        Subset(in_dataset, range(int(start * len(in_dataset)), int(end * len(in_dataset)))),
+        Subset(out_dataset, range(int(start * len(out_dataset)), int(end * len(out_dataset))))
+    ])
+
+
+def build_inout_features(features, attack_type):
+    preds = torch.Tensor(features['preds'])
+    labels = features['labels']
+    labels_onehot = torch.zeros((len(labels), 10)).scatter_(1, torch.LongTensor(labels).reshape((-1, 1)), 1)
+    return torch.cat((preds, labels_onehot), axis=1)
+
+
+def build_inout_dataset(cls_path, attack_type):
+    features = np.load(os.path.join(cls_path, 'features.npy'), allow_pickle=True).item()
+
+    in_features = build_inout_features(features['train'], attack_type)
+    out_features = build_inout_features(features['test'], attack_type)
+
+    in_dataset = CustomDataset(in_features, torch.ones(in_features.shape[0]))
+    out_dataset = CustomDataset(out_features, torch.zeros(out_features.shape[0]))
+
+    inout_datasets = {
+        'train': concat_datasets(in_dataset, out_dataset, 0, 0.7),
+        'valid': concat_datasets(in_dataset, out_dataset, 0.7, 0.85),
+        'test': concat_datasets(in_dataset, out_dataset, 0.85, 1.0),
+    }
+    return inout_datasets
