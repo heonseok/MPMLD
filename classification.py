@@ -7,8 +7,6 @@ import torch.backends.cudnn as cudnn
 import torch.optim as optim
 from models import *
 
-from utils import progress_bar
-
 
 class Classifier(object):
     def __init__(self, args):
@@ -60,6 +58,9 @@ class Classifier(object):
         self.criterion = nn.CrossEntropyLoss()
         self.optimizer = optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4)
 
+    #########################
+    # -- Base operations -- #
+    #########################
     def load(self):
         print('====> Loading checkpoint {}'.format(self.cls_name))
         checkpoint = torch.load(os.path.join(self.cls_path, 'ckpt.pth'))
@@ -86,10 +87,7 @@ class Classifier(object):
             total += targets.size(0)
             correct += predicted.eq(targets).sum().item()
 
-            # progress_bar(batch_idx, len(trainloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
-            #              % (train_loss / (batch_idx + 1), 100. * correct / total, correct, total))
-
-        self.train_acc = 100. * correct / total
+        self.train_acc = correct / total
 
     def inference(self, loader, epoch, type='valid'):
         self.net.eval()
@@ -107,10 +105,7 @@ class Classifier(object):
                 total += targets.size(0)
                 correct += predicted.eq(targets).sum().item()
 
-                # progress_bar(batch_idx, len(loader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
-                #              % (test_loss / (batch_idx + 1), 100. * correct / total, correct, total))
-
-        acc = 100. * correct / total
+        acc =  correct / total
         if type == 'valid':
             print('\nEpoch: {:>3}, Train Acc: {}, Valid Acc: {}'.format(epoch, self.train_acc, acc))
             if acc > self.best_valid_acc:
@@ -168,7 +163,9 @@ class Classifier(object):
         print(acc_dict)
         np.save(os.path.join(self.cls_path, 'acc.npy'), acc_dict)
 
+    #####################
     # ---- For MIA ---- #
+    #####################
     def extract_features(self, dataset_dict):
         print('==> Extract features')
         try:

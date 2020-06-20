@@ -27,23 +27,17 @@ class Attacker(object):
 
         self.cls_name = args.cls_name
         self.cls_path = args.cls_path
-        # self.cls_name = os.path.join('{}_setsize{}'.format(args.model_type, args.setsize),
-        #                              'repeat{}'.format(args.repeat_idx))
-        # self.cls_path = os.path.join(args.base_path, 'classifier', self.cls_name)
-
-        self.attack_path = os.path.join(args.base_path, 'attacker', self.cls_name, args.attack_type)
+        self.attack_path = args.attack_path
         print(self.attack_path)
         if not os.path.exists(self.attack_path):
             os.makedirs(self.attack_path)
 
-        # # Model
-        # print('==> Building {}'.format(self.cls_name))
-        # if 'VGG' in args.model_type:
-        #     print('VGG(\'' + args.model_type + '\')')
-        #     net = eval('VGG(\'' + args.model_type + '\')')
-        # else:
-        #     net = eval(args.model_type + '()')
-        net = SimpleNet(20)
+        self.attack_type = args.attack_type
+
+        # Model
+        print('==> Building {}'.format(self.attack_path))
+        if self.attack_type == 'black':
+            net = SimpleNet(20)
 
         self.start_epoch = 0
         self.best_valid_acc = 0
@@ -67,7 +61,6 @@ class Attacker(object):
         self.train_flag = False
 
         self.criterion = nn.BCELoss()
-        # self.criterion = nn.CrossEntropyLoss()
         self.optimizer = optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4)
 
     #########################
@@ -202,34 +195,3 @@ class Attacker(object):
         print(auroc_dict)
         np.save(os.path.join(self.attack_path, 'auroc.npy'), auroc_dict)
 
-    ###########################
-    # -- Attack operations -- #
-    ###########################
-    def statistical_attack(self):
-        features = np.load(os.path.join(self.cls_path, 'features.npy'), allow_pickle=True).item()
-
-        train_entropy = entropy(features['train']['preds'], base=2, axis=1)
-        test_entropy = entropy(features['test']['preds'], base=2, axis=1)
-        acc, _ = classify_membership(train_entropy, test_entropy)
-        np.save(os.path.join(self.attack_path, 'acc_stat.npy'), acc)
-
-        # todo: sort by confidence score
-
-    # def black_box_attack(self):
-    #     prediction_scores = np.load(os.path.join(self.cls_path, 'prediction_scores.npy'), allow_pickle=True).item()
-    #
-    #     in_features = self.build_inout_features(prediction_scores['train'])
-    #     out_features = self.build_inout_features(prediction_scores['test'])
-    #
-    #     in_dataset = CustomDataset(in_features, torch.ones(in_features.shape[0]))
-    #     out_dataset = CustomDataset(out_features, torch.zeros(out_features.shape[0]))
-    #     inout_dataset = ConcatDataset([in_dataset, out_dataset])
-    #     print(inout_dataset)
-    #
-    #     self.train(inout_dataset)
-
-    # def build_inout_features(self, prediction_scores):
-    #     preds = torch.Tensor(prediction_scores['preds'])
-    #     labels = prediction_scores['labels']
-    #     labels_onehot = torch.zeros((1000, 10)).scatter_(1, torch.LongTensor(labels).reshape((-1, 1)), 1)
-    #     return torch.cat((preds, labels_onehot), axis=1)

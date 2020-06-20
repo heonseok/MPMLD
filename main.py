@@ -9,6 +9,7 @@ from data import load_dataset
 from utils import str2bool
 from classification import Classifier
 from utils import build_inout_dataset
+import utils
 
 parser = argparse.ArgumentParser(description='Membership Privacy-preserving Machine Learning models by Disentanglement')
 parser.add_argument('--dataset', type=str, default='CIFAR-10', choices=['CIFAR-10'])
@@ -25,7 +26,7 @@ parser.add_argument('--early_stop', type=str2bool, default='1')
 parser.add_argument('--early_stop_observation_period', type=int, default=20)
 parser.add_argument('--repeat_idx', type=int, default=0)
 parser.add_argument('--gpu_id', type=int, default=0)
-parser.add_argument('--attack_type', type=str, default='black', choices=['stat', 'black', 'white'])
+parser.add_argument('--attack_type', type=str, default='stat', choices=['stat', 'black', 'white'])
 
 parser.add_argument('--train_classifier', type=str2bool, default='0')
 parser.add_argument('--test_classifier', type=str2bool, default='0')
@@ -48,6 +49,8 @@ if not os.path.exists(args.data_path):
 args.cls_name = os.path.join('{}_setsize{}'.format(args.model_type, args.setsize),
                              'repeat{}'.format(args.repeat_idx))
 args.cls_path = os.path.join(args.base_path, 'classifier', args.cls_name)
+
+args.attack_path = os.path.join(args.base_path, 'attacker', args.cls_name, args.attack_type)
 
 # -- Dataset -- #
 trainset, testset = load_dataset(args.dataset, args.data_path)
@@ -78,9 +81,9 @@ if args.train_attack_model or args.test_attack_model:
     inout_dataset = build_inout_dataset(args.cls_path, args.attack_type)
     attack_model = Attacker(args)
     if args.train_attack_model:
-        if args.attack_type == 'stat':
-            attack_model.statistical_attack()
-        else:
-            attack_model.train(inout_dataset['train'], inout_dataset['valid'])
+        attack_model.train(inout_dataset['train'], inout_dataset['valid'])
     if args.test_attack_model:
-        attack_model.test(inout_dataset['test'])
+        if args.attack_type == 'stat':
+            utils.statistical_attack(args.cls_path, args.attack_path)
+        else:
+            attack_model.test(inout_dataset['test'])

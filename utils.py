@@ -1,5 +1,6 @@
 import os
 from torch.utils.data import ConcatDataset
+from scipy.stats import entropy
 import torch
 from torch.utils.data import Dataset
 from torch.utils.data import Subset
@@ -190,3 +191,13 @@ def build_inout_dataset(cls_path, attack_type):
         'test': concat_datasets(in_dataset, out_dataset, 0.85, 1.0),
     }
     return inout_datasets
+
+def statistical_attack(cls_path, attack_path):
+    features = np.load(os.path.join(cls_path, 'features.npy'), allow_pickle=True).item()
+
+    train_entropy = entropy(features['train']['preds'], base=2, axis=1)
+    test_entropy = entropy(features['test']['preds'], base=2, axis=1)
+    acc, auroc = classify_membership(train_entropy, test_entropy)
+    np.save(os.path.join(attack_path, 'acc.npy'), acc)
+    np.save(os.path.join(attack_path, 'auroc.npy'), auroc)
+    # todo: sort by confidence score
