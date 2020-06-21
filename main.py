@@ -26,14 +26,15 @@ parser.add_argument('--early_stop', type=str2bool, default='1')
 parser.add_argument('--early_stop_observation_period', type=int, default=20)
 parser.add_argument('--repeat_idx', type=int, default=0)
 parser.add_argument('--gpu_id', type=int, default=0)
-parser.add_argument('--attack_type', type=str, default='stat', choices=['stat', 'black', 'white'])
+parser.add_argument('--attack_type', type=str, default='black', choices=['black', 'white'])
 
 parser.add_argument('--train_classifier', type=str2bool, default='0')
 parser.add_argument('--test_classifier', type=str2bool, default='0')
 parser.add_argument('--extract_classifier_features', type=str2bool, default='0')
 
 parser.add_argument('--train_attack_model', type=str2bool, default='0')
-parser.add_argument('--test_attack_model', type=str2bool, default='1')
+parser.add_argument('--test_attack_model', type=str2bool, default='0')
+parser.add_argument('--statistical_attack', type=str2bool, default='1')
 args = parser.parse_args()
 
 torch.cuda.set_device(args.gpu_id)
@@ -50,7 +51,10 @@ args.cls_name = os.path.join('{}_setsize{}'.format(args.model_type, args.setsize
                              'repeat{}'.format(args.repeat_idx))
 args.cls_path = os.path.join(args.base_path, 'classifier', args.cls_name)
 
-args.attack_path = os.path.join(args.base_path, 'attacker', args.cls_name, args.attack_type)
+if args.statistical_attack:
+    args.attack_path = os.path.join(args.base_path, 'attacker', args.cls_name, 'stat')
+else:
+    args.attack_path = os.path.join(args.base_path, 'attacker', args.cls_name, args.attack_type)
 
 # -- Dataset -- #
 trainset, testset = load_dataset(args.dataset, args.data_path)
@@ -83,7 +87,7 @@ if args.train_attack_model or args.test_attack_model:
     if args.train_attack_model:
         attack_model.train(inout_dataset['train'], inout_dataset['valid'])
     if args.test_attack_model:
-        if args.attack_type == 'stat':
-            utils.statistical_attack(args.cls_path, args.attack_path)
-        else:
-            attack_model.test(inout_dataset['test'])
+        attack_model.test(inout_dataset['test'])
+
+if args.statistical_attack:
+    utils.statistical_attack(args.cls_path, args.attack_path)
