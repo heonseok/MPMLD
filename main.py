@@ -4,10 +4,11 @@ import os
 import torch
 from torch.utils.data import Subset
 
-from attack import Attacker
 from data import load_dataset
 from utils import str2bool
 from classification import Classifier
+from attack import Attacker
+from disentanglement import Disentangler
 from utils import build_inout_dataset
 import utils
 
@@ -32,9 +33,13 @@ parser.add_argument('--train_classifier', type=str2bool, default='0')
 parser.add_argument('--test_classifier', type=str2bool, default='0')
 parser.add_argument('--extract_classifier_features', type=str2bool, default='0')
 
-parser.add_argument('--train_attack_model', type=str2bool, default='0')
-parser.add_argument('--test_attack_model', type=str2bool, default='0')
-parser.add_argument('--statistical_attack', type=str2bool, default='1')
+parser.add_argument('--train_attacker', type=str2bool, default='0')
+parser.add_argument('--test_attacker', type=str2bool, default='0')
+parser.add_argument('--statistical_attack', type=str2bool, default='0')
+
+parser.add_argument('--train_disentangler', type=str2bool, default='1')
+parser.add_argument('--z_dim', type=int, default=64)
+
 args = parser.parse_args()
 
 torch.cuda.set_device(args.gpu_id)
@@ -47,14 +52,16 @@ args.data_path = os.path.join(args.base_path, 'data', args.dataset)
 if not os.path.exists(args.data_path):
     os.makedirs(args.data_path)
 
-args.cls_name = os.path.join('{}_setsize{}'.format(args.model_type, args.setsize),
+args.classification_name = os.path.join('{}_setsize{}'.format(args.model_type, args.setsize),
                              'repeat{}'.format(args.repeat_idx))
-args.cls_path = os.path.join(args.base_path, 'classifier', args.cls_name)
+args.classification_path = os.path.join(args.base_path, 'classifier', args.classification_name)
 
 if args.statistical_attack:
-    args.attack_path = os.path.join(args.base_path, 'attacker', args.cls_name, 'stat')
+    args.attack_path = os.path.join(args.base_path, 'attacker', args.classification_name, 'stat')
 else:
-    args.attack_path = os.path.join(args.base_path, 'attacker', args.cls_name, args.attack_type)
+    args.attack_path = os.path.join(args.base_path, 'attacker', args.classification_name, args.attack_type)
+
+args.disentanglement_path = os.path.join(args.base_path, 'disentangler')
 
 # -- Dataset -- #
 trainset, testset = load_dataset(args.dataset, args.data_path)
@@ -63,31 +70,37 @@ subset0 = Subset(trainset, range(args.setsize))
 subset1 = Subset(trainset, range(args.setsize, 2 * args.setsize))
 subset2 = Subset(trainset, range(2 * args.setsize, 3 * args.setsize))
 
-if args.train_classifier or args.test_classifier or args.extract_classifier_features:
-    cls_datasets = {
-        'train': subset0,
-        'valid': subset1,
-        'test': subset2,
-    }
-    for dataset_type, dataset in cls_datasets.items():
-        print('Cls {:<5} : {}'.format(dataset_type, len(dataset)))
+class_datasets = {
+    'train': subset0,
+    'valid': subset1,
+    'test': subset2,
+}
+for dataset_type, dataset in class_datasets.items():
+    print('Cls {:<5} : {}'.format(dataset_type, len(dataset)))
 
-    cls_model = Classifier(args)
+# -- Run -- #
+if args.train_classifier or args.test_classifier or args.extract_classifier_features:
+
+    classifier = Classifier(args)
 
     if args.train_classifier:
-        cls_model.train(cls_datasets['train'], cls_datasets['valid'])
+        classifier.train(class_datasets['train'], class_datasets['valid'])
     if args.test_classifier:
-        cls_model.test(cls_datasets['test'])
+        classifier.test(class_datasets['test'])
     if args.extract_classifier_features:
-        cls_model.extract_features(cls_datasets)
+        classifier.extract_features(class_datasets)
 
-if args.train_attack_model or args.test_attack_model:
-    inout_dataset = build_inout_dataset(args.cls_path, args.attack_type)
-    attack_model = Attacker(args)
-    if args.train_attack_model:
-        attack_model.train(inout_dataset['train'], inout_dataset['valid'])
-    if args.test_attack_model:
-        attack_model.test(inout_dataset['test'])
+if args.train_attacker or args.test_attacker:
+    inout_dataset = build_inout_dataset(args.classification_path, args.attack_type)
+    attacker = Attacker(args)
+    if args.train_attacker:
+        attacker.train(inout_dataset['train'], inout_dataset['valid'])
+    if args.test_attacker:
+        attacker.test(inout_dataset['test'])
 
 if args.statistical_attack:
-    utils.statistical_attack(args.cls_path, args.attack_path)
+    utils.statistical_attack(args.classification_path, args.attack_path)
+
+if args.train_disentangler:
+    disentangler = Disentangler(args)
+    disentangler.train(class_datasets['train'])

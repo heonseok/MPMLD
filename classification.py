@@ -19,9 +19,6 @@ class Classifier(object):
 
         self.cls_name = args.cls_name
         self.cls_path = args.cls_path
-        # self.cls_name = os.path.join('{}_setsize{}'.format(args.model_type, args.setsize),
-        #                              'repeat{}'.format(args.repeat_idx))
-        # self.cls_path = os.path.join(args.base_path, 'classifier', self.cls_name)
         if not os.path.exists(self.cls_path):
             os.makedirs(self.cls_path)
 

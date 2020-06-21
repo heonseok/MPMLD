@@ -1,15 +1,11 @@
 import os
 
 import numpy as np
-from scipy.stats import entropy
 import torch
 import sys
 import torch.optim as optim
 import torch.backends.cudnn as cudnn
 
-from utils import classify_membership
-from utils import progress_bar
-from utils import CustomDataset
 from torch.utils.data import ConcatDataset
 import torch.nn as nn
 from module import SimpleNet

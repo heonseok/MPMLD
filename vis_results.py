@@ -21,7 +21,8 @@ def plot_classification_result(clf_model):
     plt.title(clf_model, fontdict={'size': 20})
     plt.xticks(fontsize=15)
     plt.yticks(fontsize=15)
-    # plt.axhline(50, ls='--', c='r')
+    plt.ylim(0.4,1)
+    plt.axhline(0.5, ls='--', c='r')
     plt.tight_layout()
     plt.show()
     plt.close()
@@ -35,22 +36,23 @@ def plot_attack_result(clf_model):
             attack_path = os.path.join(base_path, 'attacker', clf_model, 'repeat{}'.format(repeat))
             acc = np.load(os.path.join(attack_path, attack_type, 'acc.npy'), allow_pickle=True)
             if attack_type == 'stat':
-                df = df.append({attack_type:acc}, ignore_index=True)
+                df = df.append({attack_type: acc}, ignore_index=True)
             else:
-                df = df.append({attack_type:acc.item()['test']}, ignore_index=True)
+                df = df.append({attack_type: acc.item()['test']}, ignore_index=True)
 
     sns.boxplot(data=df)
     plt.ylabel('Attack accuracy', fontdict={'size': 18})
     plt.title(clf_model, fontdict={'size': 20})
     plt.xticks(fontsize=15)
     plt.yticks(fontsize=15)
-    # plt.axhline(50, ls='--', c='r')
+    plt.ylim(0.4,1)
+    plt.axhline(0.5, ls='--', c='r')
     plt.tight_layout()
     plt.show()
     plt.close()
 
 
-def vis_classification_result():
+if __name__ == "__main__":
     clf_model_list = [
         'ResNet18_setsize1000',
     ]
@@ -58,8 +60,3 @@ def vis_classification_result():
     for clf_model in clf_model_list:
         plot_classification_result(clf_model)
         plot_attack_result(clf_model)
-
-
-if __name__ == "__main__":
-    vis_classification_result()
-    # vis_attack_result()
