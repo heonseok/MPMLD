@@ -8,7 +8,8 @@ from data import load_dataset
 from utils import str2bool
 from classification import Classifier
 from attack import Attacker
-from disentanglement import Disentangler
+from disentanglement_class import Disentangler
+# from disentanglement import Disentangler
 from utils import build_inout_dataset
 import utils
 import numpy as np
@@ -27,7 +28,7 @@ parser.add_argument('--classification_model', type=str, default='ResNet18', choi
 parser.add_argument('--epochs', type=int, default=1500)
 parser.add_argument('--early_stop', type=str2bool, default='1')
 parser.add_argument('--early_stop_observation_period', type=int, default=20)
-parser.add_argument('--repeat_idx', type=int, default=1)
+parser.add_argument('--repeat_idx', type=int, default=0)
 parser.add_argument('--gpu_id', type=int, default=0)
 parser.add_argument('--attack_type', type=str, default='black', choices=['black', 'white'])
 parser.add_argument('--z_dim', type=int, default=64)
@@ -42,7 +43,7 @@ parser.add_argument('--test_attacker', type=str2bool, default='0')
 parser.add_argument('--statistical_attack', type=str2bool, default='0')
 
 parser.add_argument('--train_disentangler', type=str2bool, default='1')
-parser.add_argument('--reconstruct_datasets', type=str2bool, default='1')
+parser.add_argument('--reconstruct_datasets', type=str2bool, default='0')
 
 args = parser.parse_args()
 

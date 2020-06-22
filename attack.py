@@ -8,7 +8,7 @@ import torch.backends.cudnn as cudnn
 
 from torch.utils.data import ConcatDataset
 import torch.nn as nn
-from module import SimpleNet
+from module import SimpleDiscriminator
 from sklearn import metrics
 
 
@@ -33,7 +33,7 @@ class Attacker(object):
         # Model
         print('==> Building {}'.format(self.attack_path))
         if self.attack_type == 'black':
-            net = SimpleNet(20)
+            net = SimpleDiscriminator(20)
 
         self.start_epoch = 0
         self.best_valid_acc = 0
