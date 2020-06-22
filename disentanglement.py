@@ -36,9 +36,12 @@ class Disentangler(object):
 
         # print(self.encoder)
         # print(self.decoder)
+        # sys.exit(1)
 
         if self.device == 'cuda':
             cudnn.benchmark = True
+
+        self.fixed_inputs = None
 
     def train_epoch(self, trainloader, epoch):
         self.encoder.train()
@@ -46,6 +49,10 @@ class Disentangler(object):
         train_loss = 0
         for batch_idx, (inputs, targets) in enumerate(trainloader):
             inputs, targets = inputs.to(self.device), targets.to(self.device)
+            if batch_idx == 0 and epoch == 0:
+                self.fixed_inputs = inputs
+                vutils.save_image(self.fixed_inputs, os.path.join(self.disentanglement_path, 'real_samples.png'),
+                                  normalize=True, nrow=10)
             self.optimizer_enc.zero_grad()
             self.optimizer_dec.zero_grad()
 
@@ -63,10 +70,11 @@ class Disentangler(object):
 
         if epoch % 10 == 0:
             print('saving the output')
-            vutils.save_image(inputs, os.path.join(self.disentanglement_path, 'real_samples.png'), normalize=True)
+            outputs_from_fixed_inputs = self.decoder(self.encoder(self.fixed_inputs)).detach()
             # fake = netG(fixed_noise)
-            vutils.save_image(outputs.detach(), os.path.join(self.disentanglement_path, 'recon_%03d.png' % (epoch)),
-                              normalize=True)
+            vutils.save_image(outputs_from_fixed_inputs,
+                              os.path.join(self.disentanglement_path, 'recon_%03d.png' % (epoch)), normalize=True,
+                              nrow=10)
 
     def train(self, trainset):
         trainloader = torch.utils.data.DataLoader(trainset, batch_size=self.train_batch_size, shuffle=True,

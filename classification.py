@@ -17,21 +17,23 @@ class Classifier(object):
         self.early_stop = args.early_stop
         self.early_stop_observation_period = args.early_stop_observation_period
 
-        self.cls_name = args.cls_name
-        self.cls_path = args.cls_path
-        if not os.path.exists(self.cls_path):
-            os.makedirs(self.cls_path)
+        self.classification_name = args.classification_name
+        self.classification_path = args.classification_path
+        if not os.path.exists(self.classification_path):
+            os.makedirs(self.classification_path)
 
-        with open(os.path.join(self.cls_path, 'descriptions.txt'), 'w') as f:
+        with open(os.path.join(self.classification_path, 'descriptions.txt'), 'w') as f:
             json.dump(args.__dict__, f, indent=2)
 
         # Model
-        print('==> Building {}'.format(self.cls_name))
-        if 'VGG' in args.model_type:
-            print('VGG(\'' + args.model_type + '\')')
-            net = eval('VGG(\'' + args.model_type + '\')')
+        print('==> Building {}'.format(self.classification_name))
+        if 'VGG' in args.classification_model:
+            print('VGG(\'' + args.classification_model + '\')')
+            net = eval('VGG(\'' + args.classification_model + '\')')
         else:
-            net = eval(args.model_type + '()')
+            net = eval(args.classification_model + '()')
+
+        # print(net)
 
         self.start_epoch = 0
         self.best_valid_acc = 0
@@ -59,8 +61,8 @@ class Classifier(object):
     # -- Base operations -- #
     #########################
     def load(self):
-        print('====> Loading checkpoint {}'.format(self.cls_name))
-        checkpoint = torch.load(os.path.join(self.cls_path, 'ckpt.pth'))
+        print('====> Loading checkpoint {}'.format(self.classification_name))
+        checkpoint = torch.load(os.path.join(self.classification_path, 'ckpt.pth'))
         self.net.load_state_dict(checkpoint['net'])
         self.best_valid_acc = checkpoint['best_valid_acc']
         self.train_acc = checkpoint['train_acc']
@@ -113,7 +115,7 @@ class Classifier(object):
                     'train_acc': self.train_acc,
                     'epoch': epoch,
                 }
-                torch.save(state, os.path.join(self.cls_path, 'ckpt.pth'))
+                torch.save(state, os.path.join(self.classification_path, 'ckpt.pth'))
                 self.best_valid_acc = acc
                 self.early_stop_count = 0
             else:
@@ -128,7 +130,7 @@ class Classifier(object):
             return acc
 
     def train(self, trainset, validset=None):
-        print('==> Start training {}'.format(self.cls_name))
+        print('==> Start training {}'.format(self.classification_name))
         self.train_flag = True
         trainloader = torch.utils.data.DataLoader(trainset, batch_size=self.train_batch_size, shuffle=True,
                                                   num_workers=2)
@@ -144,7 +146,7 @@ class Classifier(object):
                 break
 
     def test(self, testset):
-        print('==> Test {}'.format(self.cls_name))
+        print('==> Test {}'.format(self.classification_name))
         try:
             self.load()
         except FileNotFoundError:
@@ -158,7 +160,7 @@ class Classifier(object):
             'test': test_acc,
         }
         print(acc_dict)
-        np.save(os.path.join(self.cls_path, 'acc.npy'), acc_dict)
+        np.save(os.path.join(self.classification_path, 'acc.npy'), acc_dict)
 
     #####################
     # ---- For MIA ---- #
@@ -194,4 +196,4 @@ class Classifier(object):
                 'preds': prediction_scores,
                 'labels': labels
             }
-        np.save(os.path.join(self.cls_path, 'features.npy'), features_dict)
+        np.save(os.path.join(self.classification_path, 'features.npy'), features_dict)

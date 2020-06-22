@@ -21,7 +21,7 @@ parser.add_argument('--resume', type=str2bool, default='0')
 parser.add_argument('--train_batch_size', type=int, default=100)
 parser.add_argument('--valid_batch_size', type=int, default=100)
 parser.add_argument('--test_batch_size', type=int, default=100)
-parser.add_argument('--model_type', type=str, default='ResNet18', choices=['VGG19', 'ResNet18'])
+parser.add_argument('--classification_model', type=str, default='VGG19', choices=['VGG19', 'ResNet18'])
 parser.add_argument('--epochs', type=int, default=500)
 parser.add_argument('--early_stop', type=str2bool, default='1')
 parser.add_argument('--early_stop_observation_period', type=int, default=20)
@@ -52,7 +52,7 @@ args.data_path = os.path.join(args.base_path, 'data', args.dataset)
 if not os.path.exists(args.data_path):
     os.makedirs(args.data_path)
 
-args.classification_name = os.path.join('{}_setsize{}'.format(args.model_type, args.setsize),
+args.classification_name = os.path.join('{}_setsize{}'.format(args.classification_model, args.setsize),
                              'repeat{}'.format(args.repeat_idx))
 args.classification_path = os.path.join(args.base_path, 'classifier', args.classification_name)
 

@@ -62,17 +62,17 @@ class ConvEncoder(nn.Module):
         # assert image_size == 64, 'This model only works with image size 64x64.'
 
         self.main = nn.Sequential(
-            nn.Conv2d(num_channels, 32, 4, 2, 1),
+            nn.Conv2d(num_channels, 32, 3, 2, 1),
             nn.ReLU(True),
-            nn.Conv2d(32, 32, 4, 2, 1),
+            nn.Conv2d(32, 32, 3, 2, 1),
             nn.ReLU(True),
-            nn.Conv2d(32, 64, 4, 2, 1),
+            nn.Conv2d(32, 64, 3, 2, 1),
             nn.ReLU(True),
-            nn.Conv2d(64, 128, 4, 2, 1),
+            nn.Conv2d(64, 128, 3, 2, 1),
             nn.ReLU(True),
-            nn.Conv2d(128, 256, 4, 2, 1),
+            nn.Conv2d(128, 256, 3, 2, 1),
             nn.ReLU(True),
-            nn.Conv2d(256, 256, 4, 2, 1),
+            nn.Conv2d(256, 256, 3, 2, 1),
             nn.ReLU(True),
             Flatten3D(),
             nn.Linear(256, latent_dim, bias=True)
@@ -106,17 +106,17 @@ class ConvDecoder(nn.Module):
             Unsqueeze3D(),
             nn.Conv2d(latent_dim, 256, 1, 2),
             nn.ReLU(True),
-            nn.ConvTranspose2d(256, 256, 4, 2, 1),
+            nn.ConvTranspose2d(256, 256, 3, 2, 1),
             nn.ReLU(True),
-            nn.ConvTranspose2d(256, 128, 4, 2),
+            nn.ConvTranspose2d(256, 128, 3, 2),
             nn.ReLU(True),
-            nn.ConvTranspose2d(128, 128, 4, 2),
+            nn.ConvTranspose2d(128, 128, 3, 2),
             nn.ReLU(True),
-            nn.ConvTranspose2d(128, 64, 4, 2),
+            nn.ConvTranspose2d(128, 64, 3, 2),
             nn.ReLU(True),
-            nn.ConvTranspose2d(64, 64, 4, 2),
+            nn.ConvTranspose2d(64, 64, 3, 2),
             nn.ReLU(True),
-            nn.ConvTranspose2d(64, num_channels, 3, 1)
+            nn.ConvTranspose2d(64, num_channels, 2, 1)
         )
         # output shape = bs x 3 x 64 x 64
 
