@@ -31,7 +31,10 @@ parser.add_argument('--early_stop_observation_period', type=int, default=20)
 parser.add_argument('--repeat_idx', type=int, default=0)
 parser.add_argument('--gpu_id', type=int, default=0)
 parser.add_argument('--attack_type', type=str, default='black', choices=['black', 'white'])
-parser.add_argument('--z_dim', type=int, default=64)
+parser.add_argument('--z_dim', type=int, default=16)
+parser.add_argument('--disentanglement_type', type=str, default='type1', choices=['base', 'type1', 'type2'])
+# parser.add_argument('--reconstruction_type', type=str, default='full_z', choices=['full_z', 'partial_z'])
+parser.add_argument('--reconstruction_type', type=str, default='partial_z', choices=['full_z', 'partial_z'])
 
 parser.add_argument('--train_classifier', type=str2bool, default='0')
 parser.add_argument('--test_classifier', type=str2bool, default='0')
@@ -43,7 +46,7 @@ parser.add_argument('--test_attacker', type=str2bool, default='0')
 parser.add_argument('--statistical_attack', type=str2bool, default='0')
 
 parser.add_argument('--train_disentangler', type=str2bool, default='1')
-parser.add_argument('--reconstruct_datasets', type=str2bool, default='0')
+parser.add_argument('--reconstruct_datasets', type=str2bool, default='1')
 
 args = parser.parse_args()
 
@@ -57,17 +60,21 @@ args.data_path = os.path.join(args.base_path, 'data', args.dataset)
 if not os.path.exists(args.data_path):
     os.makedirs(args.data_path)
 
-args.disentanglement_path = os.path.join(args.base_path, 'disentangler', 'repeat{}'.format(args.repeat_idx))
-
+args.disentanglement_name = os.path.join('disentangler_z{}'.format(args.z_dim), args.disentanglement_type)
+args.disentanglement_path = os.path.join(args.base_path, args.disentanglement_name, 'repeat{}'.format(args.repeat_idx))
+# args.reconstruction_name = os.path.join(args.disentanglement_name, args.reconstruction_type)
+args.reconstruction_path = os.path.join(args.disentanglement_path,
+                                        'recon_{}.pt'.format(args.reconstruction_type))
 
 if args.use_reconstructed_datasets:
     try:
-        class_datasets = utils.build_reconstructed_datasets(args.disentanglement_path)
+        class_datasets = utils.build_reconstructed_datasets(args.reconstruction_path)
     except FileNotFoundError:
         print('There is no reconstructed data')
         sys.exit(1)
-    args.classification_name = os.path.join('{}_setsize{}_recon'.format(args.classification_model, args.setsize),
-                                            'repeat{}'.format(args.repeat_idx))
+    args.classification_name = os.path.join(
+        '{}_setsize{}_{}'.format(args.classification_model, args.setsize, args.reconstruction_path),
+        'repeat{}'.format(args.repeat_idx))
 else:
     trainset, testset = load_dataset(args.dataset, args.data_path)
 

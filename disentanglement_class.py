@@ -19,7 +19,10 @@ class Disentangler(object):
         self.disc_input_dim = int(self.z_dim / 2)
         self.num_channels = 3
         self.image_size = 64
+        self.disentanglement_type = args.disentanglement_type
         self.disentanglement_path = args.disentanglement_path
+        self.reconstruction_type = args.reconstruction_type
+        self.reconstruction_path = args.reconstruction_path
 
         if not os.path.exists(self.disentanglement_path):
             os.makedirs(self.disentanglement_path)
@@ -84,6 +87,7 @@ class Disentangler(object):
             #                       normalize=True, nrow=10)
 
             # -------------------------------------------------------
+            # ---- Reconstruction ---- #
             self.optimizer_enc.zero_grad()
             self.optimizer_dec.zero_grad()
 
@@ -95,17 +99,37 @@ class Disentangler(object):
             self.optimizer_enc.step()
             self.optimizer_dec.step()
 
-            # ----
-            self.optimizer_enc.zero_grad()
-            self.optimizer_class.zero_grad()
+            # ---- Disentanglement ---- #
+            if self.disentanglement_type == 'type1':
+                self.optimizer_enc.zero_grad()
+                z = self.encoder(inputs)
+                pred_label = self.classifier(z[:, self.disc_input_dim:])
+                class_loss = -self.class_loss(pred_label, targets)
+                class_loss.backward()
+                self.optimizer_enc.step()
 
-            z = self.encoder(inputs)
-            pred_label = self.classifier(z[:, :self.disc_input_dim])
-            class_loss = self.class_loss(pred_label, targets)
-            class_loss.backward()
+                self.optimizer_class.zero_grad()
+                z = self.encoder(inputs)
+                pred_label = self.classifier(z[:, self.disc_input_dim:])
+                class_loss = self.class_loss(pred_label, targets)
+                class_loss.backward()
+                self.optimizer_class.step()
 
-            self.optimizer_enc.step()
-            self.optimizer_class.step()
+            elif self.disentanglement_type == 'type2':
+                self.optimizer_enc.zero_grad()
+                z = self.encoder(inputs)
+                pred_label = self.classifier(z[:, 0:self.disc_input_dim])
+                class_loss = self.class_loss(pred_label, targets)
+                class_loss.backward()
+                self.optimizer_enc.step()
+
+                self.optimizer_class.zero_grad()
+                z = self.encoder(inputs)
+                pred_label = self.classifier(z[:, 0:self.disc_input_dim])
+                class_loss = self.class_loss(pred_label, targets)
+                class_loss.backward()
+                self.optimizer_class.step()
+
             # -------------------------------------------------------
 
             # # ---- Encoder ----- #
@@ -114,42 +138,42 @@ class Disentangler(object):
             # recons = self.decoder(z)
             # recon_loss = self.recon_loss(recons, inputs)
             #
-            # pred_label = self.classifier(z.detach()[:, :self.disc_input_dim])
+            # pred_label = self.classifier(z[:, :self.disc_input_dim])
             # class_loss = self.class_loss(pred_label, targets)
             #
-            # # enc_loss = recon_loss + class_loss
-            # enc_loss = recon_loss
+            # enc_loss = recon_loss + class_loss
+            # # enc_loss = recon_loss
             # enc_loss.backward()
             # self.optimizer_enc.step()
             #
             # # ---- Decoder ----- #
             # self.optimizer_dec.zero_grad()
-            # # z = self.encoder(inputs)
-            # # recons = self.decoder(z)
-            # # recon_loss = self.recon_loss(recons, inputs)
+            # z = self.encoder(inputs)
+            # recons = self.decoder(z)
+            # recon_loss = self.recon_loss(recons, inputs)
             #
             # dec_loss = recon_loss
             # dec_loss.backward()
             # self.optimizer_dec.step()
             #
             # # ---- Classifier ----- #
-            # # self.optimizer_class.zero_grad()
+            # self.optimizer_class.zero_grad()
             #
             # z = self.encoder(inputs)
-            # pred_label = self.classifier(z.detach()[:, :self.disc_input_dim])
+            # pred_label = self.classifier(z[:, :self.disc_input_dim])
             # class_loss = self.class_loss(pred_label, targets)
-            # # class_loss.backward()
-            # # self.optimizer_class.step()
-            # -------------------------------------------------------
+            # class_loss.backward()
+            # self.optimizer_class.step()
+            # # -------------------------------------------------------
 
             recon_train_loss += recon_loss.item()
-            _, predicted = pred_label.max(1)
-            total += targets.size(0)
-            correct += predicted.eq(targets).sum().item()
-
-        # self.train_acc = correct / total
-        print(epoch, recon_train_loss, correct / total)
-        # print(epoch, recon_train_loss)
+            if self.disentanglement_type != 'base':
+                _, predicted = pred_label.max(1)
+                total += targets.size(0)
+                correct += predicted.eq(targets).sum().item()
+                print(epoch, recon_train_loss, correct / total)
+            else:
+                print(epoch, recon_train_loss)
 
         if (epoch + 1) % 50 == 0:
             print('saving the output')
@@ -199,22 +223,29 @@ class Disentangler(object):
             with torch.no_grad():
                 for batch_idx, (inputs, targets) in enumerate(loader):
                     inputs = inputs.to(self.device)
-                    recons_batch = self.decoder(self.encoder(inputs)).cpu()
+                    z = self.encoder(inputs)
+                    if self.reconstruction_type == 'partial_z':
+                        paritial_z = z[:, 0:self.disc_input_dim]
+                        z = torch.cat((paritial_z, torch.zeros_like(paritial_z)), axis=1)
+                    recons_batch = self.decoder(z).cpu()
                     labels_batch = targets
-                    # recons_batch = self.decoder(self.encoder(inputs)).cpu().numpy()
-                    # labels_batch = targets.numpy()
                     if len(recons) == 0:
                         recons = recons_batch
                         labels = labels_batch
+
+                        # save images
+                        vutils.save_image(recons, os.path.join(self.disentanglement_path,
+                                                               'recon_{}_{}.png'.format(dataset_type,
+                                                                                        self.reconstruction_type)),
+                                          normalize=True, nrow=10)
+
                     else:
                         recons = torch.cat((recons, recons_batch), axis=0)
                         labels = torch.cat((labels, labels_batch), axis=0)
-                        # recons = np.vstack((recons, recons_batch))
-                        # labels = np.concatenate((labels, labels_batch))
 
             recon_datasets_dict[dataset_type] = {
                 'recons': recons,
                 'labels': labels,
             }
-        # np.save(os.path.join(self.disentanglement_path, 'recon_datasets.npy'), recon_datasets_dict)
-        torch.save(recon_datasets_dict, os.path.join(self.disentanglement_path, 'recon_datasets.pt'))
+        torch.save(recon_datasets_dict, self.reconstruction_path)
+        # torch.save(recon_datasets_dict, os.path.join(self.disentanglement_path, 'recon_datasets_{}.pt'.format(self.reconstruction_type)))

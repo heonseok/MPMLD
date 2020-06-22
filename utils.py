@@ -204,8 +204,9 @@ def statistical_attack(cls_path, attack_path):
     # todo: sort by confidence score
 
 
-def build_reconstructed_datasets(disentanglement_path):
-    recon_datasets_ = torch.load(os.path.join(disentanglement_path, 'recon_datasets.pt'))
+def build_reconstructed_datasets(reconstruction_path):
+    # recon_datasets_ = torch.load(os.path.join(disentanglement_path, 'recon_datasets.pt'))
+    recon_datasets_ = torch.load(reconstruction_path)
     recon_datasets = {}
     for dataset_type, dataset in recon_datasets_.items():
         # print(dataset_type)

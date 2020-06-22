@@ -9,6 +9,12 @@ classification_model_list = [
     'ResNet18',
 ]
 
+disentanglement_type = [
+    'base',
+    # 'type1',
+    # 'type2',
+]
+
 repeat_idx_list = [
     0,
     1,
