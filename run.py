@@ -48,7 +48,7 @@ for dataset in dataset_list:
             target_setup_dict['classification_model'] = classification_model
             target_setup_dict['repeat_idx'] = str(repeat_idx)
 
-            args_list.append('python main.py')
+            args_list.append('python main_for_run.py')
             for k, v in target_setup_dict.items():
                 args_list.append('--{} {}'.format(k, v))
 

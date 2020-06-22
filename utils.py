@@ -192,6 +192,7 @@ def build_inout_dataset(cls_path, attack_type):
     }
     return inout_datasets
 
+
 def statistical_attack(cls_path, attack_path):
     features = np.load(os.path.join(cls_path, 'features.npy'), allow_pickle=True).item()
 
@@ -201,3 +202,12 @@ def statistical_attack(cls_path, attack_path):
     np.save(os.path.join(attack_path, 'acc.npy'), acc)
     np.save(os.path.join(attack_path, 'auroc.npy'), auroc)
     # todo: sort by confidence score
+
+
+def build_reconstructed_datasets(disentanglement_path):
+    recon_datasets_ = torch.load(os.path.join(disentanglement_path, 'recon_datasets.pt'))
+    recon_datasets = {}
+    for dataset_type, dataset in recon_datasets_.items():
+        # print(dataset_type)
+        recon_datasets[dataset_type] = CustomDataset(dataset['recons'], dataset['labels'])
+    return recon_datasets

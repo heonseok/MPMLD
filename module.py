@@ -53,13 +53,8 @@ class SimpleNet(nn.Module):
 
 
 class ConvEncoder(nn.Module):
-    def __init__(self, latent_dim, num_channels, image_size):
+    def __init__(self, latent_dim, num_channels):
         super().__init__()
-        # self._latent_dim = latent_dim
-        # self._num_channels = num_channels
-        # self._image_size = image_size
-
-        # assert image_size == 64, 'This model only works with image size 64x64.'
 
         self.main = nn.Sequential(
             nn.Conv2d(num_channels, 32, 3, 2, 1),
@@ -75,7 +70,8 @@ class ConvEncoder(nn.Module):
             nn.Conv2d(256, 256, 3, 2, 1),
             nn.ReLU(True),
             Flatten3D(),
-            nn.Linear(256, latent_dim, bias=True)
+            nn.Linear(256, latent_dim, bias=True),
+            # nn.ReLU(True),
         )
 
         init_layers(self._modules)
@@ -83,24 +79,10 @@ class ConvEncoder(nn.Module):
     def forward(self, x):
         return self.main(x)
 
-    # def latent_dim(self):
-    #     return self._latent_dim
-    #
-    # def num_channels(self):
-    #     return self._num_channels
-    #
-    # def image_size(self):
-    #     return self._image_size
-
 
 class ConvDecoder(nn.Module):
-    def __init__(self, latent_dim, num_channels, image_size):
+    def __init__(self, latent_dim, num_channels):
         super().__init__()
-        # self.latent_dim = latent_dim
-        # self.num_channels = num_channels
-        # self.image_size = image_size
-
-        # assert image_size == 64, 'This model only works with image size 64x64.'
 
         self.main = nn.Sequential(
             Unsqueeze3D(),
@@ -116,19 +98,11 @@ class ConvDecoder(nn.Module):
             nn.ReLU(True),
             nn.ConvTranspose2d(64, 64, 3, 2),
             nn.ReLU(True),
-            nn.ConvTranspose2d(64, num_channels, 2, 1)
+            nn.ConvTranspose2d(64, num_channels, 2, 1),
+            # nn.Sigmoid(),
         )
-        # output shape = bs x 3 x 64 x 64
 
         init_layers(self._modules)
 
     def forward(self, x):
         return self.main(x)
-
-    # def init_layers(self):
-    #     for block in self._modules:
-    #         for m in self._modules[block]:
-    #             if isinstance(m, nn.Conv2d) or isinstance(m, nn.ConvTranspose2d):
-    #                 init.xavier_normal_(m.weight.data)
-    #             if isinstance(m, nn.Linear):
-    #                 init.kaiming_normal_(m.weight.data)

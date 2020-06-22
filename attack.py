@@ -142,7 +142,7 @@ class Attacker(object):
                 self.early_stop_count = 0
             else:
                 self.early_stop_count += 1
-                print('Eearly stop count: {}'.format(self.early_stop_count))
+                print('Early stop count: {}'.format(self.early_stop_count))
 
             if self.early_stop_count == self.early_stop_observation_period:
                 print('Early stop count == {}; Terminate training'.format(self.early_stop_observation_period))
