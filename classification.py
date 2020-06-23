@@ -123,7 +123,7 @@ class Classifier(object):
                 print('Early stop count: {}'.format(self.early_stop_count))
 
             if self.early_stop_count == self.early_stop_observation_period:
-                print('Early stop count == {}; Terminate training'.format(self.early_stop_observation_period))
+                print('Early stop count == {}; Terminate training\n'.format(self.early_stop_observation_period))
                 self.train_flag = False
 
         elif type == 'test':

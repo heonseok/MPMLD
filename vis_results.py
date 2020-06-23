@@ -60,9 +60,10 @@ def plot_attack_result(clf_model):
 
 if __name__ == "__main__":
     clf_model_list = [
-        'ResNet18_setsize1000',
+        # 'ResNet18_setsize1000',
+        'ResNet18_setsize10000',
     ]
 
     for clf_model in clf_model_list:
         plot_classification_result(clf_model)
-        plot_attack_result(clf_model)
+        # plot_attack_result(clf_model)

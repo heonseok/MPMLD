@@ -12,13 +12,8 @@ classification_model_list = [
 setsize_list = [
     # 1000,
     # 10000,
-    20000,
-]
-
-disentanglement_type = [
-    'base',
-    # 'type1',
-    # 'type2',
+    # 20000,
+    30000,
 ]
 
 repeat_idx_list = [
@@ -32,17 +27,7 @@ repeat_idx_list = [
 setup_dict = {
     'train_classifier': '1',
     'test_classifier': '1',
-    'extract_classifier_features': '1',
-
-    'statistical_attack': '0',
-
-    'attack_type': 'black',
-    'train_attacker': '0',
-    'test_attacker': '0',
-
-    'train_disentangler': '0',
-
-    'z_dim': 64,
+    'extract_classifier_features': '0',
 
     'epochs': 500,
     'early_stop': '1',
@@ -61,7 +46,7 @@ for dataset in dataset_list:
                 target_setup_dict['setsize'] = setsize
                 target_setup_dict['repeat_idx'] = str(repeat_idx)
 
-                args_list.append('python main_for_run.py')
+                args_list.append('python classification_main.py')
                 for k, v in target_setup_dict.items():
                     args_list.append('--{} {}'.format(k, v))
 
