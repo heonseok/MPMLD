@@ -21,8 +21,6 @@ class Attacker(object):
         self.early_stop = args.early_stop
         self.early_stop_observation_period = args.early_stop_observation_period
 
-        self.classification_name = args.classification_name
-        self.classification_path = args.classification_path
         self.attack_path = args.attack_path
         print(self.attack_path)
         # if not os.path.exists(self.attack_path):
@@ -152,7 +150,7 @@ class Attacker(object):
             return acc, auroc
 
     def train(self, trainset, validset=None):
-        print('==> Start training {}'.format(self.classification_name))
+        print('==> Start training {}'.format(self.attack_path))
         self.train_flag = True
         trainloader = torch.utils.data.DataLoader(trainset, batch_size=self.train_batch_size, shuffle=True,
                                                   num_workers=2)
@@ -168,7 +166,7 @@ class Attacker(object):
                 break
 
     def test(self, testset):
-        print('==> Test {}'.format(self.classification_name))
+        print('==> Test {}'.format(self.attack_path))
         try:
             self.load()
         except FileNotFoundError:

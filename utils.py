@@ -176,8 +176,8 @@ def build_inout_features(features, attack_type):
     return torch.cat((preds, labels_onehot), axis=1)
 
 
-def build_inout_feature_sets(cls_path, attack_type):
-    features = np.load(os.path.join(cls_path, 'features.npy'), allow_pickle=True).item()
+def build_inout_feature_sets(classification_path, attack_type):
+    features = np.load(os.path.join(classification_path, 'features.npy'), allow_pickle=True).item()
 
     in_features = build_inout_features(features['in'], attack_type)
     out_features = build_inout_features(features['out'], attack_type)

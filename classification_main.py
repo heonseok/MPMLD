@@ -7,13 +7,13 @@ from torch.utils.data import Subset
 from data import load_dataset
 from utils import str2bool
 from classification import Classifier
+from torch.utils.data import ConcatDataset
 import utils
 import sys
 
-parser = argparse.ArgumentParser(
-    description='Classification of Membership Privacy-preserving Machine Learning models by Disentanglement')
+parser = argparse.ArgumentParser()
 parser.add_argument('--dataset', type=str, default='CIFAR-10', choices=['CIFAR-10'])
-parser.add_argument('--setsize', type=int, default=1000)
+parser.add_argument('--setsize', type=int, default=20000)
 parser.add_argument('--lr', type=float, default=0.002)
 parser.add_argument('--base_path', type=str, default='/mnt/disk1/heonseok/MPMLD')
 parser.add_argument('--resume', type=str2bool, default='0')
@@ -30,17 +30,18 @@ parser.add_argument('--gpu_id', type=int, default=0)
 parser.add_argument('--dataset_type', type=str, default='original', choices=['original', 'reconstructed'])
 parser.add_argument('--reconstruction_path', type=str, default='blah')
 
-parser.add_argument('--train_classifier', type=str2bool, default='1')
-parser.add_argument('--test_classifier', type=str2bool, default='1')
-parser.add_argument('--extract_classifier_features', type=str2bool, default='0')
+parser.add_argument('--train_classifier', type=str2bool, default='0')
+parser.add_argument('--test_classifier', type=str2bool, default='0')
+parser.add_argument('--extract_classifier_features', type=str2bool, default='1')
 
 args = parser.parse_args()
 
 torch.cuda.set_device(args.gpu_id)
 
 # -- Directory -- #
-if not os.path.exists(args.base_path):
-    os.mkdir(args.base_path)
+args.output_path = os.path.join(args.base_path, 'output', args.dataset)
+if not os.path.exists(args.output_path):
+    os.makedirs(args.output_path)
 
 args.data_path = os.path.join(args.base_path, 'data', args.dataset)
 if not os.path.exists(args.data_path):
@@ -48,11 +49,16 @@ if not os.path.exists(args.data_path):
 
 if args.dataset_type == 'original':
     trainset, testset = load_dataset(args.dataset, args.data_path)
+    concatset = ConcatDataset((trainset, testset))
 
-    subset0 = Subset(trainset, range(0, args.setsize))
-    subset1 = Subset(trainset, range(args.setsize, int(1.2 * args.setsize)))
-    subset2 = Subset(trainset, range(int(1.2 * args.setsize), int(1.4 * args.setsize)))
-    subset3 = Subset(testset, range(0, args.setsize))
+    if args.setsize * 2.4 > len(concatset):
+        print('Setsize * 2.4 > len(concatset); Terminate program')
+        sys.exit(1)
+
+    subset0 = Subset(concatset, range(0, args.setsize))
+    subset1 = Subset(concatset, range(args.setsize, int(1.2 * args.setsize)))
+    subset2 = Subset(concatset, range(int(1.2 * args.setsize), int(1.4 * args.setsize)))
+    subset3 = Subset(concatset, range(int(1.4 * args.setsize), int(2.4 * args.setsize)))
 
     class_datasets = {
         'train': subset0,
@@ -66,7 +72,6 @@ if args.dataset_type == 'original':
     }
     args.classification_name = os.path.join('{}_setsize{}'.format(args.classification_model, args.setsize),
                                             'repeat{}'.format(args.repeat_idx))
-
 else:
     try:
         class_datasets = utils.build_reconstructed_datasets(args.reconstruction_path)
@@ -82,7 +87,7 @@ for dataset_type, dataset in class_datasets.items():
     print('Class {:<5} dataset: {}'.format(dataset_type, len(dataset)))
 print()
 
-args.classification_path = os.path.join(args.base_path, 'classifier', args.classification_name)
+args.classification_path = os.path.join(args.output_path, 'classifier', args.classification_name)
 
 # -- Run -- #
 classifier = Classifier(args)

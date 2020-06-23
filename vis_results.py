@@ -5,11 +5,12 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
-base_path = '/mnt/disk1/heonseok/MPMLD'
+base_path = '/mnt/disk1/heonseok/MPMLD/output'
 
 
-def plot_classification_result(clf_model):
-    clf_path = os.path.join(base_path, 'classifier', clf_model)
+def plot_classification_result(dataset, clf_model):
+    clf_path = os.path.join(base_path, dataset, 'classifier', clf_model)
+    print(clf_path)
     df = pd.DataFrame()
     for repeat in range(5):
         try:
@@ -31,13 +32,13 @@ def plot_classification_result(clf_model):
     plt.close()
 
 
-def plot_attack_result(clf_model):
+def plot_attack_result(dataset, clf_model):
     df = pd.DataFrame()
     attack_type_list = ['stat', 'black']
     for repeat in range(5):
         for attack_type in attack_type_list:
             try:
-                attack_path = os.path.join(base_path, 'attacker', clf_model, 'repeat{}'.format(repeat))
+                attack_path = os.path.join(base_path, dataset, 'attacker', clf_model, 'repeat{}'.format(repeat))
                 acc = np.load(os.path.join(attack_path, attack_type, 'acc.npy'), allow_pickle=True)
                 if attack_type == 'stat':
                     df = df.append({attack_type: acc}, ignore_index=True)
@@ -60,10 +61,10 @@ def plot_attack_result(clf_model):
 
 if __name__ == "__main__":
     clf_model_list = [
-        # 'ResNet18_setsize1000',
-        'ResNet18_setsize10000',
+        # ('CIFAR-10', 'ResNet18_setsize1000'),
+        ('CIFAR-10', 'ResNet18_setsize20000'),
     ]
 
-    for clf_model in clf_model_list:
-        plot_classification_result(clf_model)
-        # plot_attack_result(clf_model)
+    for (dataset, clf_model) in clf_model_list:
+        plot_classification_result(dataset, clf_model)
+        plot_attack_result(dataset, clf_model)

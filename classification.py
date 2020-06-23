@@ -17,7 +17,7 @@ class Classifier(object):
         self.early_stop = args.early_stop
         self.early_stop_observation_period = args.early_stop_observation_period
 
-        self.classification_name = args.classification_name
+        # self.classification_name = args.classification_name
         self.classification_path = args.classification_path
         if not os.path.exists(self.classification_path):
             os.makedirs(self.classification_path)
@@ -26,7 +26,7 @@ class Classifier(object):
             json.dump(args.__dict__, f, indent=2)
 
         # Model
-        print('==> Building {}'.format(self.classification_name))
+        print('==> Building {}'.format(self.classification_path))
         if 'VGG' in args.classification_model:
             print('VGG(\'' + args.classification_model + '\')')
             net = eval('VGG(\'' + args.classification_model + '\')')
@@ -61,7 +61,7 @@ class Classifier(object):
     # -- Base operations -- #
     #########################
     def load(self):
-        print('====> Loading checkpoint {}'.format(self.classification_name))
+        print('====> Loading checkpoint {}'.format(self.classification_path))
         checkpoint = torch.load(os.path.join(self.classification_path, 'ckpt.pth'))
         self.net.load_state_dict(checkpoint['net'])
         self.best_valid_acc = checkpoint['best_valid_acc']
@@ -106,7 +106,7 @@ class Classifier(object):
 
         acc =  correct / total
         if type == 'valid':
-            print('\nEpoch: {:>3}, Train Acc: {}, Valid Acc: {}'.format(epoch, self.train_acc, acc))
+            print('\nEpoch: {:>3}, Train Acc: {:.4f}, Valid Acc: {:.4f}'.format(epoch, self.train_acc, acc))
             if acc > self.best_valid_acc:
                 print('Saving..')
                 state = {
@@ -130,7 +130,7 @@ class Classifier(object):
             return acc
 
     def train(self, trainset, validset=None):
-        print('==> Start training {}'.format(self.classification_name))
+        print('==> Start training {}'.format(self.classification_path))
         self.train_flag = True
         trainloader = torch.utils.data.DataLoader(trainset, batch_size=self.train_batch_size, shuffle=True,
                                                   num_workers=2)
@@ -146,7 +146,7 @@ class Classifier(object):
                 break
 
     def test(self, testset):
-        print('==> Test {}'.format(self.classification_name))
+        print('==> Test {}'.format(self.classification_path))
         try:
             self.load()
         except FileNotFoundError:
