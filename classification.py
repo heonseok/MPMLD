@@ -179,6 +179,7 @@ class Classifier(object):
             loader = torch.utils.data.DataLoader(dataset, batch_size=self.test_batch_size, shuffle=False, num_workers=2)
             prediction_scores = []
             labels = []
+            print('====> Extract features from {} dataset'.format(dataset_type))
             with torch.no_grad():
                 for batch_idx, (inputs, targets) in enumerate(loader):
                     inputs = inputs.to(self.device)

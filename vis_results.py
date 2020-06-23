@@ -12,16 +12,19 @@ def plot_classification_result(clf_model):
     clf_path = os.path.join(base_path, 'classifier', clf_model)
     df = pd.DataFrame()
     for repeat in range(5):
-        clf_repeat_path = os.path.join(clf_path, 'repeat{}'.format(repeat))
-        acc = np.load(os.path.join(clf_repeat_path, 'acc.npy'), allow_pickle=True).item()
-        df = df.append(acc, ignore_index=True)
+        try:
+            clf_repeat_path = os.path.join(clf_path, 'repeat{}'.format(repeat))
+            acc = np.load(os.path.join(clf_repeat_path, 'acc.npy'), allow_pickle=True).item()
+            df = df.append(acc, ignore_index=True)
+        except FileNotFoundError:
+            continue
     df = df[['train', 'valid', 'test']]
     sns.boxplot(data=df)
     plt.ylabel('Classification accuracy', fontdict={'size': 18})
     plt.title(clf_model, fontdict={'size': 20})
     plt.xticks(fontsize=15)
     plt.yticks(fontsize=15)
-    plt.ylim(0.4,1)
+    plt.ylim(0.3, 1.01)
     plt.axhline(0.5, ls='--', c='r')
     plt.tight_layout()
     plt.show()
@@ -33,20 +36,23 @@ def plot_attack_result(clf_model):
     attack_type_list = ['stat', 'black']
     for repeat in range(5):
         for attack_type in attack_type_list:
-            attack_path = os.path.join(base_path, 'attacker', clf_model, 'repeat{}'.format(repeat))
-            acc = np.load(os.path.join(attack_path, attack_type, 'acc.npy'), allow_pickle=True)
-            if attack_type == 'stat':
-                df = df.append({attack_type: acc}, ignore_index=True)
-            else:
-                df = df.append({attack_type: acc.item()['test']}, ignore_index=True)
+            try:
+                attack_path = os.path.join(base_path, 'attacker', clf_model, 'repeat{}'.format(repeat))
+                acc = np.load(os.path.join(attack_path, attack_type, 'acc.npy'), allow_pickle=True)
+                if attack_type == 'stat':
+                    df = df.append({attack_type: acc}, ignore_index=True)
+                else:
+                    df = df.append({attack_type: acc.item()['test']}, ignore_index=True)
+            except FileNotFoundError:
+                continue
 
     sns.boxplot(data=df)
     plt.ylabel('Attack accuracy', fontdict={'size': 18})
     plt.title(clf_model, fontdict={'size': 20})
     plt.xticks(fontsize=15)
     plt.yticks(fontsize=15)
-    plt.ylim(0.4,1)
-    plt.axhline(0.5, ls='--', c='r')
+    plt.ylim(0.5, 1.)
+    # plt.axhline(0.5, ls='--', c='r')
     plt.tight_layout()
     plt.show()
     plt.close()

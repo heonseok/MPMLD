@@ -176,31 +176,34 @@ def build_inout_features(features, attack_type):
     return torch.cat((preds, labels_onehot), axis=1)
 
 
-def build_inout_dataset(cls_path, attack_type):
+def build_inout_feature_sets(cls_path, attack_type):
     features = np.load(os.path.join(cls_path, 'features.npy'), allow_pickle=True).item()
 
-    in_features = build_inout_features(features['train'], attack_type)
-    out_features = build_inout_features(features['test'], attack_type)
+    in_features = build_inout_features(features['in'], attack_type)
+    out_features = build_inout_features(features['out'], attack_type)
 
-    in_dataset = CustomDataset(in_features, torch.ones(in_features.shape[0]))
-    out_dataset = CustomDataset(out_features, torch.zeros(out_features.shape[0]))
+    in_feature_set = CustomDataset(in_features, torch.ones(in_features.shape[0]))
+    out_feature_set = CustomDataset(out_features, torch.zeros(out_features.shape[0]))
 
-    inout_datasets = {
-        'train': concat_datasets(in_dataset, out_dataset, 0, 0.7),
-        'valid': concat_datasets(in_dataset, out_dataset, 0.7, 0.85),
-        'test': concat_datasets(in_dataset, out_dataset, 0.85, 1.0),
+    inout_feature_sets = {
+        'train': concat_datasets(in_feature_set, out_feature_set, 0, 0.7),
+        'valid': concat_datasets(in_feature_set, out_feature_set, 0.7, 0.85),
+        'test': concat_datasets(in_feature_set, out_feature_set, 0.85, 1.0),
     }
-    return inout_datasets
+    return inout_feature_sets
 
 
 def statistical_attack(cls_path, attack_path):
     features = np.load(os.path.join(cls_path, 'features.npy'), allow_pickle=True).item()
 
-    train_entropy = entropy(features['train']['preds'], base=2, axis=1)
-    test_entropy = entropy(features['test']['preds'], base=2, axis=1)
-    acc, auroc = classify_membership(train_entropy, test_entropy)
+    print('==> Statistical attack')
+    in_entropy = entropy(features['in']['preds'], base=2, axis=1)
+    out_entropy = entropy(features['out']['preds'], base=2, axis=1)
+    acc, auroc = classify_membership(in_entropy, out_entropy)
     np.save(os.path.join(attack_path, 'acc.npy'), acc)
     np.save(os.path.join(attack_path, 'auroc.npy'), auroc)
+
+    print('Statistical attack accuracy : {:.2f}'.format(acc))
     # todo: sort by confidence score
 
 

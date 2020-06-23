@@ -10,7 +10,7 @@ from classification import Classifier
 from attack import Attacker
 from disentanglement_class import Disentangler
 # from disentanglement import Disentangler
-from utils import build_inout_dataset
+from utils import build_inout_feature_sets
 import utils
 import numpy as np
 import sys
@@ -32,7 +32,7 @@ parser.add_argument('--repeat_idx', type=int, default=0)
 parser.add_argument('--gpu_id', type=int, default=0)
 parser.add_argument('--attack_type', type=str, default='black', choices=['black', 'white'])
 parser.add_argument('--z_dim', type=int, default=16)
-parser.add_argument('--disentanglement_type', type=str, default='type1', choices=['base', 'type1', 'type2'])
+parser.add_argument('--disentanglement_type', type=str, default='base', choices=['base', 'type1', 'type2'])
 # parser.add_argument('--reconstruction_type', type=str, default='full_z', choices=['full_z', 'partial_z'])
 parser.add_argument('--reconstruction_type', type=str, default='partial_z', choices=['full_z', 'partial_z'])
 
@@ -41,12 +41,12 @@ parser.add_argument('--test_classifier', type=str2bool, default='0')
 parser.add_argument('--extract_classifier_features', type=str2bool, default='0')
 parser.add_argument('--use_reconstructed_datasets', type=str2bool, default='0')
 
-parser.add_argument('--train_attacker', type=str2bool, default='0')
-parser.add_argument('--test_attacker', type=str2bool, default='0')
 parser.add_argument('--statistical_attack', type=str2bool, default='0')
+parser.add_argument('--train_attacker', type=str2bool, default='1')
+parser.add_argument('--test_attacker', type=str2bool, default='1')
 
-parser.add_argument('--train_disentangler', type=str2bool, default='1')
-parser.add_argument('--reconstruct_datasets', type=str2bool, default='1')
+parser.add_argument('--train_disentangler', type=str2bool, default='0')
+parser.add_argument('--reconstruct_datasets', type=str2bool, default='0')
 
 args = parser.parse_args()
 
@@ -78,20 +78,29 @@ if args.use_reconstructed_datasets:
 else:
     trainset, testset = load_dataset(args.dataset, args.data_path)
 
-    subset0 = Subset(trainset, range(args.setsize))
-    subset1 = Subset(trainset, range(args.setsize, 2 * args.setsize))
-    subset2 = Subset(trainset, range(2 * args.setsize, 3 * args.setsize))
+    subset0 = Subset(trainset, range(0, args.setsize))
+    subset1 = Subset(trainset, range(args.setsize, int(1.2 * args.setsize)))
+    subset2 = Subset(trainset, range(int(1.2 * args.setsize), int(1.4 * args.setsize)))
+    subset3 = Subset(testset, range(0, args.setsize))
 
     class_datasets = {
         'train': subset0,
         'valid': subset1,
         'test': subset2,
     }
+    # inout_datasets should be transformed to inout_feature_sets for training attacker
+    inout_datasets = {
+        'in': subset0,
+        'out': subset3,
+    }
     args.classification_name = os.path.join('{}_setsize{}'.format(args.classification_model, args.setsize),
                                             'repeat{}'.format(args.repeat_idx))
 
 for dataset_type, dataset in class_datasets.items():
-    print('Class {:<5} : {}'.format(dataset_type, len(dataset)))
+    print('Class {:<5} dataset: {}'.format(dataset_type, len(dataset)))
+print()
+for dataset_type, dataset in inout_datasets.items():
+    print('Inout {:<3} dataset: {}'.format(dataset_type, len(dataset)))
 print()
 
 args.classification_path = os.path.join(args.base_path, 'classifier', args.classification_name)
@@ -99,6 +108,8 @@ if args.statistical_attack:
     args.attack_path = os.path.join(args.base_path, 'attacker', args.classification_name, 'stat')
 else:
     args.attack_path = os.path.join(args.base_path, 'attacker', args.classification_name, args.attack_type)
+if not os.path.exists(args.attack_path):
+    os.makedirs(args.attack_path)
 
 # -- Run -- #
 if args.train_classifier or args.test_classifier or args.extract_classifier_features:
@@ -110,15 +121,17 @@ if args.train_classifier or args.test_classifier or args.extract_classifier_feat
     if args.test_classifier:
         classifier.test(class_datasets['test'])
     if args.extract_classifier_features:
-        classifier.extract_features(class_datasets)
+        classifier.extract_features(inout_datasets)
 
 if args.train_attacker or args.test_attacker:
-    inout_dataset = build_inout_dataset(args.classification_path, args.attack_type)
+    inout_feature_sets = build_inout_feature_sets(args.classification_path, args.attack_type)
+    for dataset_type, dataset in inout_feature_sets.items():
+        print('Inout {:<3} feature set: {}'.format(dataset_type, len(dataset)))
     attacker = Attacker(args)
     if args.train_attacker:
-        attacker.train(inout_dataset['train'], inout_dataset['valid'])
+        attacker.train(inout_feature_sets['train'], inout_feature_sets['valid'])
     if args.test_attacker:
-        attacker.test(inout_dataset['test'])
+        attacker.test(inout_feature_sets['test'])
 
 if args.statistical_attack:
     utils.statistical_attack(args.classification_path, args.attack_path)

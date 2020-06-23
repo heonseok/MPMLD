@@ -25,8 +25,8 @@ class Attacker(object):
         self.classification_path = args.classification_path
         self.attack_path = args.attack_path
         print(self.attack_path)
-        if not os.path.exists(self.attack_path):
-            os.makedirs(self.attack_path)
+        # if not os.path.exists(self.attack_path):
+        #     os.makedirs(self.attack_path)
 
         self.attack_type = args.attack_type
 
@@ -126,7 +126,7 @@ class Attacker(object):
         acc = metrics.accuracy_score(labels, np.round(predicted))
 
         if type == 'valid':
-            print('\nEpoch: {:>3}, Train Acc: {:.2f}, Valid Acc: {:.2f}'.format(epoch, self.train_acc, acc))
+            print('Epoch: {:>3}, Train Acc: {:.2f}, Valid Acc: {:.2f}'.format(epoch, self.train_acc, acc))
             if acc > self.best_valid_acc:
                 print('Saving..')
                 state = {
