@@ -48,17 +48,17 @@ if not os.path.exists(args.data_path):
     os.makedirs(args.data_path)
 
 if args.dataset_type == 'original':
-    trainset, testset = load_dataset(args.dataset, args.data_path)
-    concatset = ConcatDataset((trainset, testset))
+    train_set, test_set = load_dataset(args.dataset, args.data_path)
+    concat_set = ConcatDataset((train_set, test_set))
 
-    if args.setsize * 2.4 > len(concatset):
+    if args.setsize * 2.4 > len(concat_set):
         print('Setsize * 2.4 > len(concatset); Terminate program')
         sys.exit(1)
 
-    subset0 = Subset(concatset, range(0, args.setsize))
-    subset1 = Subset(concatset, range(args.setsize, int(1.2 * args.setsize)))
-    subset2 = Subset(concatset, range(int(1.2 * args.setsize), int(1.4 * args.setsize)))
-    subset3 = Subset(concatset, range(int(1.4 * args.setsize), int(2.4 * args.setsize)))
+    subset0 = Subset(concat_set, range(0, args.setsize))
+    subset1 = Subset(concat_set, range(args.setsize, int(1.2 * args.setsize)))
+    subset2 = Subset(concat_set, range(int(1.2 * args.setsize), int(1.4 * args.setsize)))
+    subset3 = Subset(concat_set, range(int(1.4 * args.setsize), int(2.4 * args.setsize)))
 
     class_datasets = {
         'train': subset0,
