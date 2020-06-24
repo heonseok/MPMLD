@@ -25,7 +25,7 @@ parser.add_argument('--repeat_idx', type=int, default=0)
 parser.add_argument('--gpu_id', type=int, default=0)
 parser.add_argument('--attack_type', type=str, default='black', choices=['black', 'white'])
 
-parser.add_argument('--target_classifier', type=str, default='ResNet18_setsize1000')
+parser.add_argument('--target_classifier', type=str, default='ResNet18_setsize10000_original')
 
 parser.add_argument('--dataset_type', type=str, default='original', choices=['original', 'reconstructed'])
 parser.add_argument('--reconstruction_path', type=str, default='blah')
@@ -46,11 +46,6 @@ if not os.path.exists(args.output_path):
 if args.dataset_type == 'original':
     args.classification_name = os.path.join(args.target_classifier, 'repeat{}'.format(args.repeat_idx))
 else:
-    try:
-        class_datasets = utils.build_reconstructed_datasets(args.reconstruction_path)
-    except FileNotFoundError:
-        print('There is no reconstructed data')
-        sys.exit(1)
     args.classification_name = os.path.join(
         '{}_setsize{}_{}'.format(args.classification_model, args.setsize, args.reconstruction_path),
         'repeat{}'.format(args.repeat_idx))

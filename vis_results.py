@@ -10,7 +10,6 @@ base_path = '/mnt/disk1/heonseok/MPMLD/output'
 
 def plot_classification_result(dataset, clf_model):
     clf_path = os.path.join(base_path, dataset, 'classifier', clf_model)
-    print(clf_path)
     df = pd.DataFrame()
     for repeat in range(5):
         try:
@@ -61,8 +60,11 @@ def plot_attack_result(dataset, clf_model):
 
 if __name__ == "__main__":
     clf_model_list = [
-        # ('CIFAR-10', 'ResNet18_setsize1000'),
-        ('CIFAR-10', 'ResNet18_setsize20000'),
+        ('CIFAR-10', 'ResNet18_setsize1000_original'),
+        ('CIFAR-10', 'ResNet18_setsize1000_AE_z64_base/full_z'),
+
+        # ('CIFAR-10', 'ResNet18_setsize10000_original'),
+        # ('CIFAR-10', 'ResNet18_setsize10000_AE_z64_base/full_z'),
     ]
 
     for (dataset, clf_model) in clf_model_list:

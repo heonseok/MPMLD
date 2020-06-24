@@ -5,17 +5,23 @@ dataset_list = [
 ]
 
 target_classifier_list = [
-    # 'ResNet18_setsize1000',
-    'ResNet18_setsize20000',
+    # 'ResNet18_setsize1000_original',
+    'ResNet18_setsize1000_AE_z64_base/full_z',
+
+    # 'ResNet18_setsize10000_original',
+    # 'ResNet18_setsize10000_AE_z64_base/full_z',
+
+    # 'ResNet18_setsize20000',
     # 'ResNet18_setsize30000',
+
 ]
 
 repeat_idx_list = [
     0,
-    1,
-    2,
-    3,
-    4,
+    # 1,
+    # 2,
+    # 3,
+    # 4,
 ]
 
 setup_dict = {

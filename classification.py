@@ -106,7 +106,7 @@ class Classifier(object):
 
         acc =  correct / total
         if type == 'valid':
-            print('\nEpoch: {:>3}, Train Acc: {:.4f}, Valid Acc: {:.4f}'.format(epoch, self.train_acc, acc))
+            print('Epoch: {:>3}, Train Acc: {:.4f}, Valid Acc: {:.4f}'.format(epoch, self.train_acc, acc))
             if acc > self.best_valid_acc:
                 print('Saving..')
                 state = {

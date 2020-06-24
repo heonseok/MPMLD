@@ -21,8 +21,8 @@ class Disentangler(object):
         self.image_size = 64
         self.disentanglement_type = args.disentanglement_type
         self.disentanglement_path = args.disentanglement_path
-        self.reconstruction_type = args.reconstruction_type
-        self.reconstruction_path = args.reconstruction_path
+        # self.reconstruction_type = args.reconstruction_type
+        # self.reconstruction_path = args.reconstruction_path
 
         if not os.path.exists(self.disentanglement_path):
             os.makedirs(self.disentanglement_path)
@@ -171,9 +171,15 @@ class Disentangler(object):
                 _, predicted = pred_label.max(1)
                 total += targets.size(0)
                 correct += predicted.eq(targets).sum().item()
-                print(epoch, recon_train_loss, correct / total)
-            else:
-                print(epoch, recon_train_loss)
+
+        if self.disentanglement_type != 'base':
+            # print(epoch, recon_train_loss, correct / total)
+            print(
+                'Epoch: {:>3}, Train Loss: {:.4f}, Train Acc: {:.4f}'.format(epoch, recon_train_loss, correct / total))
+            # print('Epoch: {:>3}, Train Acc: {:.4f}, Valid Acc: {:.4f}'.format(epoch, self.train_acc, acc))
+        else:
+            # print(epoch, recon_train_loss)
+            print('Epoch: {:>3}, Train Loss: {:.4f}'.format(epoch, recon_train_loss))
 
         if (epoch + 1) % 50 == 0:
             print('saving the output')
@@ -205,7 +211,7 @@ class Disentangler(object):
         for epoch in range(self.start_epoch, self.start_epoch + self.epochs):
             self.train_epoch(trainloader, epoch)
 
-    def reconstruct(self, dataset_dict):
+    def reconstruct(self, dataset_dict, reconstruction_type):
         print('==> Reconstruct datasets')
         try:
             self.load()
@@ -224,7 +230,7 @@ class Disentangler(object):
                 for batch_idx, (inputs, targets) in enumerate(loader):
                     inputs = inputs.to(self.device)
                     z = self.encoder(inputs)
-                    if self.reconstruction_type == 'partial_z':
+                    if reconstruction_type == 'partial_z':
                         paritial_z = z[:, 0:self.disc_input_dim]
                         z = torch.cat((paritial_z, torch.zeros_like(paritial_z)), axis=1)
                     recons_batch = self.decoder(z).cpu()
@@ -236,7 +242,7 @@ class Disentangler(object):
                         # save images
                         vutils.save_image(recons, os.path.join(self.disentanglement_path,
                                                                'recon_{}_{}.png'.format(dataset_type,
-                                                                                        self.reconstruction_type)),
+                                                                                        reconstruction_type)),
                                           normalize=True, nrow=10)
 
                     else:
@@ -247,5 +253,7 @@ class Disentangler(object):
                 'recons': recons,
                 'labels': labels,
             }
-        torch.save(recon_datasets_dict, self.reconstruction_path)
-        # torch.save(recon_datasets_dict, os.path.join(self.disentanglement_path, 'recon_datasets_{}.pt'.format(self.reconstruction_type)))
+
+        # todo : refactor dict to CustomDataset
+        torch.save(recon_datasets_dict,
+                   os.path.join(self.disentanglement_path, 'recon_{}.pt'.format(reconstruction_type)))

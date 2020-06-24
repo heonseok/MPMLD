@@ -11,6 +11,7 @@ from disentanglement_class import Disentangler
 from utils import build_inout_feature_sets
 import utils
 import numpy as np
+from torch.utils.data import ConcatDataset
 import sys
 
 parser = argparse.ArgumentParser()
@@ -32,7 +33,6 @@ parser.add_argument('--gpu_id', type=int, default=0)
 
 parser.add_argument('--z_dim', type=int, default=16)
 parser.add_argument('--disentanglement_type', type=str, default='base', choices=['base', 'type1', 'type2'])
-parser.add_argument('--reconstruction_type', type=str, default='partial_z', choices=['full_z', 'partial_z'])
 
 parser.add_argument('--train_disentangler', type=str2bool, default='0')
 parser.add_argument('--reconstruct_datasets', type=str2bool, default='0')
@@ -50,45 +50,39 @@ args.data_path = os.path.join(args.base_path, 'data', args.dataset)
 if not os.path.exists(args.data_path):
     os.makedirs(args.data_path)
 
-args.disentanglement_name = os.path.join('disentangler_z{}'.format(args.z_dim), args.disentanglement_type)
-args.disentanglement_path = os.path.join(args.output_path, args.disentanglement_name,
+args.disentanglement_name = os.path.join(
+    '{}_z{}_{}_setsize{}'.format(args.disentanglement_model, args.z_dim, args.disentanglement_type, args.setsize))
+args.disentanglement_path = os.path.join(args.output_path, 'disentangler', args.disentanglement_name,
                                          'repeat{}'.format(args.repeat_idx))
-# args.reconstruction_name = os.path.join(args.disentanglement_name, args.reconstruction_type)
-args.reconstruction_path = os.path.join(args.disentanglement_path,
-                                        'recon_{}.pt'.format(args.reconstruction_type))
 
 train_set, test_set = load_dataset(args.dataset, args.data_path)
+concat_set = ConcatDataset((train_set, test_set))
 
-subset0 = Subset(train_set, range(0, args.setsize))
-subset1 = Subset(train_set, range(args.setsize, int(1.2 * args.setsize)))
-subset2 = Subset(train_set, range(int(1.2 * args.setsize), int(1.4 * args.setsize)))
-subset3 = Subset(test_set, range(0, args.setsize))
+if args.setsize * 2.4 > len(concat_set):
+    print('Setsize * 2.4 > len(concatset); Terminate program')
+    sys.exit(1)
+
+subset0 = Subset(concat_set, range(0, args.setsize))
+subset1 = Subset(concat_set, range(args.setsize, int(1.2 * args.setsize)))
+subset2 = Subset(concat_set, range(int(1.2 * args.setsize), int(1.4 * args.setsize)))
+subset3 = Subset(concat_set, range(int(1.4 * args.setsize), int(2.4 * args.setsize)))
 
 class_datasets = {
     'train': subset0,
     'valid': subset1,
     'test': subset2,
 }
-# inout_datasets should be transformed to inout_feature_sets for training attacker
-inout_datasets = {
-    'in': subset0,
-    'out': subset3,
-}
 
 for dataset_type, dataset in class_datasets.items():
     print('Class {:<5} dataset: {}'.format(dataset_type, len(dataset)))
 print()
-for dataset_type, dataset in inout_datasets.items():
-    print('Inout {:<3} dataset: {}'.format(dataset_type, len(dataset)))
-print()
 
 if args.train_disentangler or args.reconstruct_datasets:
-    if args.use_reconstructed_datasets:
-        print('You use disentangler with reconstructed datasets; set use_reconstructed_datasets as 0')
-        sys.exit(1)
-    else:
-        disentangler = Disentangler(args)
-        if args.train_disentangler:
-            disentangler.train(class_datasets['train'])
-        if args.reconstruct_datasets:
-            disentangler.reconstruct(class_datasets)
+    disentangler = Disentangler(args)
+
+    if args.train_disentangler:
+        disentangler.train(class_datasets['train'])
+
+    if args.reconstruct_datasets:
+        disentangler.reconstruct(class_datasets, 'full_z')
+        disentangler.reconstruct(class_datasets, 'partial_z')
