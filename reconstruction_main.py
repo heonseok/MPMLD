@@ -31,7 +31,7 @@ parser.add_argument('--z_dim', type=int, default=16)
 parser.add_argument('--disentanglement_type', type=str, default='base', choices=['base', 'type1', 'type2'])
 
 parser.add_argument('--train_reconstructor', type=str2bool, default='0')
-parser.add_argument('--reconstruct_datasets', type=str2bool, default='0')
+parser.add_argument('--reconstruct_datasets', type=str2bool, default='1')
 
 args = parser.parse_args()
 
@@ -77,7 +77,7 @@ if args.train_reconstructor or args.reconstruct_datasets:
     reconstructor = Reconstructor(args)
 
     if args.train_reconstructor:
-        reconstructor.train(class_datasets['train'])
+        reconstructor.train(class_datasets['train'], class_datasets['valid'])
 
     if args.reconstruct_datasets:
         reconstructor.reconstruct(class_datasets, 'full_z')
