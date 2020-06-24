@@ -6,7 +6,8 @@ from torch.utils.data import Subset
 
 from data import load_dataset
 from utils import str2bool
-from reconstruction import Reconstructor
+from reconstruction_AE import ReconstructorAE
+from reconstruction_VAE import ReconstructorVAE
 from torch.utils.data import ConcatDataset
 import sys
 
@@ -73,12 +74,14 @@ for dataset_type, dataset in class_datasets.items():
     print('Class {:<5} dataset: {}'.format(dataset_type, len(dataset)))
 print()
 
-if args.train_reconstructor or args.reconstruct_datasets:
-    reconstructor = Reconstructor(args)
+if args.reconstruction_model == 'AE':
+    reconstructor = ReconstructorAE(args)
+elif args.reconstruction_model == 'VAE':
+    reconstructor = ReconstructorVAE(args)
 
-    if args.train_reconstructor:
-        reconstructor.train(class_datasets['train'], class_datasets['valid'])
+if args.train_reconstructor:
+    reconstructor.train(class_datasets['train'], class_datasets['valid'])
 
-    if args.reconstruct_datasets:
-        reconstructor.reconstruct(class_datasets, 'full_z')
-        reconstructor.reconstruct(class_datasets, 'partial_z')
+if args.reconstruct_datasets:
+    reconstructor.reconstruct(class_datasets, 'full_z')
+    reconstructor.reconstruct(class_datasets, 'partial_z')

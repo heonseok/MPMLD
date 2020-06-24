@@ -6,22 +6,22 @@ dataset_list = [
 
 target_classifier_list = [
     # 'ResNet18_setsize1000_original',
-    'ResNet18_setsize1000_AE_z64_base/full_z',
+    # 'ResNet18_setsize1000_AE_z64_base/full_z',
 
     # 'ResNet18_setsize10000_original',
     # 'ResNet18_setsize10000_AE_z64_base/full_z',
 
-    # 'ResNet18_setsize20000',
-    # 'ResNet18_setsize30000',
+    'ResNet50_setsize10000_original',
+    # 'ResNet50_setsize20000_original',
 
 ]
 
 repeat_idx_list = [
-    0,
-    # 1,
-    # 2,
-    # 3,
-    # 4,
+    # 0,
+    1,
+    2,
+    3,
+    4,
 ]
 
 setup_dict = {
@@ -34,7 +34,7 @@ setup_dict = {
     'epochs': 500,
     'early_stop': '1',
     'early_stop_observation_period': 20,
-    'gpu_id': 1,
+    'gpu_id': 0,
 }
 
 for dataset in dataset_list:

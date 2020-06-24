@@ -5,8 +5,8 @@ dataset_list = [
 ]
 
 setsize_list = [
-    1000,
-    # 10000,
+    # 1000,
+    10000,
     # 20000,
 ]
 
@@ -17,8 +17,8 @@ reconstruction_model_list = [
 
 disentanglement_type_list = [
     'base',
-    # 'type1',
-    # 'type2',
+    'type1',
+    'type2',
 ]
 
 repeat_idx_list = [
@@ -37,8 +37,8 @@ setup_dict = {
 
     'epochs': 500,
     'early_stop': '1',
-    'early_stop_observation_period': 20,
-    'gpu_id': 1,
+    'early_stop_observation_period': 50,
+    'gpu_id': 0,
 }
 
 for dataset in dataset_list:

@@ -6,10 +6,9 @@ import torch.backends.cudnn as cudnn
 import sys
 import torchvision.utils as vutils
 import os
-import numpy as np
 
 
-class Reconstructor(object):
+class ReconstructorAE(object):
     def __init__(self, args):
         self.train_batch_size = args.train_batch_size
         self.test_batch_size = args.test_batch_size
@@ -87,13 +86,7 @@ class Reconstructor(object):
         total = 0
         for batch_idx, (inputs, targets) in enumerate(trainloader):
             inputs, targets = inputs.to(self.device), targets.to(self.device)
-            # if batch_idx == 0 and epoch == 0:
-            # if batch_idx == 0:
-            #     self.fixed_inputs = inputs
-            #     vutils.save_image(self.fixed_inputs, os.path.join(self.disentanglement_path, 'real_samples.png'),
-            #                       normalize=True, nrow=10)
 
-            # -------------------------------------------------------
             # ---- Reconstruction ---- #
             self.optimizer_enc.zero_grad()
             self.optimizer_dec.zero_grad()
@@ -146,14 +139,7 @@ class Reconstructor(object):
         self.train_loss = recon_train_loss
         if self.disentanglement_type != 'base':
             self.train_acc = correct / total
-        # if self.disentanglement_type != 'base':
-        #     # print(epoch, recon_train_loss, correct / total)
-        #     print(
-        #         'Epoch: {:>3}, Train Loss: {:.4f}, Train Acc: {:.4f}'.format(epoch, recon_train_loss, correct / total))
-        #     # print('Epoch: {:>3}, Train Acc: {:.4f}, Valid Acc: {:.4f}'.format(epoch, self.train_acc, acc))
-        # else:
-        #     # print(epoch, recon_train_loss)
-        #     print('Epoch: {:>3}, Train Loss: {:.4f}'.format(epoch, recon_train_loss))
+
 
         if (epoch + 1) % 50 == 0:
             print('saving the output')
