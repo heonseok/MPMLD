@@ -6,11 +6,7 @@ from torch.utils.data import Subset
 
 from data import load_dataset
 from utils import str2bool
-from disentanglement_class import Disentangler
-# from disentanglement import Disentangler
-from utils import build_inout_feature_sets
-import utils
-import numpy as np
+from reconstruction import Reconstructor
 from torch.utils.data import ConcatDataset
 import sys
 
@@ -24,7 +20,7 @@ parser.add_argument('--train_batch_size', type=int, default=100)
 parser.add_argument('--valid_batch_size', type=int, default=100)
 parser.add_argument('--test_batch_size', type=int, default=100)
 
-parser.add_argument('--disentanglement_model', type=str, default='AE', choices=['AE', 'VAE'])
+parser.add_argument('--reconstruction_model', type=str, default='AE', choices=['AE', 'VAE'])
 parser.add_argument('--epochs', type=int, default=1500)
 parser.add_argument('--early_stop', type=str2bool, default='1')
 parser.add_argument('--early_stop_observation_period', type=int, default=20)
@@ -34,7 +30,7 @@ parser.add_argument('--gpu_id', type=int, default=0)
 parser.add_argument('--z_dim', type=int, default=16)
 parser.add_argument('--disentanglement_type', type=str, default='base', choices=['base', 'type1', 'type2'])
 
-parser.add_argument('--train_disentangler', type=str2bool, default='0')
+parser.add_argument('--train_reconstructor', type=str2bool, default='0')
 parser.add_argument('--reconstruct_datasets', type=str2bool, default='0')
 
 args = parser.parse_args()
@@ -50,9 +46,9 @@ args.data_path = os.path.join(args.base_path, 'data', args.dataset)
 if not os.path.exists(args.data_path):
     os.makedirs(args.data_path)
 
-args.disentanglement_name = os.path.join(
-    '{}_z{}_{}_setsize{}'.format(args.disentanglement_model, args.z_dim, args.disentanglement_type, args.setsize))
-args.disentanglement_path = os.path.join(args.output_path, 'disentangler', args.disentanglement_name,
+args.reconstruction_name = os.path.join(
+    '{}_z{}_{}_setsize{}'.format(args.reconstruction_model, args.z_dim, args.disentanglement_type, args.setsize))
+args.reconstruction_path = os.path.join(args.output_path, 'reconstructor', args.reconstruction_name,
                                          'repeat{}'.format(args.repeat_idx))
 
 train_set, test_set = load_dataset(args.dataset, args.data_path)
@@ -77,12 +73,12 @@ for dataset_type, dataset in class_datasets.items():
     print('Class {:<5} dataset: {}'.format(dataset_type, len(dataset)))
 print()
 
-if args.train_disentangler or args.reconstruct_datasets:
-    disentangler = Disentangler(args)
+if args.train_reconstructor or args.reconstruct_datasets:
+    reconstructor = Reconstructor(args)
 
-    if args.train_disentangler:
-        disentangler.train(class_datasets['train'])
+    if args.train_reconstructor:
+        reconstructor.train(class_datasets['train'])
 
     if args.reconstruct_datasets:
-        disentangler.reconstruct(class_datasets, 'full_z')
-        disentangler.reconstruct(class_datasets, 'partial_z')
+        reconstructor.reconstruct(class_datasets, 'full_z')
+        reconstructor.reconstruct(class_datasets, 'partial_z')

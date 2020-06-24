@@ -84,7 +84,7 @@ else:
         'repeat{}'.format(args.repeat_idx))
     print(args.classification_name)
 
-    args.reconstruction_path = os.path.join(args.output_path, 'disentangler',
+    args.reconstruction_path = os.path.join(args.output_path, 'reconstructor',
                                             args.target_data + '_setsize{}'.format(args.setsize),
                                             'repeat{}'.format(args.repeat_idx),
                                             'recon_{}.pt'.format(args.recon_type),

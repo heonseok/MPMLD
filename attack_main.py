@@ -28,7 +28,7 @@ parser.add_argument('--attack_type', type=str, default='black', choices=['black'
 parser.add_argument('--target_classifier', type=str, default='ResNet18_setsize10000_original')
 
 parser.add_argument('--dataset_type', type=str, default='original', choices=['original', 'reconstructed'])
-parser.add_argument('--reconstruction_path', type=str, default='blah')
+parser.add_argument('--reconstruction_path', type=str, default='todo...')
 
 parser.add_argument('--train_attacker', type=str2bool, default='0')
 parser.add_argument('--test_attacker', type=str2bool, default='0')

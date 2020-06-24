@@ -10,7 +10,7 @@ setsize_list = [
     # 20000,
 ]
 
-disentanglement_model_list = [
+reconstruction_model_list = [
     'AE',
     # 'VAE'
 ]
@@ -30,31 +30,31 @@ repeat_idx_list = [
 ]
 
 setup_dict = {
-    'train_disentangler': '1',
+    'train_reconstructor': '1',
     'reconstruct_datasets': '1',
 
     'z_dim': 64,
 
     'epochs': 500,
-    # 'early_stop': '1',
-    # 'early_stop_observation_period': 20,
+    'early_stop': '1',
+    'early_stop_observation_period': 20,
     'gpu_id': 1,
 }
 
 for dataset in dataset_list:
-    for disentanglement_model in disentanglement_model_list:
+    for reconstruction_model in reconstruction_model_list:
         for disentanglement_type in disentanglement_type_list:
             for setsize in setsize_list:
                 for repeat_idx in repeat_idx_list:
                     args_list = []
                     target_setup_dict = setup_dict
                     target_setup_dict['dataset'] = dataset
-                    target_setup_dict['disentanglement_model'] = disentanglement_model
+                    target_setup_dict['reconstruction_model'] = reconstruction_model
                     target_setup_dict['disentanglement_type'] = disentanglement_type
                     target_setup_dict['setsize'] = setsize
                     target_setup_dict['repeat_idx'] = str(repeat_idx)
 
-                    args_list.append('python disentanglement_main.py')
+                    args_list.append('python reconstruction_main.py')
                     for k, v in target_setup_dict.items():
                         args_list.append('--{} {}'.format(k, v))
 

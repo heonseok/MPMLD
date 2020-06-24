@@ -9,7 +9,7 @@ import os
 import numpy as np
 
 
-class Disentangler(object):
+class Reconstructor(object):
     def __init__(self, args):
         self.train_batch_size = args.train_batch_size
         self.test_batch_size = args.test_batch_size
@@ -20,12 +20,12 @@ class Disentangler(object):
         self.num_channels = 3
         self.image_size = 64
         self.disentanglement_type = args.disentanglement_type
-        self.disentanglement_path = args.disentanglement_path
+        self.reconstruction_path = args.reconstruction_path
         # self.reconstruction_type = args.reconstruction_type
         # self.reconstruction_path = args.reconstruction_path
 
-        if not os.path.exists(self.disentanglement_path):
-            os.makedirs(self.disentanglement_path)
+        if not os.path.exists(self.reconstruction_path):
+            os.makedirs(self.reconstruction_path)
 
         self.encoder = module.ConvEncoder(self.z_dim, self.num_channels)
         self.decoder = module.ConvDecoder(self.z_dim, self.num_channels)
@@ -64,8 +64,8 @@ class Disentangler(object):
     # -- Base operations -- #
     #########################
     def load(self):
-        print('====> Loading checkpoint {}'.format(self.disentanglement_path))
-        checkpoint = torch.load(os.path.join(self.disentanglement_path, 'ckpt.pth'))
+        print('====> Loading checkpoint {}'.format(self.reconstruction_path))
+        checkpoint = torch.load(os.path.join(self.reconstruction_path, 'ckpt.pth'))
         self.encoder.load_state_dict(checkpoint['encoder'])
         self.decoder.load_state_dict(checkpoint['decoder'])
         self.classifier.load_state_dict(checkpoint['classifier'])
@@ -183,10 +183,10 @@ class Disentangler(object):
 
         if (epoch + 1) % 50 == 0:
             print('saving the output')
-            vutils.save_image(inputs, os.path.join(self.disentanglement_path, 'real_samples.png'),
+            vutils.save_image(inputs, os.path.join(self.reconstruction_path, 'real_samples.png'),
                               normalize=True, nrow=10)
             vutils.save_image(recons,
-                              os.path.join(self.disentanglement_path, 'recon_%03d.png' % (epoch + 1)), normalize=True,
+                              os.path.join(self.reconstruction_path, 'recon_%03d.png' % (epoch + 1)), normalize=True,
                               nrow=10)
             # try:
             #     outputs_from_fixed_inputs = self.decoder(self.encoder(self.fixed_inputs)).detach()
@@ -202,10 +202,10 @@ class Disentangler(object):
             'classifier': self.classifier.state_dict(),
             'epoch': epoch,
         }
-        torch.save(state, os.path.join(self.disentanglement_path, 'ckpt.pth'))
+        torch.save(state, os.path.join(self.reconstruction_path, 'ckpt.pth'))
 
     def train(self, trainset):
-        print('==> Start training {}'.format(self.disentanglement_path))
+        print('==> Start training {}'.format(self.reconstruction_path))
         trainloader = torch.utils.data.DataLoader(trainset, batch_size=self.train_batch_size, shuffle=True,
                                                   num_workers=2)
         for epoch in range(self.start_epoch, self.start_epoch + self.epochs):
@@ -240,7 +240,7 @@ class Disentangler(object):
                         labels = labels_batch
 
                         # save images
-                        vutils.save_image(recons, os.path.join(self.disentanglement_path,
+                        vutils.save_image(recons, os.path.join(self.reconstruction_path,
                                                                'recon_{}_{}.png'.format(dataset_type,
                                                                                         reconstruction_type)),
                                           normalize=True, nrow=10)
@@ -256,4 +256,4 @@ class Disentangler(object):
 
         # todo : refactor dict to CustomDataset
         torch.save(recon_datasets_dict,
-                   os.path.join(self.disentanglement_path, 'recon_{}.pt'.format(reconstruction_type)))
+                   os.path.join(self.reconstruction_path, 'recon_{}.pt'.format(reconstruction_type)))
