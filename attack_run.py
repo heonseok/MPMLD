@@ -1,4 +1,6 @@
 import os
+import sys
+import datetime
 
 dataset_list = [
     'CIFAR-10',
@@ -11,13 +13,18 @@ target_classifier_list = [
     # 'ResNet18_setsize10000_original',
     # 'ResNet18_setsize10000_AE_z64_base/full_z',
 
-    'ResNet50_setsize10000_original',
-    # 'ResNet50_setsize20000_original',
+    # 'ResNet50_setsize10000_original',
+    # 'ResNet50_setsize10000_AE_z64_base/partial_z',
+    # 'ResNet50_setsize10000_AE_z64_base/full_z',
+    # 'ResNet50_setsize10000_AE_z64_type1/partial_z',
+    # 'ResNet50_setsize10000_AE_z64_type2/full_z',
+
+    'ResNet50_setsize20000_original',
 
 ]
 
 repeat_idx_list = [
-    # 0,
+    0,
     1,
     2,
     3,
@@ -37,6 +44,11 @@ setup_dict = {
     'gpu_id': 0,
 }
 
+if not os.path.exists('log'):
+    os.mkdir('log')
+f = open('log/reconstruction_run.log', 'a')
+f.write(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S') + '\n')
+
 for dataset in dataset_list:
     for target_classifier in target_classifier_list:
         for repeat_idx in repeat_idx_list:
@@ -52,4 +64,8 @@ for dataset in dataset_list:
 
             model = ' '.join(args_list)
             print(model)
+            f.write(model + '\n')
             os.system(model)
+
+f.write('\n')
+f.close()

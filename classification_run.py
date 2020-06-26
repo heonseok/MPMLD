@@ -7,7 +7,8 @@ dataset_list = [
 classification_model_list = [
     # 'VGG19',
     # 'ResNet18',
-    'ResNet50',
+    # 'ResNet50',
+    'ResNet101',
 ]
 
 setsize_list = [
@@ -19,7 +20,14 @@ setsize_list = [
 
 target_data_list = [
     'original',
-    # 'AE_z64_base'
+    # 'AE_z64_base',
+    # 'AE_z64_type1',
+    # 'AE_z64_type2',
+]
+
+recon_type_list = [
+    'full_z',
+    # 'partial_z',
 ]
 
 repeat_idx_list = [
@@ -35,7 +43,7 @@ setup_dict = {
     'test_classifier': '1',
     'extract_classifier_features': '1',
 
-    'recon_type': 'full_z',
+    # 'recon_type': 'full_z',
     # 'recon_type': 'partial_z',
 
     'epochs': 500,
@@ -48,19 +56,22 @@ for dataset in dataset_list:
     for classification_model in classification_model_list:
         for setsize in setsize_list:
             for target_data in target_data_list:
-                for repeat_idx in repeat_idx_list:
-                    args_list = []
-                    target_setup_dict = setup_dict
-                    target_setup_dict['dataset'] = dataset
-                    target_setup_dict['classification_model'] = classification_model
-                    target_setup_dict['setsize'] = setsize
-                    target_setup_dict['target_data'] = target_data
-                    target_setup_dict['repeat_idx'] = str(repeat_idx)
+                for recon_type in recon_type_list:
+                    for repeat_idx in repeat_idx_list:
+                        args_list = []
+                        target_setup_dict = setup_dict
+                        target_setup_dict['dataset'] = dataset
+                        target_setup_dict['classification_model'] = classification_model
+                        target_setup_dict['setsize'] = setsize
+                        target_setup_dict['target_data'] = target_data
+                        target_setup_dict['recon_type'] = recon_type
 
-                    args_list.append('python classification_main.py')
-                    for k, v in target_setup_dict.items():
-                        args_list.append('--{} {}'.format(k, v))
+                        target_setup_dict['repeat_idx'] = str(repeat_idx)
 
-                    model = ' '.join(args_list)
-                    print(model)
-                    os.system(model)
+                        args_list.append('python classification_main.py')
+                        for k, v in target_setup_dict.items():
+                            args_list.append('--{} {}'.format(k, v))
+
+                        model = ' '.join(args_list)
+                        print(model)
+                        os.system(model)

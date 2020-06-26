@@ -27,7 +27,7 @@ class ReconstructorAE(object):
         if not os.path.exists(self.reconstruction_path):
             os.makedirs(self.reconstruction_path)
 
-        self.encoder = module.ConvEncoder(self.z_dim, self.num_channels)
+        self.encoder = module.ConvEncoderAE(self.z_dim, self.num_channels)
         self.decoder = module.ConvDecoder(self.z_dim, self.num_channels)
         self.classifier = module.SimpleClassifier(self.disc_input_dim, 10)
 

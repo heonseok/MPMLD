@@ -1,4 +1,6 @@
 import os
+import sys
+import datetime
 
 dataset_list = [
     'CIFAR-10',
@@ -6,19 +8,19 @@ dataset_list = [
 
 setsize_list = [
     # 1000,
-    10000,
-    # 20000,
+    # 10000,
+    20000,
 ]
 
 reconstruction_model_list = [
-    'AE',
-    # 'VAE'
+    # 'AE',
+    'VAE'
 ]
 
 disentanglement_type_list = [
     'base',
-    'type1',
-    'type2',
+    # 'type1',
+    # 'type2',
 ]
 
 repeat_idx_list = [
@@ -39,7 +41,14 @@ setup_dict = {
     'early_stop': '1',
     'early_stop_observation_period': 50,
     'gpu_id': 0,
+
+    'lr': 0.002,
 }
+
+if not os.path.exists('log'):
+    os.mkdir('log')
+f = open('log/reconstruction_run.log', 'a')
+f.write(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S') + '\n')
 
 for dataset in dataset_list:
     for reconstruction_model in reconstruction_model_list:
@@ -60,4 +69,8 @@ for dataset in dataset_list:
 
                     model = ' '.join(args_list)
                     print(model)
+                    f.write(model + '\n')
                     os.system(model)
+
+f.write('\n')
+f.close()

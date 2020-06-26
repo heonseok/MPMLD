@@ -6,6 +6,8 @@ import torch.backends.cudnn as cudnn
 import sys
 import torchvision.utils as vutils
 import os
+from torch.autograd import Variable
+from torch.nn import functional as F
 
 
 class ReconstructorVAE(object):
@@ -27,17 +29,21 @@ class ReconstructorVAE(object):
         if not os.path.exists(self.reconstruction_path):
             os.makedirs(self.reconstruction_path)
 
-        self.encoder = module.ConvEncoder(self.z_dim, self.num_channels)
-        self.decoder = module.ConvDecoder(self.z_dim, self.num_channels)
+        self.encoder = module.ConvEncoderVAE(self.z_dim, self.num_channels)
+        self.decoder = module.ConvDecoderVAE(self.z_dim, self.num_channels)
         self.classifier = module.SimpleClassifier(self.disc_input_dim, 10)
 
         self.optimizer_enc = optim.Adam(self.encoder.parameters(), lr=args.lr, betas=(0.5, 0.999))
         self.optimizer_dec = optim.Adam(self.decoder.parameters(), lr=args.lr, betas=(0.5, 0.999))
+        # self.optimizer_enc = optim.RMSprop(self.encoder.parameters(), lr=args.lr)
+        # self.optimizer_dec = optim.RMSprop(self.decoder.parameters(), lr=args.lr)
         self.optimizer_class = optim.Adam(self.classifier.parameters(), lr=args.lr, betas=(0.5, 0.999))
 
         # self.criterion = nn.BCEWithLogitsLoss()
+        self.bce_loss = nn.BCELoss()
         # self.criterion = nn.BCELoss()
-        self.recon_loss = nn.MSELoss()
+        self.recon_loss = self.get_loss_function()
+        # self.recon_loss = nn.MSELoss()
         self.class_loss = nn.CrossEntropyLoss()
 
         self.device = torch.device("cuda:{}".format(args.gpu_id))
@@ -91,9 +97,11 @@ class ReconstructorVAE(object):
             self.optimizer_enc.zero_grad()
             self.optimizer_dec.zero_grad()
 
-            z = self.encoder(inputs)
+            mu, logvar = self.encoder(inputs)
+            z = self.reparameterize(mu, logvar)
             recons = self.decoder(z)
-            recon_loss = self.recon_loss(recons, inputs)
+            recon_loss = self.recon_loss(recons, inputs, mu, logvar)
+            # recon_loss = self.recon_loss(recons, inputs)
             recon_loss.backward()
 
             self.optimizer_enc.step()
@@ -102,14 +110,16 @@ class ReconstructorVAE(object):
             # ---- Disentanglement ---- #
             if self.disentanglement_type == 'type1':
                 self.optimizer_enc.zero_grad()
-                z = self.encoder(inputs)
+                mu, logvar = self.encoder(inputs)
+                z = self.reparameterize(mu, logvar)
                 pred_label = self.classifier(z[:, self.disc_input_dim:])
                 class_loss = -self.class_loss(pred_label, targets)
                 class_loss.backward()
                 self.optimizer_enc.step()
 
                 self.optimizer_class.zero_grad()
-                z = self.encoder(inputs)
+                mu, logvar = self.encoder(inputs)
+                z = self.reparameterize(mu, logvar)
                 pred_label = self.classifier(z[:, self.disc_input_dim:])
                 class_loss = self.class_loss(pred_label, targets)
                 class_loss.backward()
@@ -117,14 +127,16 @@ class ReconstructorVAE(object):
 
             elif self.disentanglement_type == 'type2':
                 self.optimizer_enc.zero_grad()
-                z = self.encoder(inputs)
+                mu, logvar = self.encoder(inputs)
+                z = self.reparameterize(mu, logvar)
                 pred_label = self.classifier(z[:, 0:self.disc_input_dim])
                 class_loss = self.class_loss(pred_label, targets)
                 class_loss.backward()
                 self.optimizer_enc.step()
 
                 self.optimizer_class.zero_grad()
-                z = self.encoder(inputs)
+                mu, logvar = self.encoder(inputs)
+                z = self.reparameterize(mu, logvar)
                 pred_label = self.classifier(z[:, 0:self.disc_input_dim])
                 class_loss = self.class_loss(pred_label, targets)
                 class_loss.backward()
@@ -140,14 +152,13 @@ class ReconstructorVAE(object):
         if self.disentanglement_type != 'base':
             self.train_acc = correct / total
 
-
-        if (epoch + 1) % 50 == 0:
-            print('saving the output')
-            vutils.save_image(inputs, os.path.join(self.reconstruction_path, 'real_samples.png'),
-                              normalize=True, nrow=10)
-            vutils.save_image(recons,
-                              os.path.join(self.reconstruction_path, 'recon_%03d.png' % (epoch + 1)), normalize=True,
-                              nrow=10)
+        # if (epoch + 1) % 50 == 0:
+        #     print('saving the output')
+        #     vutils.save_image(inputs, os.path.join(self.reconstruction_path, 'real_samples.png'),
+        #                       normalize=True, nrow=10)
+        #     vutils.save_image(recons,
+        #                       os.path.join(self.reconstruction_path, 'recon_%03d.png' % (epoch + 1)), normalize=True,
+        #                       nrow=10)
 
     def inference(self, loader, epoch, type='valid'):
         self.encoder.eval()
@@ -159,9 +170,11 @@ class ReconstructorVAE(object):
             for batch_idx, (inputs, targets) in enumerate(loader):
                 inputs, targets = inputs.to(self.device), targets.to(self.device)
 
-                z = self.encoder(inputs)
+                mu, logvar = self.encoder(inputs)
+                z = self.reparameterize(mu, logvar)
                 recons = self.decoder(z)
-                recon_loss = self.recon_loss(recons, inputs)
+                recon_loss = self.recon_loss(recons, inputs, mu, logvar)
+                # recon_loss = self.recon_loss(recons, inputs)
                 loss += recon_loss.item()
 
                 if self.disentanglement_type == 'type1':
@@ -184,6 +197,12 @@ class ReconstructorVAE(object):
 
             if loss < self.best_valid_loss:
                 print('Saving..')
+                vutils.save_image(inputs, os.path.join(self.reconstruction_path, 'real_samples.png'),
+                                  normalize=True, nrow=10)
+                vutils.save_image(recons,
+                                  os.path.join(self.reconstruction_path, 'recon_%03d.png' % (epoch + 1)),
+                                  normalize=True,
+                                  nrow=10)
                 state = {
                     'encoder': self.encoder.state_dict(),
                     'decoder': self.decoder.state_dict(),
@@ -220,7 +239,7 @@ class ReconstructorVAE(object):
                 break
 
     def reconstruct(self, dataset_dict, reconstruction_type):
-        print('==> Reconstruct datasets')
+        print('==> Reconstruct datasets from {}'.reconstruction_type)
         try:
             self.load()
         except FileNotFoundError:
@@ -237,7 +256,8 @@ class ReconstructorVAE(object):
             with torch.no_grad():
                 for batch_idx, (inputs, targets) in enumerate(loader):
                     inputs = inputs.to(self.device)
-                    z = self.encoder(inputs)
+                    mu, logvar = self.encoder(inputs)
+                    z = self.reparameterize(mu, logvar)
                     if reconstruction_type == 'partial_z':
                         paritial_z = z[:, 0:self.disc_input_dim]
                         z = torch.cat((paritial_z, torch.zeros_like(paritial_z)), axis=1)
@@ -265,3 +285,43 @@ class ReconstructorVAE(object):
         # todo : refactor dict to CustomDataset
         torch.save(recon_datasets_dict,
                    os.path.join(self.reconstruction_path, 'recon_{}.pt'.format(reconstruction_type)))
+
+    def reparameterize(self, mu, logvar):
+        std = logvar.mul(0.5).exp_()
+        eps = Variable(std.data.new(std.size()).normal_())
+        return eps.mul(std).add_(mu)
+
+    def get_loss_function(self):
+        bce = nn.BCELoss()
+
+        def loss_function(recon_x, x, mu, logvar):
+            # print(recon_x.shape)
+            # print(x.shape)
+            # print(mu.shape)
+            # print(logvar.shape)
+            #
+            # print(recon_x[0])
+            # print(x[0])
+            #
+            # print(recon_x)
+            # print(x)
+            # sys.exit(1)
+
+            BCE = F.binary_cross_entropy(recon_x.view(-1, 32 * 32 * 3), x.view(-1, 32 * 32 * 3), reduction='sum')
+            # BCE = F.binary_cross_entropy(recon_x, x, reduction='sum')
+            # BCE = F.binary_cross_entropy_with_logits(recon_x, x, reduction='sum')
+            # BCE = bce(recon_x, x)
+            # BCE = nn.BCEWithLogitsLoss(recon_x, x)
+
+            # see Appendix B from VAE paper:
+            # Kingma and Welling. Auto-Encoding Variational Bayes. ICLR, 2014
+            # https://arxiv.org/abs/1312.6114
+            # 0.5 * sum(1 + log(sigma^2) - mu^2 - sigma^2)
+            KLD = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
+            # print(KLD)
+            # sys.exit(1)
+
+            # return KLD
+            return BCE + KLD
+
+        return loss_function

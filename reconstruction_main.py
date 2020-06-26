@@ -14,7 +14,7 @@ import sys
 parser = argparse.ArgumentParser()
 parser.add_argument('--dataset', type=str, default='CIFAR-10', choices=['CIFAR-10'])
 parser.add_argument('--setsize', type=int, default=1000)
-parser.add_argument('--lr', type=float, default=0.002)
+parser.add_argument('--lr', type=float, default=0.02)
 parser.add_argument('--base_path', type=str, default='/mnt/disk1/heonseok/MPMLD')
 parser.add_argument('--resume', type=str2bool, default='0')
 parser.add_argument('--train_batch_size', type=int, default=100)

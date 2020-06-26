@@ -19,13 +19,15 @@ def plot_classification_result(dataset, clf_model):
         except FileNotFoundError:
             continue
     df = df[['train', 'valid', 'test']]
+    print(clf_path)
+    print(df)
     sns.boxplot(data=df)
     plt.ylabel('Classification accuracy', fontdict={'size': 18})
     plt.title(clf_model, fontdict={'size': 20})
     plt.xticks(fontsize=15)
     plt.yticks(fontsize=15)
-    plt.ylim(0.3, 1.01)
-    plt.axhline(0.5, ls='--', c='r')
+    plt.ylim(0.0, 1.01)
+    # plt.axhline(0.5, ls='--', c='r')
     plt.tight_layout()
     plt.show()
     plt.close()
@@ -67,6 +69,11 @@ if __name__ == "__main__":
         # ('CIFAR-10', 'ResNet18_setsize10000_AE_z64_base/full_z'),
 
         ('CIFAR-10', 'ResNet50_setsize10000_original'),
+        ('CIFAR-10', 'ResNet50_setsize20000_original'),
+        ('CIFAR-10', 'ResNet50_setsize10000_AE_z64_base/partial_z'),
+        ('CIFAR-10', 'ResNet50_setsize10000_AE_z64_base/full_z'),
+        ('CIFAR-10', 'ResNet50_setsize10000_AE_z64_type1/partial_z'),
+        ('CIFAR-10', 'ResNet50_setsize10000_AE_z64_type2/full_z'),
     ]
 
     for (dataset, clf_model) in clf_model_list:
