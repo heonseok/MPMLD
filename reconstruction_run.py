@@ -13,22 +13,22 @@ setsize_list = [
 ]
 
 reconstruction_model_list = [
-    # 'AE',
-    'VAE'
+    'AE',
+    # 'VAE'
 ]
 
 disentanglement_type_list = [
     'base',
-    # 'type1',
-    # 'type2',
+    'type1',
+    'type2',
 ]
 
 repeat_idx_list = [
     0,
-    # 1,
-    # 2,
-    # 3,
-    # 4,
+    1,
+    2,
+    3,
+    4,
 ]
 
 setup_dict = {
@@ -40,7 +40,7 @@ setup_dict = {
     'epochs': 500,
     'early_stop': '1',
     'early_stop_observation_period': 50,
-    'gpu_id': 0,
+    'gpu_id': 2,
 
     'lr': 0.002,
 }

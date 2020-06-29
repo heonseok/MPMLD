@@ -19,8 +19,10 @@ target_classifier_list = [
     # 'ResNet50_setsize10000_AE_z64_type1/partial_z',
     # 'ResNet50_setsize10000_AE_z64_type2/full_z',
 
-    'ResNet50_setsize20000_original',
+    # 'ResNet50_setsize20000_original',
 
+    'ResNet101_setsize10000_original',
+    'ResNet101_setsize20000_original',
 ]
 
 repeat_idx_list = [
@@ -41,12 +43,12 @@ setup_dict = {
     'epochs': 500,
     'early_stop': '1',
     'early_stop_observation_period': 20,
-    'gpu_id': 0,
+    'gpu_id': 2,
 }
 
 if not os.path.exists('log'):
     os.mkdir('log')
-f = open('log/reconstruction_run.log', 'a')
+f = open('log/attack_run.log', 'a')
 f.write(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S') + '\n')
 
 for dataset in dataset_list:

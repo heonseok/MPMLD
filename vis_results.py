@@ -68,12 +68,15 @@ if __name__ == "__main__":
         # ('CIFAR-10', 'ResNet18_setsize10000_original'),
         # ('CIFAR-10', 'ResNet18_setsize10000_AE_z64_base/full_z'),
 
-        ('CIFAR-10', 'ResNet50_setsize10000_original'),
-        ('CIFAR-10', 'ResNet50_setsize20000_original'),
-        ('CIFAR-10', 'ResNet50_setsize10000_AE_z64_base/partial_z'),
-        ('CIFAR-10', 'ResNet50_setsize10000_AE_z64_base/full_z'),
-        ('CIFAR-10', 'ResNet50_setsize10000_AE_z64_type1/partial_z'),
-        ('CIFAR-10', 'ResNet50_setsize10000_AE_z64_type2/full_z'),
+        # ('CIFAR-10', 'ResNet50_setsize10000_original'),
+        # ('CIFAR-10', 'ResNet50_setsize20000_original'),
+        # ('CIFAR-10', 'ResNet50_setsize10000_AE_z64_base/partial_z'),
+        # ('CIFAR-10', 'ResNet50_setsize10000_AE_z64_base/full_z'),
+        # ('CIFAR-10', 'ResNet50_setsize10000_AE_z64_type1/partial_z'),
+        # ('CIFAR-10', 'ResNet50_setsize10000_AE_z64_type2/full_z'),
+
+        ('CIFAR-10', 'ResNet101_setsize10000_original'),
+        ('CIFAR-10', 'ResNet101_setsize20000_original'),
     ]
 
     for (dataset, clf_model) in clf_model_list:

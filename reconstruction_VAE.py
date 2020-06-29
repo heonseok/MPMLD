@@ -239,7 +239,7 @@ class ReconstructorVAE(object):
                 break
 
     def reconstruct(self, dataset_dict, reconstruction_type):
-        print('==> Reconstruct datasets from {}'.reconstruction_type)
+        print('==> Reconstruct datasets from {}'.format(reconstruction_type))
         try:
             self.load()
         except FileNotFoundError:
