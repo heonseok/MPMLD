@@ -6,6 +6,7 @@ import numpy as np
 import torch.backends.cudnn as cudnn
 import torch.optim as optim
 from models import *
+import module
 
 
 class Classifier(object):
@@ -27,11 +28,15 @@ class Classifier(object):
 
         # Model
         print('==> Building {}'.format(self.classification_path))
-        if 'VGG' in args.classification_model:
-            print('VGG(\'' + args.classification_model + '\')')
-            net = eval('VGG(\'' + args.classification_model + '\')')
-        else:
-            net = eval(args.classification_model + '()')
+
+        if args.dataset == 'CIFAR-10':
+            if 'VGG' in args.classification_model:
+                print('VGG(\'' + args.classification_model + '\')')
+                net = eval('VGG(\'' + args.classification_model + '\')')
+            else:
+                net = eval(args.classification_model + '()')
+        elif args.dataset == 'adult':
+            net = module.SimpleClassifier(108, output_dim=2)
 
         # print(net)
 
@@ -184,8 +189,15 @@ class Classifier(object):
                 for batch_idx, (inputs, targets) in enumerate(loader):
                     inputs = inputs.to(self.device)
                     outputs = self.net(inputs)
+                    # print(outputs)
+                    # sys.exit(1)
                     prediction_scores_batch = torch.softmax(outputs, dim=1).cpu().numpy()
+                    # print(prediction_scores_batch)
+                    # sys.exit(1)
                     labels_batch = targets.numpy()
+                    # labels_batch = targets.numpy().reshape((-1,1))
+                    # print(labels_batch)
+                    # sys.exit(1)
                     if len(prediction_scores) == 0:
                         prediction_scores = prediction_scores_batch
                         labels = labels_batch
@@ -193,6 +205,8 @@ class Classifier(object):
                         prediction_scores = np.vstack((prediction_scores, prediction_scores_batch))
                         labels = np.concatenate((labels, labels_batch))
 
+            print(prediction_scores.shape)
+            print(labels.shape)
             features_dict[dataset_type] = {
                 'preds': prediction_scores,
                 'labels': labels,

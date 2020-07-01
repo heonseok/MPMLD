@@ -31,7 +31,10 @@ class Attacker(object):
         # Model
         print('==> Building {}'.format(self.attack_path))
         if self.attack_type == 'black':
-            net = SimpleDiscriminator(20)
+            if args.dataset == 'adult':
+                net = SimpleDiscriminator(4)  # adult
+            elif args.dataset == 'CIFAR-10':
+                net = SimpleDiscriminator(20)  # CIFAR-10
 
         self.start_epoch = 0
         self.best_valid_acc = 0
@@ -188,4 +191,3 @@ class Attacker(object):
         }
         print(auroc_dict)
         np.save(os.path.join(self.attack_path, 'auroc.npy'), auroc_dict)
-

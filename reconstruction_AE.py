@@ -27,8 +27,13 @@ class ReconstructorAE(object):
         if not os.path.exists(self.reconstruction_path):
             os.makedirs(self.reconstruction_path)
 
-        self.encoder = module.ConvEncoderAE(self.z_dim, self.num_channels)
-        self.decoder = module.ConvDecoder(self.z_dim, self.num_channels)
+        if args.dataset == 'CIFAR-10':
+            self.encoder = module.ConvEncoderAE(self.z_dim, self.num_channels)
+            self.decoder = module.ConvDecoder(self.z_dim, self.num_channels)
+        elif args.dataset == 'adult':
+            self.encoder = module.SimpleEncoder(108, self.z_dim)
+            self.decoder = module.SimpleDecoder(108, self.z_dim)
+
         self.classifier = module.SimpleClassifier(self.disc_input_dim, 10)
 
         self.optimizer_enc = optim.Adam(self.encoder.parameters(), lr=args.lr, betas=(0.5, 0.999))

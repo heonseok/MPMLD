@@ -10,8 +10,8 @@ import utils
 import sys
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--dataset', type=str, default='CIFAR-10', choices=['CIFAR-10'])
-parser.add_argument('--setsize', type=int, default=1000)
+parser.add_argument('--dataset', type=str, default='adult', choices=['CIFAR-10', 'adult'])
+parser.add_argument('--setsize', type=int, default=100)
 parser.add_argument('--lr', type=float, default=0.002)
 parser.add_argument('--base_path', type=str, default='/mnt/disk1/heonseok/MPMLD')
 parser.add_argument('--resume', type=str2bool, default='0')
@@ -25,13 +25,15 @@ parser.add_argument('--repeat_idx', type=int, default=0)
 parser.add_argument('--gpu_id', type=int, default=0)
 parser.add_argument('--attack_type', type=str, default='black', choices=['black', 'white'])
 
-parser.add_argument('--target_classifier', type=str, default='ResNet18_setsize10000_original')
+parser.add_argument('--target_classifier', type=str, default='FCN_setsize100_AE_z8_base/partial_z')
+# parser.add_argument('--target_classifier', type=str, default='FCN_setsize100_original')
+# parser.add_argument('--target_classifier', type=str, default='ResNet18_setsize10000_original')
 
-parser.add_argument('--dataset_type', type=str, default='original', choices=['original', 'reconstructed'])
+# parser.add_argument('--dataset_type', type=str, default='original', choices=['original', 'reconstructed'])
 parser.add_argument('--reconstruction_path', type=str, default='todo...')
 
-parser.add_argument('--train_attacker', type=str2bool, default='0')
-parser.add_argument('--test_attacker', type=str2bool, default='0')
+parser.add_argument('--train_attacker', type=str2bool, default='1')
+parser.add_argument('--test_attacker', type=str2bool, default='1')
 
 parser.add_argument('--statistical_attack', type=str2bool, default='1')
 
@@ -43,12 +45,13 @@ args.output_path = os.path.join(args.base_path, 'output', args.dataset)
 if not os.path.exists(args.output_path):
     os.makedirs(args.output_path)
 
-if args.dataset_type == 'original':
-    args.classification_name = os.path.join(args.target_classifier, 'repeat{}'.format(args.repeat_idx))
-else:
-    args.classification_name = os.path.join(
-        '{}_setsize{}_{}'.format(args.classification_model, args.setsize, args.reconstruction_path),
-        'repeat{}'.format(args.repeat_idx))
+args.classification_name = os.path.join(args.target_classifier, 'repeat{}'.format(args.repeat_idx))
+# if 'original' in args.target_classifier:
+# # if args.dataset_type == 'original':
+# else:
+#     args.classification_name = os.path.join(
+#         '{}_setsize{}_{}'.format(args.classification_model, args.setsize, args.reconstruction_path),
+#         'repeat{}'.format(args.repeat_idx))
 
 args.classification_path = os.path.join(args.output_path, 'classifier', args.classification_name)
 print(args.classification_path)

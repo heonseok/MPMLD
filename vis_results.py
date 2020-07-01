@@ -1,4 +1,5 @@
 import os
+import sys
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -8,7 +9,7 @@ import seaborn as sns
 base_path = '/mnt/disk1/heonseok/MPMLD/output'
 
 
-def plot_classification_result(dataset, clf_model):
+def plot_classification_result(dataset, clf_model, fig_path):
     clf_path = os.path.join(base_path, dataset, 'classifier', clf_model)
     df = pd.DataFrame()
     for repeat in range(5):
@@ -23,17 +24,19 @@ def plot_classification_result(dataset, clf_model):
     print(df)
     sns.boxplot(data=df)
     plt.ylabel('Classification accuracy', fontdict={'size': 18})
-    plt.title(clf_model, fontdict={'size': 20})
+    plt.title(clf_model, fontdict={'size': 15})
     plt.xticks(fontsize=15)
     plt.yticks(fontsize=15)
     plt.ylim(0.0, 1.01)
-    # plt.axhline(0.5, ls='--', c='r')
+    # plt.yticks(np.arange(0.1, 1.01, 0.1))
+    plt.axhline(0.1, ls='--', c='r')
     plt.tight_layout()
+    plt.savefig(os.path.join(fig_path, 'classification.jpg'))
     plt.show()
     plt.close()
 
 
-def plot_attack_result(dataset, clf_model):
+def plot_attack_result(dataset, clf_model, fig_path):
     df = pd.DataFrame()
     attack_type_list = ['stat', 'black']
     for repeat in range(5):
@@ -50,35 +53,55 @@ def plot_attack_result(dataset, clf_model):
 
     sns.boxplot(data=df)
     plt.ylabel('Attack accuracy', fontdict={'size': 18})
-    plt.title(clf_model, fontdict={'size': 20})
+    plt.title(clf_model, fontdict={'size': 15})
     plt.xticks(fontsize=15)
     plt.yticks(fontsize=15)
-    plt.ylim(0.5, 1.)
-    # plt.axhline(0.5, ls='--', c='r')
+    plt.ylim(0., 1.01)
+    plt.axhline(0.5, ls='--', c='r')
     plt.tight_layout()
+    plt.savefig(os.path.join(fig_path, 'attack.jpg'))
     plt.show()
     plt.close()
 
 
 if __name__ == "__main__":
+
+    if not os.path.exists('Figs'):
+        os.mkdir('Figs')
+
+    # clf_model_list = [
+    #     # ('CIFAR-10', 'ResNet18_setsize1000_original'),
+    #     # ('CIFAR-10', 'ResNet18_setsize1000_AE_z64_base/full_z'),
+    #
+    #     # ('CIFAR-10', 'ResNet18_setsize10000_original'),
+    #     # ('CIFAR-10', 'ResNet18_setsize10000_AE_z64_base/full_z'),
+    #
+    #     ('CIFAR-10', 'ResNet50_setsize10000_original'),
+    #     # ('CIFAR-10', 'ResNet50_setsize20000_original'),
+    #     ('CIFAR-10', 'ResNet50_setsize10000_AE_z64_base/partial_z'),
+    #     ('CIFAR-10', 'ResNet50_setsize10000_AE_z64_base/full_z'),
+    #     ('CIFAR-10', 'ResNet50_setsize10000_AE_z64_type1/partial_z'),
+    #     # ('CIFAR-10', 'ResNet50_setsize10000_AE_z64_type1/full_z'),
+    #     ('CIFAR-10', 'ResNet50_setsize10000_AE_z64_type2/partial_z'),
+    #     # ('CIFAR-10', 'ResNet50_setsize10000_AE_z64_type2/full_z'),
+    #
+    #     # ('CIFAR-10', 'ResNet101_setsize10000_original'),
+    #     # ('CIFAR-10', 'ResNet101_setsize20000_original'),
+    # ]
+
     clf_model_list = [
-        # ('CIFAR-10', 'ResNet18_setsize1000_original'),
-        # ('CIFAR-10', 'ResNet18_setsize1000_AE_z64_base/full_z'),
-
-        # ('CIFAR-10', 'ResNet18_setsize10000_original'),
-        # ('CIFAR-10', 'ResNet18_setsize10000_AE_z64_base/full_z'),
-
-        # ('CIFAR-10', 'ResNet50_setsize10000_original'),
-        # ('CIFAR-10', 'ResNet50_setsize20000_original'),
-        # ('CIFAR-10', 'ResNet50_setsize10000_AE_z64_base/partial_z'),
-        # ('CIFAR-10', 'ResNet50_setsize10000_AE_z64_base/full_z'),
-        # ('CIFAR-10', 'ResNet50_setsize10000_AE_z64_type1/partial_z'),
-        # ('CIFAR-10', 'ResNet50_setsize10000_AE_z64_type2/full_z'),
-
-        ('CIFAR-10', 'ResNet101_setsize10000_original'),
-        ('CIFAR-10', 'ResNet101_setsize20000_original'),
+        ('adult', 'FCN_setsize100_original'),
+        ('adult', 'FCN_setsize100_AE_z8_base/partial_z'),
+        ('adult', 'FCN_setsize100_AE_z8_type1/partial_z'),
+        ('adult', 'FCN_setsize100_AE_z8_type2/partial_z'),
+        # ('adult', 'FCN_setsize1000_original'),
+        # ('adult', 'FCN_setsize10000_original')
     ]
 
     for (dataset, clf_model) in clf_model_list:
-        plot_classification_result(dataset, clf_model)
-        plot_attack_result(dataset, clf_model)
+        fig_path = os.path.join('Figs', dataset, clf_model)
+        if not os.path.exists(fig_path):
+            os.makedirs(fig_path)
+
+        plot_classification_result(dataset, clf_model, fig_path)
+        plot_attack_result(dataset, clf_model, fig_path)

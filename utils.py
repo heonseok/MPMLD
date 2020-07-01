@@ -172,7 +172,11 @@ def concat_datasets(in_dataset, out_dataset, start, end):
 def build_inout_features(features, attack_type):
     preds = torch.Tensor(features['preds'])
     labels = features['labels']
-    labels_onehot = torch.zeros((len(labels), 10)).scatter_(1, torch.LongTensor(labels).reshape((-1, 1)), 1)
+
+    # print(labels)
+    # print()
+    # sys.exit(1)
+    labels_onehot = torch.zeros((len(labels), len(np.unique(labels)))).scatter_(1, torch.LongTensor(labels).reshape((-1, 1)), 1)
     return torch.cat((preds, labels_onehot), axis=1)
 
 
@@ -184,6 +188,8 @@ def build_inout_feature_sets(classification_path, attack_type):
 
     in_feature_set = CustomDataset(in_features, torch.ones(in_features.shape[0]))
     out_feature_set = CustomDataset(out_features, torch.zeros(out_features.shape[0]))
+
+    print(in_features[0])
 
     inout_feature_sets = {
         'train': concat_datasets(in_feature_set, out_feature_set, 0, 0.7),

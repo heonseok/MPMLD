@@ -3,7 +3,8 @@ import sys
 import datetime
 
 dataset_list = [
-    'CIFAR-10',
+    'adult',
+    # 'CIFAR-10',
 ]
 
 target_classifier_list = [
@@ -18,19 +19,24 @@ target_classifier_list = [
     # 'ResNet50_setsize10000_AE_z64_base/full_z',
     # 'ResNet50_setsize10000_AE_z64_type1/partial_z',
     # 'ResNet50_setsize10000_AE_z64_type2/full_z',
+    # 'ResNet50_setsize10000_AE_z64_type2/partial_z',
 
     # 'ResNet50_setsize20000_original',
 
-    'ResNet101_setsize10000_original',
-    'ResNet101_setsize20000_original',
+    # 'ResNet101_setsize10000_original',
+    # 'ResNet101_setsize20000_original',
+
+    'FCN_setsize100_AE_z8_base/partial_z',
+    'FCN_setsize100_AE_z8_type1/partial_z',
+    'FCN_setsize100_AE_z8_type2/partial_z',
 ]
 
 repeat_idx_list = [
     0,
-    1,
-    2,
-    3,
-    4,
+#     1,
+#     2,
+#     3,
+#     4,
 ]
 
 setup_dict = {
@@ -43,7 +49,7 @@ setup_dict = {
     'epochs': 500,
     'early_stop': '1',
     'early_stop_observation_period': 20,
-    'gpu_id': 2,
+    'gpu_id': 0,
 }
 
 if not os.path.exists('log'):

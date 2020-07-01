@@ -126,6 +126,37 @@ class ConvDecoder(nn.Module):
         return self.main(x)
 
 
+class SimpleEncoder(nn.Module):
+    def __init__(self, input_dim, latent_dim):
+        super().__init__()
+
+        self.main = nn.Sequential(
+            nn.Linear(input_dim, latent_dim, bias=True),
+            # nn.ReLU(True),
+            # nn.Linear(input_dim, latent_dim, bias=True),
+            # nn.ReLU(True),
+        )
+
+        init_layers(self._modules)
+
+    def forward(self, x):
+        return self.main(x)
+
+
+class SimpleDecoder(nn.Module):
+    def __init__(self, input_dim, latent_dim):
+        super().__init__()
+
+        self.main = nn.Sequential(
+            nn.Linear(latent_dim, input_dim, bias=True)
+        )
+
+        init_layers(self._modules)
+
+    def forward(self, x):
+        return self.main(x)
+
+
 class ConvEncoderVAE(nn.Module):
     def __init__(self, latent_dim, num_channels):
         super().__init__()
