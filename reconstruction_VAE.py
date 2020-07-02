@@ -20,8 +20,12 @@ class ReconstructorVAE(object):
 
         self.z_dim = args.z_dim
         self.disc_input_dim = int(self.z_dim / 2)
-        self.num_channels = 3
-        self.image_size = 64
+        if args.dataset in ['MNIST', 'Fashion-MNIST']:
+            self.num_channels = 1
+        else:
+            self.num_channels = 3
+
+        self.image_size = 28
 
         self.disentanglement_type = args.disentanglement_type
         self.reconstruction_path = args.reconstruction_path
@@ -29,14 +33,16 @@ class ReconstructorVAE(object):
         if not os.path.exists(self.reconstruction_path):
             os.makedirs(self.reconstruction_path)
 
-        self.encoder = module.ConvEncoderVAE(self.z_dim, self.num_channels)
-        self.decoder = module.ConvDecoderVAE(self.z_dim, self.num_channels)
-        self.classifier = module.SimpleClassifier(self.disc_input_dim, 10)
+        if args.dataset in ['MNIST', 'Fashion-MNIST', 'CIFAR-10']:
+            self.encoder = module.ConvEncoderVAE(self.z_dim, self.num_channels)
+            self.decoder = module.ConvDecoderVAE(self.z_dim, self.num_channels)
+            self.classifier = module.SimpleClassifier(self.disc_input_dim, 10)
+        elif args.dataset == 'adult':
+            # Todo : implementation
+            pass
 
         self.optimizer_enc = optim.Adam(self.encoder.parameters(), lr=args.lr, betas=(0.5, 0.999))
         self.optimizer_dec = optim.Adam(self.decoder.parameters(), lr=args.lr, betas=(0.5, 0.999))
-        # self.optimizer_enc = optim.RMSprop(self.encoder.parameters(), lr=args.lr)
-        # self.optimizer_dec = optim.RMSprop(self.decoder.parameters(), lr=args.lr)
         self.optimizer_class = optim.Adam(self.classifier.parameters(), lr=args.lr, betas=(0.5, 0.999))
 
         # self.criterion = nn.BCEWithLogitsLoss()
@@ -288,40 +294,17 @@ class ReconstructorVAE(object):
 
     def reparameterize(self, mu, logvar):
         std = logvar.mul(0.5).exp_()
-        eps = Variable(std.data.new(std.size()).normal_())
+        eps = Variable(torch.cuda.FloatTensor(std.data.new(std.size()).normal_()))
         return eps.mul(std).add_(mu)
 
     def get_loss_function(self):
-        bce = nn.BCELoss()
-
         def loss_function(recon_x, x, mu, logvar):
-            # print(recon_x.shape)
-            # print(x.shape)
-            # print(mu.shape)
-            # print(logvar.shape)
-            #
-            # print(recon_x[0])
-            # print(x[0])
-            #
-            # print(recon_x)
-            # print(x)
-            # sys.exit(1)
-
-            BCE = F.binary_cross_entropy(recon_x.view(-1, 32 * 32 * 3), x.view(-1, 32 * 32 * 3), reduction='sum')
-            # BCE = F.binary_cross_entropy(recon_x, x, reduction='sum')
-            # BCE = F.binary_cross_entropy_with_logits(recon_x, x, reduction='sum')
-            # BCE = bce(recon_x, x)
-            # BCE = nn.BCEWithLogitsLoss(recon_x, x)
+            BCE = F.binary_cross_entropy(recon_x, x, reduction='sum')
 
             # see Appendix B from VAE paper:
             # Kingma and Welling. Auto-Encoding Variational Bayes. ICLR, 2014
             # https://arxiv.org/abs/1312.6114
-            # 0.5 * sum(1 + log(sigma^2) - mu^2 - sigma^2)
             KLD = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
-            # print(KLD)
-            # sys.exit(1)
-
-            # return KLD
             return BCE + KLD
 
         return loss_function

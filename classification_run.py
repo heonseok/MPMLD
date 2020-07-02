@@ -22,8 +22,8 @@ setsize_list = [
 ]
 
 target_data_list = [
-    # 'original',
-    # 'AE_z64_base',
+    'original',
+    'AE_z8_base',
     # 'AE_z64_type1',
     # 'AE_z64_type2',
     'AE_z8_type1',
@@ -31,7 +31,7 @@ target_data_list = [
 ]
 
 recon_type_list = [
-    # 'full_z',
+    'full_z',
     'partial_z',
 ]
 

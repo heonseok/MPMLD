@@ -26,6 +26,7 @@ target_classifier_list = [
     # 'ResNet101_setsize10000_original',
     # 'ResNet101_setsize20000_original',
 
+    'FCN_setsize100_original',
     'FCN_setsize100_AE_z8_base/partial_z',
     'FCN_setsize100_AE_z8_type1/partial_z',
     'FCN_setsize100_AE_z8_type2/partial_z',

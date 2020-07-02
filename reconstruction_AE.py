@@ -18,7 +18,12 @@ class ReconstructorAE(object):
 
         self.z_dim = args.z_dim
         self.disc_input_dim = int(self.z_dim / 2)
-        self.num_channels = 3
+
+        if args.dataset in ['MNIST', 'Fashion-MNIST']:
+            self.num_channels = 1
+        else:
+            self.num_channels = 3
+
         self.image_size = 64
 
         self.disentanglement_type = args.disentanglement_type
@@ -27,14 +32,14 @@ class ReconstructorAE(object):
         if not os.path.exists(self.reconstruction_path):
             os.makedirs(self.reconstruction_path)
 
-        if args.dataset == 'CIFAR-10':
+        if args.dataset in ['MNIST', 'Fashion-MNIST', 'CIFAR-10']:
             self.encoder = module.ConvEncoderAE(self.z_dim, self.num_channels)
             self.decoder = module.ConvDecoder(self.z_dim, self.num_channels)
+            self.classifier = module.SimpleClassifier(self.disc_input_dim, 10)
         elif args.dataset == 'adult':
             self.encoder = module.SimpleEncoder(108, self.z_dim)
             self.decoder = module.SimpleDecoder(108, self.z_dim)
-
-        self.classifier = module.SimpleClassifier(self.disc_input_dim, 10)
+            self.classifier = module.SimpleClassifier(self.disc_input_dim, 2)
 
         self.optimizer_enc = optim.Adam(self.encoder.parameters(), lr=args.lr, betas=(0.5, 0.999))
         self.optimizer_dec = optim.Adam(self.decoder.parameters(), lr=args.lr, betas=(0.5, 0.999))
@@ -144,7 +149,6 @@ class ReconstructorAE(object):
         self.train_loss = recon_train_loss
         if self.disentanglement_type != 'base':
             self.train_acc = correct / total
-
 
         if (epoch + 1) % 50 == 0:
             print('saving the output')
