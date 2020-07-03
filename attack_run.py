@@ -4,8 +4,8 @@ import datetime
 
 dataset_list = [
     # 'adult',
-    # 'MNIST',
-    'Fashion-MNIST',
+    'MNIST',
+    # 'Fashion-MNIST',
     # 'CIFAR-10',
 ]
 
@@ -36,8 +36,8 @@ target_classifier_list = [
     # 'ConvClassifier_setsize200_original',
     # 'ConvClassifier_setsize300_original',
     # 'ConvClassifier_setsize400_original',
-    'ConvClassifier_setsize500_original',
-    'ConvClassifier_setsize1000_original',
+    # 'ConvClassifier_setsize500_original',
+#     'ConvClassifier_setsize1000_original',
     'ConvClassifier_setsize10000_original',
 ]
 
@@ -58,7 +58,7 @@ setup_dict = {
 
     'epochs': 500,
     'early_stop': '1',
-    'early_stop_observation_period': 20,
+    'early_stop_observation_period': 50,
     'gpu_id': 0,
 }
 

@@ -172,9 +172,16 @@ def concat_datasets(in_dataset, out_dataset, start, end):
 def build_inout_features(features, attack_type):
     preds = torch.Tensor(features['preds'])
     labels = features['labels']
+    labels_onehot = torch.zeros((len(labels), len(np.unique(labels)))).scatter_(1, torch.LongTensor(labels).reshape(
+        (-1, 1)), 1)
 
-    labels_onehot = torch.zeros((len(labels), len(np.unique(labels)))).scatter_(1, torch.LongTensor(labels).reshape((-1, 1)), 1)
-    return torch.cat((preds, labels_onehot), axis=1)
+    if attack_type == 'black':
+        inout_features = torch.cat((preds, labels_onehot), axis=1)
+    elif attack_type == 'white':
+        # 1) gradient, hidden output,
+        pass
+
+    return inout_features
 
 
 def build_inout_feature_sets(classification_path, attack_type):

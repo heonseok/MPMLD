@@ -29,14 +29,20 @@ class Classifier(object):
         # Model
         print('==> Building {}'.format(self.classification_path))
 
-        if args.dataset == 'CIFAR-10':
+        if args.dataset in ['CIFAR-10']:
             if 'VGG' in args.classification_model:
                 print('VGG(\'' + args.classification_model + '\')')
                 net = eval('VGG(\'' + args.classification_model + '\')')
             else:
                 net = eval(args.classification_model + '()')
+        elif args.dataset == 'CIFAR-100':
+            # net = eval(args.classification_model + '(\'num_classes\'=100)')
+            # net = DenseNet121(num_classes=100)
+            net = DenseNet(Bottleneck, [6, 12, 24, 16], growth_rate=32, num_classes=100)
         elif args.dataset == 'adult':
             net = module.FCNClassifier(108, output_dim=2)
+        elif args.dataset == 'location':
+            net = module.FCNClassifier(446, output_dim=30)
         elif args.dataset in ['MNIST', 'Fashion-MNIST']:
             net = module.ConvClassifier()
 
@@ -61,8 +67,13 @@ class Classifier(object):
 
         self.train_flag = False
 
+        # self.criterion = nn.Cro
         self.criterion = nn.CrossEntropyLoss()
-        self.optimizer = optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4)
+        # self.optimizer = optim.Adam(net.parameters(), lr=args.lr, betas=(0.999, 0.999))
+        self.optimizer = optim.Adam(net.parameters(), lr=args.lr, betas=(0.5, 0.999))
+        # self.optimizer = optim.SGD(net.parameters(), lr=args.lr, momentum=0.9)
+        # self.optimizer = optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4)
+        self.scheduler = optim.lr_scheduler.StepLR(self.optimizer, step_size=50, gamma=0.1)
 
     #########################
     # -- Base operations -- #
@@ -84,16 +95,31 @@ class Classifier(object):
             inputs, targets = inputs.to(self.device), targets.to(self.device)
             self.optimizer.zero_grad()
             outputs = self.net(inputs)
+
             loss = self.criterion(outputs, targets)
+
             loss.backward()
             self.optimizer.step()
 
             train_loss += loss.item()
             _, predicted = outputs.max(1)
+            # print(predicted)
             total += targets.size(0)
             correct += predicted.eq(targets).sum().item()
 
         self.train_acc = correct / total
+
+        if not self.early_stop:
+            print('Epoch: {:>3}, Train Acc: {:.4f}'.format(epoch, self.train_acc))
+
+            if epoch == self.epochs - 1:
+                state = {
+                    'net': self.net.state_dict(),
+                    'best_valid_acc': -1,
+                    'train_acc': self.train_acc,
+                    'epoch': epoch,
+                }
+                torch.save(state, os.path.join(self.classification_path, 'ckpt.pth'))
 
     def inference(self, loader, epoch, type='valid'):
         self.net.eval()
@@ -149,6 +175,7 @@ class Classifier(object):
                 self.train_epoch(trainloader, epoch)
                 if self.early_stop:
                     self.inference(validloader, epoch, type='valid')
+                # self.scheduler.step()
             else:
                 break
 
@@ -181,24 +208,43 @@ class Classifier(object):
             sys.exit(1)
         self.net.eval()
 
+        print(self.net)
+
         features_dict = {}
         for dataset_type, dataset in dataset_dict.items():
-            loader = torch.utils.data.DataLoader(dataset, batch_size=self.test_batch_size, shuffle=False, num_workers=2)
+            loader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False, num_workers=2)
+            # loader = torch.utils.data.DataLoader(dataset, batch_size=self.test_batch_size, shuffle=False, num_workers=2)
             prediction_scores = []
             labels = []
             print('====> Extract features from {} dataset'.format(dataset_type))
-            with torch.no_grad():
-                for batch_idx, (inputs, targets) in enumerate(loader):
-                    inputs = inputs.to(self.device)
-                    outputs = self.net(inputs)
-                    prediction_scores_batch = torch.softmax(outputs, dim=1).cpu().numpy()
-                    labels_batch = targets.numpy()
-                    if len(prediction_scores) == 0:
-                        prediction_scores = prediction_scores_batch
-                        labels = labels_batch
-                    else:
-                        prediction_scores = np.vstack((prediction_scores, prediction_scores_batch))
-                        labels = np.concatenate((labels, labels_batch))
+            # with torch.no_grad():
+            for batch_idx, (inputs, targets) in enumerate(loader):
+                inputs, targets = inputs.to(self.device), targets.to(self.device)
+                outputs = self.net(inputs)
+                # prediction_scores_batch = outputs.cpu().numpy()
+                # print(outputs[0])
+                prediction_scores_batch = torch.softmax(outputs, dim=1).cpu().detach().numpy()
+                labels_batch = targets.cpu().detach().numpy()
+
+                loss = self.criterion(outputs, targets)
+                print(loss)
+                loss.backward()
+
+                print(self.net.fc2.weight)
+                print(self.net.fc2.weight.grad)
+                print(self.net.fc2.weight.grad.shape)
+
+                print('Prediction score:', prediction_scores_batch.shape)
+                print('Label:', labels_batch.shape)
+                print('Gradient:', self.net.fc2.weight.grad.shape)
+                sys.exit(1)
+
+                if len(prediction_scores) == 0:
+                    prediction_scores = prediction_scores_batch
+                    labels = labels_batch
+                else:
+                    prediction_scores = np.vstack((prediction_scores, prediction_scores_batch))
+                    labels = np.concatenate((labels, labels_batch))
 
             print(prediction_scores.shape)
             print(labels.shape)

@@ -11,16 +11,17 @@ import utils
 import sys
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--dataset', type=str, default='adult', choices=['MNIST', 'Fashion-MNIST', 'CIFAR-10', 'adult'])
+parser.add_argument('--dataset', type=str, default='adult', choices=['MNIST', 'Fashion-MNIST', 'CIFAR-10', 'CIFAR-100', 'adult', 'location'])
 parser.add_argument('--setsize', type=int, default=100)
-parser.add_argument('--lr', type=float, default=0.002)
+# parser.add_argument('--lr', type=float, default=0.0001)
+parser.add_argument('--lr', type=float, default=0.01)
 parser.add_argument('--base_path', type=str, default='/mnt/disk1/heonseok/MPMLD')
 parser.add_argument('--resume', type=str2bool, default='0')
 parser.add_argument('--train_batch_size', type=int, default=100)
 parser.add_argument('--valid_batch_size', type=int, default=100)
 parser.add_argument('--test_batch_size', type=int, default=100)
 parser.add_argument('--classification_model', type=str, default='FCN',
-                    choices=['FCNClassifier', 'ConvClassifier', 'VGG19', 'ResNet18', 'ResNet50', 'ResNet101'])
+                    choices=['FCNClassifier', 'ConvClassifier', 'VGG19', 'ResNet18', 'ResNet50', 'ResNet101', 'DenseNet121'])
 parser.add_argument('--epochs', type=int, default=1500)
 parser.add_argument('--early_stop', type=str2bool, default='1')
 parser.add_argument('--early_stop_observation_period', type=int, default=20)

@@ -2,18 +2,21 @@ import os
 
 dataset_list = [
     # 'adult',
+    'location',
     # 'MNIST',
-    'Fashion-MNIST',
+    # 'Fashion-MNIST',
     # 'CIFAR-10',
+    # 'CIFAR-100',
 ]
 
 classification_model_list = [
-    # 'FCNClassifier',
-    'ConvClassifier',
+    'FCNClassifier',
+    # 'ConvClassifier',
     # 'VGG19',
     # 'ResNet18',
     # 'ResNet50',
     # 'ResNet101',
+    # 'DenseNet121',
 ]
 
 setsize_list = [
@@ -21,10 +24,13 @@ setsize_list = [
     # 200,
     # 300,
     # 400,
-    500,
-    1000,
-    10000,
+    # 500,
+    # 1000,
+    # 1600,
+    2000,
+    # 10000,
     # 20000,
+    # 30000,
     # 30000,
 ]
 
@@ -53,14 +59,14 @@ repeat_idx_list = [
 setup_dict = {
     'train_classifier': '1',
     'test_classifier': '1',
-    'extract_classifier_features': '1',
+    'extract_classifier_features': '0',
 
     # 'recon_type': 'full_z',
     # 'recon_type': 'partial_z',
 
     'epochs': 500,
     'early_stop': '1',
-    'early_stop_observation_period': 50,
+    'early_stop_observation_period': 100,
     'gpu_id': 0,
 }
 
