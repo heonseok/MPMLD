@@ -4,8 +4,9 @@ import datetime
 
 dataset_list = [
     # 'adult'
-    'MNIST',
-    # 'CIFAR-10',
+    # 'MNIST',
+    # 'Fashion-MNIST',
+    'CIFAR-10',
 ]
 
 setsize_list = [
@@ -21,9 +22,9 @@ reconstruction_model_list = [
 ]
 
 disentanglement_type_list = [
-    # 'base',
-    'type1',
-    'type2',
+    'base',
+    # 'type1',
+    # 'type2',
 ]
 
 repeat_idx_list = [

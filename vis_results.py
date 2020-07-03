@@ -78,24 +78,42 @@ if __name__ == "__main__":
     #
     #     ('CIFAR-10', 'ResNet50_setsize10000_original'),
     #     # ('CIFAR-10', 'ResNet50_setsize20000_original'),
-    #     ('CIFAR-10', 'ResNet50_setsize10000_AE_z64_base/partial_z'),
-    #     ('CIFAR-10', 'ResNet50_setsize10000_AE_z64_base/full_z'),
-    #     ('CIFAR-10', 'ResNet50_setsize10000_AE_z64_type1/partial_z'),
+    #     # ('CIFAR-10', 'ResNet50_setsize10000_AE_z64_base/partial_z'),
+    #     # ('CIFAR-10', 'ResNet50_setsize10000_AE_z64_base/full_z'),
+    #     # ('CIFAR-10', 'ResNet50_setsize10000_AE_z64_type1/partial_z'),
     #     # ('CIFAR-10', 'ResNet50_setsize10000_AE_z64_type1/full_z'),
-    #     ('CIFAR-10', 'ResNet50_setsize10000_AE_z64_type2/partial_z'),
+    #     # ('CIFAR-10', 'ResNet50_setsize10000_AE_z64_type2/partial_z'),
     #     # ('CIFAR-10', 'ResNet50_setsize10000_AE_z64_type2/full_z'),
     #
     #     # ('CIFAR-10', 'ResNet101_setsize10000_original'),
     #     # ('CIFAR-10', 'ResNet101_setsize20000_original'),
     # ]
 
+    # clf_model_list = [
+    #     ('adult', 'FCN_setsize100_original'),
+    #     ('adult', 'FCN_setsize100_AE_z8_base/partial_z'),
+    #     ('adult', 'FCN_setsize100_AE_z8_type1/partial_z'),
+    #     ('adult', 'FCN_setsize100_AE_z8_type2/partial_z'),
+    #     # ('adult', 'FCN_setsize1000_original'),
+    #     # ('adult', 'FCN_setsize10000_original')
+    # ]
+
+    # clf_model_list = [
+    #     ('MNIST', 'ConvClassifier_setsize200_original'),
+    #     ('MNIST', 'ConvClassifier_setsize300_original'),
+    #     ('MNIST', 'ConvClassifier_setsize400_original'),
+    #     # ('MNIST', 'ConvClassifier_setsize500_original'),
+    #     # ('MNIST', 'ConvClassifier_setsize1000_original'),
+    #     # ('MNIST', 'ConvClassifier_setsize10000_original'),
+    # ]
+
     clf_model_list = [
-        ('adult', 'FCN_setsize100_original'),
-        ('adult', 'FCN_setsize100_AE_z8_base/partial_z'),
-        ('adult', 'FCN_setsize100_AE_z8_type1/partial_z'),
-        ('adult', 'FCN_setsize100_AE_z8_type2/partial_z'),
-        # ('adult', 'FCN_setsize1000_original'),
-        # ('adult', 'FCN_setsize10000_original')
+        ('Fashion-MNIST', 'ConvClassifier_setsize200_original'),
+        ('Fashion-MNIST', 'ConvClassifier_setsize300_original'),
+        ('Fashion-MNIST', 'ConvClassifier_setsize400_original'),
+        # ('Fashion-MNIST', 'ConvClassifier_setsize500_original'),
+        # ('Fashion-MNIST', 'ConvClassifier_setsize1000_original'),
+        # ('Fashion-MNIST', 'ConvClassifier_setsize10000_original'),
     ]
 
     for (dataset, clf_model) in clf_model_list:

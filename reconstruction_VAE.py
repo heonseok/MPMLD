@@ -25,7 +25,7 @@ class ReconstructorVAE(object):
         else:
             self.num_channels = 3
 
-        self.image_size = 28
+        # self.image_size = 28
 
         self.disentanglement_type = args.disentanglement_type
         self.reconstruction_path = args.reconstruction_path
@@ -33,10 +33,14 @@ class ReconstructorVAE(object):
         if not os.path.exists(self.reconstruction_path):
             os.makedirs(self.reconstruction_path)
 
-        if args.dataset in ['MNIST', 'Fashion-MNIST', 'CIFAR-10']:
+        if args.dataset in ['MNIST', 'Fashion-MNIST',]:
+            self.encoder = module.VAEConvEncoder(self.z_dim, self.num_channels)
+            self.decoder = module.VAEConvDecoder(self.z_dim, self.num_channels)
+            self.classifier = module.Discriminator(self.disc_input_dim, 10)
+        elif args.dataset == 'CIFAR-10':
             self.encoder = module.ConvEncoderVAE(self.z_dim, self.num_channels)
             self.decoder = module.ConvDecoderVAE(self.z_dim, self.num_channels)
-            self.classifier = module.SimpleClassifier(self.disc_input_dim, 10)
+            self.classifier = module.Discriminator(self.disc_input_dim, 10)
         elif args.dataset == 'adult':
             # Todo : implementation
             pass

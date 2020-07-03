@@ -1,12 +1,15 @@
 import os
 
 dataset_list = [
-    'adult',
+    # 'adult',
+    # 'MNIST',
+    'Fashion-MNIST',
     # 'CIFAR-10',
 ]
 
 classification_model_list = [
-    'FCN',
+    # 'FCNClassifier',
+    'ConvClassifier',
     # 'VGG19',
     # 'ResNet18',
     # 'ResNet50',
@@ -14,25 +17,29 @@ classification_model_list = [
 ]
 
 setsize_list = [
-    100,
-    # 1000,
-    # 10000,
+    # 100,
+    # 200,
+    # 300,
+    # 400,
+    500,
+    1000,
+    10000,
     # 20000,
     # 30000,
 ]
 
 target_data_list = [
     'original',
-    'AE_z8_base',
+    # 'AE_z8_base',
     # 'AE_z64_type1',
     # 'AE_z64_type2',
-    'AE_z8_type1',
-    'AE_z8_type2',
+    # 'AE_z8_type1',
+    # 'AE_z8_type2',
 ]
 
 recon_type_list = [
     'full_z',
-    'partial_z',
+    # 'partial_z',
 ]
 
 repeat_idx_list = [
@@ -53,7 +60,7 @@ setup_dict = {
 
     'epochs': 500,
     'early_stop': '1',
-    'early_stop_observation_period': 20,
+    'early_stop_observation_period': 50,
     'gpu_id': 0,
 }
 

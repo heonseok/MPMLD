@@ -8,7 +8,7 @@ import torch.backends.cudnn as cudnn
 
 from torch.utils.data import ConcatDataset
 import torch.nn as nn
-from module import SimpleDiscriminator
+from module import MIAttacker
 from sklearn import metrics
 
 
@@ -32,9 +32,9 @@ class Attacker(object):
         print('==> Building {}'.format(self.attack_path))
         if self.attack_type == 'black':
             if args.dataset == 'adult':
-                net = SimpleDiscriminator(4)  # adult
-            elif args.dataset == 'CIFAR-10':
-                net = SimpleDiscriminator(20)  # CIFAR-10
+                net = MIAttacker(4)
+            elif args.dataset in ['MNIST', 'Fashion-MNIST', 'CIFAR-10']:
+                net = MIAttacker(20)
 
         self.start_epoch = 0
         self.best_valid_acc = 0

@@ -3,7 +3,9 @@ import sys
 import datetime
 
 dataset_list = [
-    'adult',
+    # 'adult',
+    # 'MNIST',
+    'Fashion-MNIST',
     # 'CIFAR-10',
 ]
 
@@ -26,10 +28,17 @@ target_classifier_list = [
     # 'ResNet101_setsize10000_original',
     # 'ResNet101_setsize20000_original',
 
-    'FCN_setsize100_original',
-    'FCN_setsize100_AE_z8_base/partial_z',
-    'FCN_setsize100_AE_z8_type1/partial_z',
-    'FCN_setsize100_AE_z8_type2/partial_z',
+    # 'FCN_setsize100_original',
+    # 'FCN_setsize100_AE_z8_base/partial_z',
+    # 'FCN_setsize100_AE_z8_type1/partial_z',
+    # 'FCN_setsize100_AE_z8_type2/partial_z',
+
+    # 'ConvClassifier_setsize200_original',
+    # 'ConvClassifier_setsize300_original',
+    # 'ConvClassifier_setsize400_original',
+    'ConvClassifier_setsize500_original',
+    'ConvClassifier_setsize1000_original',
+    'ConvClassifier_setsize10000_original',
 ]
 
 repeat_idx_list = [

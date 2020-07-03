@@ -33,13 +33,13 @@ class ReconstructorAE(object):
             os.makedirs(self.reconstruction_path)
 
         if args.dataset in ['MNIST', 'Fashion-MNIST', 'CIFAR-10']:
-            self.encoder = module.ConvEncoderAE(self.z_dim, self.num_channels)
-            self.decoder = module.ConvDecoder(self.z_dim, self.num_channels)
-            self.classifier = module.SimpleClassifier(self.disc_input_dim, 10)
+            self.encoder = module.AEConvEncoder(self.z_dim, self.num_channels)
+            self.decoder = module.AEConvDecoder(self.z_dim, self.num_channels)
+            self.classifier = module.Discriminator(self.disc_input_dim, 10)
         elif args.dataset == 'adult':
-            self.encoder = module.SimpleEncoder(108, self.z_dim)
-            self.decoder = module.SimpleDecoder(108, self.z_dim)
-            self.classifier = module.SimpleClassifier(self.disc_input_dim, 2)
+            self.encoder = module.FCNEncoder(108, self.z_dim)
+            self.decoder = module.FCNDecoder(108, self.z_dim)
+            self.classifier = module.Discriminator(self.disc_input_dim, 2)
 
         self.optimizer_enc = optim.Adam(self.encoder.parameters(), lr=args.lr, betas=(0.5, 0.999))
         self.optimizer_dec = optim.Adam(self.decoder.parameters(), lr=args.lr, betas=(0.5, 0.999))

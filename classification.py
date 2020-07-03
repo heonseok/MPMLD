@@ -36,7 +36,9 @@ class Classifier(object):
             else:
                 net = eval(args.classification_model + '()')
         elif args.dataset == 'adult':
-            net = module.SimpleClassifier(108, output_dim=2)
+            net = module.FCNClassifier(108, output_dim=2)
+        elif args.dataset in ['MNIST', 'Fashion-MNIST']:
+            net = module.ConvClassifier()
 
         # print(net)
 
@@ -109,7 +111,7 @@ class Classifier(object):
                 total += targets.size(0)
                 correct += predicted.eq(targets).sum().item()
 
-        acc =  correct / total
+        acc = correct / total
         if type == 'valid':
             print('Epoch: {:>3}, Train Acc: {:.4f}, Valid Acc: {:.4f}'.format(epoch, self.train_acc, acc))
             if acc > self.best_valid_acc:
@@ -189,15 +191,8 @@ class Classifier(object):
                 for batch_idx, (inputs, targets) in enumerate(loader):
                     inputs = inputs.to(self.device)
                     outputs = self.net(inputs)
-                    # print(outputs)
-                    # sys.exit(1)
                     prediction_scores_batch = torch.softmax(outputs, dim=1).cpu().numpy()
-                    # print(prediction_scores_batch)
-                    # sys.exit(1)
                     labels_batch = targets.numpy()
-                    # labels_batch = targets.numpy().reshape((-1,1))
-                    # print(labels_batch)
-                    # sys.exit(1)
                     if len(prediction_scores) == 0:
                         prediction_scores = prediction_scores_batch
                         labels = labels_batch

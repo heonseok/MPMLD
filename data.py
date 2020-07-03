@@ -13,12 +13,12 @@ def load_dataset(dataset, data_path):
     if dataset == 'CIFAR-10':
         transform_train = transforms.Compose([
             transforms.ToTensor(),
-            transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+            # transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
         ])
 
         transform_test = transforms.Compose([
             transforms.ToTensor(),
-            transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+            # transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
         ])
 
         trainset = torchvision.datasets.CIFAR10(
@@ -50,15 +50,15 @@ def load_dataset(dataset, data_path):
 
         merged_set = ConcatDataset((trainset, testset))
 
-    elif dataset == 'Fashioin-MNIST':
+    elif dataset == 'Fashion-MNIST':
         transform_train = transforms.Compose([
             transforms.ToTensor(),
-            transforms.Normalize(mean=[0.5], std=[0.5]),
+            # transforms.Normalize(mean=[0.5], std=[0.5]),
         ])
 
         transform_test = transforms.Compose([
             transforms.ToTensor(),
-            transforms.Normalize(mean=[0.5], std=[0.5]),
+            # transforms.Normalize(mean=[0.5], std=[0.5]),
         ])
 
         trainset = torchvision.datasets.FashionMNIST(
