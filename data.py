@@ -95,7 +95,7 @@ def load_dataset(dataset, data_path):
 
     elif dataset == 'location':
         dataset = np.load(os.path.join(data_path, 'data_complete.npz'))
-        print(np.unique(dataset['y']-1))
+        # print(np.unique(dataset['y']-1))
         total_set = CustomDataset(torch.FloatTensor(dataset['x']), dataset['y']-1)
 
     return total_set

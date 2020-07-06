@@ -36,10 +36,10 @@ class ReconstructorAE(object):
             self.encoder = module.AEConvEncoder(self.z_dim, self.num_channels)
             self.decoder = module.AEConvDecoder(self.z_dim, self.num_channels)
             self.classifier = module.Discriminator(self.disc_input_dim, 10)
-        elif args.dataset == 'adult':
-            self.encoder = module.FCNEncoder(108, self.z_dim)
-            self.decoder = module.FCNDecoder(108, self.z_dim)
-            self.classifier = module.Discriminator(self.disc_input_dim, 2)
+        elif args.dataset in ['adult', 'location']:
+            self.encoder = module.FCNEncoder(args.encoder_input_dim, self.z_dim)
+            self.decoder = module.FCNDecoder(args.encoder_input_dim, self.z_dim)
+            self.classifier = module.Discriminator(self.disc_input_dim, args.class_num)
 
         self.optimizer_enc = optim.Adam(self.encoder.parameters(), lr=args.lr, betas=(0.5, 0.999))
         self.optimizer_dec = optim.Adam(self.decoder.parameters(), lr=args.lr, betas=(0.5, 0.999))
@@ -114,6 +114,9 @@ class ReconstructorAE(object):
                 self.optimizer_enc.zero_grad()
                 z = self.encoder(inputs)
                 pred_label = self.classifier(z[:, self.disc_input_dim:])
+                # print(pred_label)
+                # print(targets)
+                # sys.exit(1)
                 class_loss = -self.class_loss(pred_label, targets)
                 class_loss.backward()
                 self.optimizer_enc.step()

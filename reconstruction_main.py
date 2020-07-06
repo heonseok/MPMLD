@@ -12,7 +12,7 @@ from torch.utils.data import ConcatDataset
 import sys
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--dataset', type=str, default='MNIST', choices=['MNIST', 'Fashion-MNIST', 'CIFAR-10', 'adult'])
+parser.add_argument('--dataset', type=str, default='MNIST', choices=['MNIST', 'Fashion-MNIST', 'CIFAR-10', 'adult', 'location'])
 parser.add_argument('--setsize', type=int, default=10000)
 parser.add_argument('--lr', type=float, default=0.02)
 parser.add_argument('--base_path', type=str, default='/mnt/disk1/heonseok/MPMLD')
@@ -36,6 +36,7 @@ parser.add_argument('--reconstruct_datasets', type=str2bool, default='1')
 
 args = parser.parse_args()
 
+
 torch.cuda.set_device(args.gpu_id)
 
 # -- Directory -- #
@@ -54,6 +55,13 @@ args.reconstruction_path = os.path.join(args.output_path, 'reconstructor', args.
 
 merged_dataset = load_dataset(args.dataset, args.data_path)
 print(merged_dataset.__len__())
+
+if args.dataset in ['adult', 'location']:
+    args.encoder_input_dim = merged_dataset.__getitem__(0)[0].numpy().shape[0]
+    if args.dataset == 'adult':
+        args.class_num = 2
+    elif args.dataset == 'location':
+        args.class_num = 30
 
 if args.setsize * 2.4 > len(merged_dataset):
     print('Setsize * 2.4 > len(concatset); Terminate program')

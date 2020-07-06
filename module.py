@@ -48,6 +48,7 @@ class MIAttacker(nn.Module):
             nn.Linear(32, 1),
             nn.Sigmoid(),
         )
+        init_layers(self._modules)
 
     def forward(self, x):
         return self.net(x)
@@ -66,6 +67,7 @@ class Discriminator(nn.Module):
             nn.LeakyReLU(0.2),
             nn.Linear(32, output_dim),
         )
+        init_layers(self._modules)
 
     def forward(self, x):
         return self.net(x)
@@ -81,9 +83,11 @@ class FCNClassifier(nn.Module):
             # nn.Linear(1024, 512),
             # nn.LeakyReLU(0.2),
             nn.Linear(input_dim, 256),
-            nn.LeakyReLU(0.2),
+            nn.ReLU(),
+            # nn.LeakyReLU(0.2),
             nn.Linear(256, 128),
-            nn.LeakyReLU(0.2),
+            nn.ReLU(),
+            # nn.LeakyReLU(0.2),
             nn.Linear(128, output_dim),
             # nn.Softmax(dim=1),
         )
@@ -91,6 +95,7 @@ class FCNClassifier(nn.Module):
 
     def forward(self, x):
         return self.net(x)
+
 
 # class FCNClassifier(nn.Module):
 #     def __init__(self, input_dim, output_dim):
@@ -238,6 +243,43 @@ class FCNDecoder(nn.Module):
 
         self.main = nn.Sequential(
             nn.Linear(latent_dim, input_dim, bias=True)
+        )
+
+        init_layers(self._modules)
+
+    def forward(self, x):
+        return self.main(x)
+
+
+class VAEFCNEncoder(nn.Module):
+    def __init__(self, input_dim, latent_dim):
+        super().__init__()
+
+        self.mu = nn.Linear(2*latent_dim, latent_dim)
+        self.logvar = nn.Linear(2*latent_dim, latent_dim)
+
+        self.main = nn.Sequential(
+            nn.Linear(input_dim, 2*latent_dim, bias=True),
+            nn.ReLU(),
+            # nn.ReLU(True),
+            # nn.Linear(input_dim, latent_dim, bias=True),
+            # nn.ReLU(True),
+        )
+
+        init_layers(self._modules)
+
+    def forward(self, x):
+        x = self.main(x)
+        return self.mu(x), self.logvar(x)
+
+
+class VAEFCNDecoder(nn.Module):
+    def __init__(self, input_dim, latent_dim):
+        super().__init__()
+
+        self.main = nn.Sequential(
+            nn.Linear(latent_dim, input_dim, bias=True),
+            nn.Sigmoid(),
         )
 
         init_layers(self._modules)

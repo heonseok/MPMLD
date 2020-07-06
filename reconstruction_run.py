@@ -4,35 +4,39 @@ import datetime
 
 dataset_list = [
     # 'adult'
+    'location',
     # 'MNIST',
     # 'Fashion-MNIST',
-    'CIFAR-10',
+    # 'CIFAR-10',
 ]
 
 setsize_list = [
     # 100,
     # 1000,
-    10000,
+    # 500,
+    # 1000,
+    2000,
+    # 10000,
     # 20000,
 ]
 
 reconstruction_model_list = [
-    # 'AE',
-    'VAE'
+    'AE',
+    # 'VAE'
 ]
 
 disentanglement_type_list = [
     'base',
-    # 'type1',
-    # 'type2',
+    'type1',
+    'type2',
 ]
 
 repeat_idx_list = [
     0,
-    # 1,
-    # 2,
-    # 3,
-    # 4,
+    1,
+    2,
+    3,
+    4,
 ]
 
 setup_dict = {

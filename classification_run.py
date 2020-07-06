@@ -26,7 +26,6 @@ setsize_list = [
     # 400,
     # 500,
     # 1000,
-    # 1600,
     2000,
     # 10000,
     # 20000,
@@ -35,12 +34,13 @@ setsize_list = [
 ]
 
 target_data_list = [
-    'original',
-    # 'AE_z8_base',
+    # 'original',
+    # 'AE_z64_base',
     # 'AE_z64_type1',
     # 'AE_z64_type2',
-    # 'AE_z8_type1',
-    # 'AE_z8_type2',
+    'VAE_z64_base',
+    # 'VAE_z64_type1',
+    # 'VAE_z64_type2',
 ]
 
 recon_type_list = [
@@ -50,16 +50,16 @@ recon_type_list = [
 
 repeat_idx_list = [
     0,
-    # 1,
-    # 2,
-    # 3,
-    # 4,
+    1,
+    2,
+    3,
+    4,
 ]
 
 setup_dict = {
     'train_classifier': '1',
     'test_classifier': '1',
-    'extract_classifier_features': '0',
+    'extract_classifier_features': '1',
 
     # 'recon_type': 'full_z',
     # 'recon_type': 'partial_z',

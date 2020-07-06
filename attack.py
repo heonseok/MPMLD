@@ -35,6 +35,8 @@ class Attacker(object):
                 net = MIAttacker(4)
             elif args.dataset in ['MNIST', 'Fashion-MNIST', 'CIFAR-10']:
                 net = MIAttacker(20)
+            elif args.dataset == 'location':
+                net = MIAttacker(60)
 
         self.start_epoch = 0
         self.best_valid_acc = 0

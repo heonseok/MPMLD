@@ -86,6 +86,7 @@ class Classifier(object):
         self.train_acc = checkpoint['train_acc']
         self.start_epoch = checkpoint['epoch']
 
+
     def train_epoch(self, trainloader, epoch):
         self.net.train()
         train_loss = 0
@@ -227,17 +228,17 @@ class Classifier(object):
                 labels_batch = targets.cpu().detach().numpy()
 
                 loss = self.criterion(outputs, targets)
-                print(loss)
+                # print(loss)
                 loss.backward()
 
-                print(self.net.fc2.weight)
-                print(self.net.fc2.weight.grad)
-                print(self.net.fc2.weight.grad.shape)
+                # print(self.net.fc2.weight)
+                # print(self.net.fc2.weight.grad)
+                # print(self.net.fc2.weight.grad.shape)
 
-                print('Prediction score:', prediction_scores_batch.shape)
-                print('Label:', labels_batch.shape)
-                print('Gradient:', self.net.fc2.weight.grad.shape)
-                sys.exit(1)
+                # print('Prediction score:', prediction_scores_batch.shape)
+                # print('Label:', labels_batch.shape)
+                # print('Gradient:', self.net.fc2.weight.grad.shape)
+                # sys.exit(1)
 
                 if len(prediction_scores) == 0:
                     prediction_scores = prediction_scores_batch

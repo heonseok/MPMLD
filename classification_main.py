@@ -54,6 +54,7 @@ if not os.path.exists(args.data_path):
 
 merged_dataset = load_dataset(args.dataset, args.data_path)
 print(merged_dataset.__len__())
+print('Number of features: ' + str(merged_dataset.__getitem__(0)[0].numpy().shape[0]))
 
 if args.setsize * 2.4 > len(merged_dataset):
     print('Setsize * 2.4 > len(concatset); Terminate program')

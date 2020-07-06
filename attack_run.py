@@ -4,7 +4,8 @@ import datetime
 
 dataset_list = [
     # 'adult',
-    'MNIST',
+    'location',
+    # 'MNIST',
     # 'Fashion-MNIST',
     # 'CIFAR-10',
 ]
@@ -38,15 +39,27 @@ target_classifier_list = [
     # 'ConvClassifier_setsize400_original',
     # 'ConvClassifier_setsize500_original',
 #     'ConvClassifier_setsize1000_original',
-    'ConvClassifier_setsize10000_original',
+#     'ConvClassifier_setsize10000_original',
+
+    # 'FCNClassifier_setsize500_original',
+    # 'FCNClassifier_setsize1000_original',
+    # 'FCNClassifier_setsize2000_original',
+    # 'FCNClassifier_setsize2000_AE_z64_base/full_z',
+    # 'FCNClassifier_setsize2000_AE_z64_type1/full_z',
+    # 'FCNClassifier_setsize2000_AE_z64_type1/partial_z',
+    # 'FCNClassifier_setsize2000_AE_z64_type2/full_z',
+    # 'FCNClassifier_setsize2000_AE_z64_type2/partial_z',
+
+    'FCNClassifier_setsize2000_VAE_z64_base/full_z',
+
 ]
 
 repeat_idx_list = [
     0,
-#     1,
-#     2,
-#     3,
-#     4,
+    1,
+    2,
+    3,
+    4,
 ]
 
 setup_dict = {
