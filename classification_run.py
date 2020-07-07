@@ -38,14 +38,15 @@ target_data_list = [
     # 'AE_z64_base',
     # 'AE_z64_type1',
     # 'AE_z64_type2',
-    'VAE_z64_base',
-    # 'VAE_z64_type1',
-    # 'VAE_z64_type2',
+    'AE_z64_base',
+    'AE_z64_type1',
+    'AE_z64_type2',
 ]
 
 recon_type_list = [
     'full_z',
-    # 'partial_z',
+    'content_z',
+    'style_z',
 ]
 
 repeat_idx_list = [

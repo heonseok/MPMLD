@@ -50,7 +50,7 @@ setup_dict = {
     'early_stop_observation_period': 50,
     'gpu_id': 0,
 
-    'lr': 0.0002,
+    'lr': 0.002,
 }
 
 if not os.path.exists('log'):

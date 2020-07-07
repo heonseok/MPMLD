@@ -113,17 +113,16 @@ class ReconstructorAE(object):
             if self.disentanglement_type == 'type1':
                 self.optimizer_enc.zero_grad()
                 z = self.encoder(inputs)
-                pred_label = self.classifier(z[:, self.disc_input_dim:])
-                # print(pred_label)
-                # print(targets)
-                # sys.exit(1)
+                _, style_z = self.split_z(z)
+                pred_label = self.classifier(style_z)
                 class_loss = -self.class_loss(pred_label, targets)
                 class_loss.backward()
                 self.optimizer_enc.step()
 
                 self.optimizer_class.zero_grad()
                 z = self.encoder(inputs)
-                pred_label = self.classifier(z[:, self.disc_input_dim:])
+                _, style_z = self.split_z(z)
+                pred_label = self.classifier(style_z)
                 class_loss = self.class_loss(pred_label, targets)
                 class_loss.backward()
                 self.optimizer_class.step()
@@ -131,14 +130,16 @@ class ReconstructorAE(object):
             elif self.disentanglement_type == 'type2':
                 self.optimizer_enc.zero_grad()
                 z = self.encoder(inputs)
-                pred_label = self.classifier(z[:, 0:self.disc_input_dim])
+                content_z, _ = self.split_z(z)
+                pred_label = self.classifier(content_z)
                 class_loss = self.class_loss(pred_label, targets)
                 class_loss.backward()
                 self.optimizer_enc.step()
 
                 self.optimizer_class.zero_grad()
                 z = self.encoder(inputs)
-                pred_label = self.classifier(z[:, 0:self.disc_input_dim])
+                content_z, _ = self.split_z(z)
+                pred_label = self.classifier(content_z)
                 class_loss = self.class_loss(pred_label, targets)
                 class_loss.backward()
                 self.optimizer_class.step()
@@ -152,14 +153,6 @@ class ReconstructorAE(object):
         self.train_loss = recon_train_loss
         if self.disentanglement_type != 'base':
             self.train_acc = correct / total
-
-        if (epoch + 1) % 50 == 0:
-            print('saving the output')
-            vutils.save_image(inputs, os.path.join(self.reconstruction_path, 'real_samples.png'),
-                              normalize=True, nrow=10)
-            vutils.save_image(recons,
-                              os.path.join(self.reconstruction_path, 'recon_%03d.png' % (epoch + 1)), normalize=True,
-                              nrow=10)
 
     def inference(self, loader, epoch, type='valid'):
         self.encoder.eval()
@@ -250,9 +243,13 @@ class ReconstructorAE(object):
                 for batch_idx, (inputs, targets) in enumerate(loader):
                     inputs = inputs.to(self.device)
                     z = self.encoder(inputs)
-                    if reconstruction_type == 'partial_z':
-                        paritial_z = z[:, 0:self.disc_input_dim]
-                        z = torch.cat((paritial_z, torch.zeros_like(paritial_z)), axis=1)
+
+                    content_z, style_z = self.split_z(z)
+                    if reconstruction_type == 'content_z':
+                        z = torch.cat((content_z, torch.zeros_like(style_z)), axis=1)
+                    elif reconstruction_type == 'style_z':
+                        z = torch.cat((torch.zeros_like(content_z), style_z), axis=1)
+
                     recons_batch = self.decoder(z).cpu()
                     labels_batch = targets
                     if len(recons) == 0:
@@ -260,10 +257,10 @@ class ReconstructorAE(object):
                         labels = labels_batch
 
                         # save images
-                        vutils.save_image(recons, os.path.join(self.reconstruction_path,
-                                                               'recon_{}_{}.png'.format(dataset_type,
-                                                                                        reconstruction_type)),
-                                          normalize=True, nrow=10)
+                        # vutils.save_image(recons, os.path.join(self.reconstruction_path,
+                        #                                        'recon_{}_{}.png'.format(dataset_type,
+                        #                                                                 reconstruction_type)),
+                        #                   normalize=True, nrow=10)
 
                     else:
                         recons = torch.cat((recons, recons_batch), axis=0)
@@ -277,3 +274,9 @@ class ReconstructorAE(object):
         # todo : refactor dict to CustomDataset
         torch.save(recon_datasets_dict,
                    os.path.join(self.reconstruction_path, 'recon_{}.pt'.format(reconstruction_type)))
+
+    def split_z(self, z):
+        content_z = z[:, 0:self.disc_input_dim]
+        style_z = z[:, self.disc_input_dim:]
+
+        return content_z, style_z

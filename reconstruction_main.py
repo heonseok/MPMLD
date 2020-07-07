@@ -28,7 +28,7 @@ parser.add_argument('--early_stop_observation_period', type=int, default=20)
 parser.add_argument('--repeat_idx', type=int, default=0)
 parser.add_argument('--gpu_id', type=int, default=0)
 
-parser.add_argument('--z_dim', type=int, default=8)
+parser.add_argument('--z_dim', type=int, default=64)
 parser.add_argument('--disentanglement_type', type=str, default='type2', choices=['base', 'type1', 'type2'])
 
 parser.add_argument('--train_reconstructor', type=str2bool, default='1')
@@ -92,4 +92,5 @@ if args.train_reconstructor:
 
 if args.reconstruct_datasets:
     reconstructor.reconstruct(class_datasets, 'full_z')
-    reconstructor.reconstruct(class_datasets, 'partial_z')
+    reconstructor.reconstruct(class_datasets, 'content_z')
+    reconstructor.reconstruct(class_datasets, 'style_z')

@@ -43,14 +43,18 @@ target_classifier_list = [
 
     # 'FCNClassifier_setsize500_original',
     # 'FCNClassifier_setsize1000_original',
-    # 'FCNClassifier_setsize2000_original',
-    # 'FCNClassifier_setsize2000_AE_z64_base/full_z',
-    # 'FCNClassifier_setsize2000_AE_z64_type1/full_z',
-    # 'FCNClassifier_setsize2000_AE_z64_type1/partial_z',
-    # 'FCNClassifier_setsize2000_AE_z64_type2/full_z',
-    # 'FCNClassifier_setsize2000_AE_z64_type2/partial_z',
+    'FCNClassifier_setsize2000_original',
+    'FCNClassifier_setsize2000_AE_z64_base/full_z',
+    'FCNClassifier_setsize2000_AE_z64_base/content_z',
+    'FCNClassifier_setsize2000_AE_z64_base/style_z',
+    'FCNClassifier_setsize2000_AE_z64_type1/full_z',
+    'FCNClassifier_setsize2000_AE_z64_type1/content_z',
+    'FCNClassifier_setsize2000_AE_z64_type1/style_z',
+    'FCNClassifier_setsize2000_AE_z64_type2/full_z',
+    'FCNClassifier_setsize2000_AE_z64_type2/content_z',
+    'FCNClassifier_setsize2000_AE_z64_type2/style_z',
 
-    'FCNClassifier_setsize2000_VAE_z64_base/full_z',
+    # 'FCNClassifier_setsize2000_VAE_z64_base/full_z',
 
 ]
 
