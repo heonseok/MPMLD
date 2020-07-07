@@ -26,17 +26,18 @@ reconstruction_model_list = [
 ]
 
 disentanglement_type_list = [
-    'base',
-    'type1',
-    'type2',
+    # 'base',
+    # 'type1',
+    # 'type2',
+    'type3',
 ]
 
 repeat_idx_list = [
     0,
-    1,
-    2,
-    3,
-    4,
+    # 1,
+    # 2,
+    # 3,
+    # 4,
 ]
 
 setup_dict = {

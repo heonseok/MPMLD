@@ -6,6 +6,7 @@ import torch.backends.cudnn as cudnn
 import sys
 import torchvision.utils as vutils
 import os
+import data
 
 
 class ReconstructorAE(object):
@@ -87,14 +88,14 @@ class ReconstructorAE(object):
         self.classifier.load_state_dict(checkpoint['classifier'])
         self.start_epoch = checkpoint['epoch']
 
-    def train_epoch(self, trainloader, epoch):
+    def train_epoch(self, train_ref_loader, epoch):
         self.encoder.train()
         self.decoder.train()
         self.classifier.train()
         recon_train_loss = 0
         correct = 0
         total = 0
-        for batch_idx, (inputs, targets) in enumerate(trainloader):
+        for batch_idx, (inputs, targets, inputs_ref, targets_ref) in enumerate(train_ref_loader):
             inputs, targets = inputs.to(self.device), targets.to(self.device)
 
             # ---- Reconstruction ---- #
@@ -111,38 +112,15 @@ class ReconstructorAE(object):
 
             # ---- Disentanglement ---- #
             if self.disentanglement_type == 'type1':
-                self.optimizer_enc.zero_grad()
-                z = self.encoder(inputs)
-                _, style_z = self.split_z(z)
-                pred_label = self.classifier(style_z)
-                class_loss = -self.class_loss(pred_label, targets)
-                class_loss.backward()
-                self.optimizer_enc.step()
-
-                self.optimizer_class.zero_grad()
-                z = self.encoder(inputs)
-                _, style_z = self.split_z(z)
-                pred_label = self.classifier(style_z)
-                class_loss = self.class_loss(pred_label, targets)
-                class_loss.backward()
-                self.optimizer_class.step()
+                pred_label = self.update_type1(inputs, targets)
 
             elif self.disentanglement_type == 'type2':
-                self.optimizer_enc.zero_grad()
-                z = self.encoder(inputs)
-                content_z, _ = self.split_z(z)
-                pred_label = self.classifier(content_z)
-                class_loss = self.class_loss(pred_label, targets)
-                class_loss.backward()
-                self.optimizer_enc.step()
+                pred_label = self.update_type2(inputs, targets)
 
-                self.optimizer_class.zero_grad()
-                z = self.encoder(inputs)
-                content_z, _ = self.split_z(z)
-                pred_label = self.classifier(content_z)
-                class_loss = self.class_loss(pred_label, targets)
-                class_loss.backward()
-                self.optimizer_class.step()
+            elif self.disentanglement_type == 'type3':
+                inputs_ref, targets_ref = inputs_ref.to(self.device), targets_ref.to(self.device)
+                pred_label = self.update_type2(inputs, targets)
+                # pred_label = self.update_type3(inputs, targets, inputs_ref, targets_ref)
 
             recon_train_loss += recon_loss.item()
             if self.disentanglement_type != 'base':
@@ -153,6 +131,47 @@ class ReconstructorAE(object):
         self.train_loss = recon_train_loss
         if self.disentanglement_type != 'base':
             self.train_acc = correct / total
+
+    def update_type1(self, inputs, targets):
+        self.optimizer_enc.zero_grad()
+        z = self.encoder(inputs)
+        _, style_z = self.split_z(z)
+        pred_label = self.classifier(style_z)
+        class_loss = -self.class_loss(pred_label, targets)
+        class_loss.backward()
+        self.optimizer_enc.step()
+
+        self.optimizer_class.zero_grad()
+        z = self.encoder(inputs)
+        _, style_z = self.split_z(z)
+        pred_label = self.classifier(style_z)
+        class_loss = self.class_loss(pred_label, targets)
+        class_loss.backward()
+        self.optimizer_class.step()
+
+        return pred_label
+
+    def update_type2(self, inputs, targets):
+        self.optimizer_enc.zero_grad()
+        z = self.encoder(inputs)
+        content_z, _ = self.split_z(z)
+        pred_label = self.classifier(content_z)
+        class_loss = self.class_loss(pred_label, targets)
+        class_loss.backward()
+        self.optimizer_enc.step()
+
+        self.optimizer_class.zero_grad()
+        z = self.encoder(inputs)
+        content_z, _ = self.split_z(z)
+        pred_label = self.classifier(content_z)
+        class_loss = self.class_loss(pred_label, targets)
+        class_loss.backward()
+        self.optimizer_class.step()
+
+        return pred_label
+
+    def update_type3(self, inputs, targets, inputs_ref, targets_ref):
+        pass
 
     def inference(self, loader, epoch, type='valid'):
         self.encoder.eval()
@@ -169,12 +188,11 @@ class ReconstructorAE(object):
                 recon_loss = self.recon_loss(recons, inputs)
                 loss += recon_loss.item()
 
-                if self.disentanglement_type == 'type1':
-                    pred_label = self.classifier(z[:, self.disc_input_dim:])
-                elif self.disentanglement_type == 'type2':
-                    pred_label = self.classifier(z[:, 0:self.disc_input_dim])
-
                 if self.disentanglement_type != 'base':
+                    content_z, style_z = self.split_z(z)
+                    pred_label = self.classifier(style_z)
+                    # pred_label = self.classifier(content_z)
+
                     _, predicted = pred_label.max(1)
                     total += targets.size(0)
                     correct += predicted.eq(targets).sum().item()
@@ -208,21 +226,40 @@ class ReconstructorAE(object):
                 print('Early stop count == {}; Terminate training\n'.format(self.early_stop_observation_period))
                 self.train_flag = False
 
-    def train(self, trainset, validset=None):
+    def train(self, train_set, valid_set=None, ref_set=None):
         print('==> Start training {}'.format(self.reconstruction_path))
         self.train_flag = True
-        trainloader = torch.utils.data.DataLoader(trainset, batch_size=self.train_batch_size, shuffle=True,
-                                                  num_workers=2)
+
+        train_ref_set = data.DoubleDataset(train_set, ref_set)
+        train_ref_loader = torch.utils.data.DataLoader(train_ref_set, batch_size=self.train_batch_size, shuffle=True,
+                                                       num_workers=2)
+
         if self.early_stop:
-            validloader = torch.utils.data.DataLoader(validset, batch_size=self.train_batch_size, shuffle=True,
-                                                      num_workers=2)
+            valid_loader = torch.utils.data.DataLoader(valid_set, batch_size=self.train_batch_size, shuffle=True,
+                                                       num_workers=2)
         for epoch in range(self.start_epoch, self.start_epoch + self.epochs):
             if self.train_flag:
-                self.train_epoch(trainloader, epoch)
+                self.train_epoch(train_ref_loader, epoch)
                 if self.early_stop:
-                    self.inference(validloader, epoch, type='valid')
+                    self.inference(valid_loader, epoch, type='valid')
             else:
                 break
+
+    # def train(self, trainset, validset=None, refset=None):
+    #     print('==> Start training {}'.format(self.reconstruction_path))
+    #     self.train_flag = True
+    #     trainloader = torch.utils.data.DataLoader(trainset, batch_size=self.train_batch_size, shuffle=True,
+    #                                               num_workers=2)
+    #     if self.early_stop:
+    #         validloader = torch.utils.data.DataLoader(validset, batch_size=self.train_batch_size, shuffle=True,
+    #                                                   num_workers=2)
+    #     for epoch in range(self.start_epoch, self.start_epoch + self.epochs):
+    #         if self.train_flag:
+    #             self.train_epoch(trainloader, epoch)
+    #             if self.early_stop:
+    #                 self.inference(validloader, epoch, type='valid')
+    #         else:
+    #             break
 
     def reconstruct(self, dataset_dict, reconstruction_type):
         print('==> Reconstruct datasets')

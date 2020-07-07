@@ -12,7 +12,8 @@ from torch.utils.data import ConcatDataset
 import sys
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--dataset', type=str, default='MNIST', choices=['MNIST', 'Fashion-MNIST', 'CIFAR-10', 'adult', 'location'])
+parser.add_argument('--dataset', type=str, default='MNIST',
+                    choices=['MNIST', 'Fashion-MNIST', 'CIFAR-10', 'adult', 'location'])
 parser.add_argument('--setsize', type=int, default=10000)
 parser.add_argument('--lr', type=float, default=0.02)
 parser.add_argument('--base_path', type=str, default='/mnt/disk1/heonseok/MPMLD')
@@ -29,13 +30,14 @@ parser.add_argument('--repeat_idx', type=int, default=0)
 parser.add_argument('--gpu_id', type=int, default=0)
 
 parser.add_argument('--z_dim', type=int, default=64)
-parser.add_argument('--disentanglement_type', type=str, default='type2', choices=['base', 'type1', 'type2'])
+parser.add_argument('--disentanglement_type', type=str, default='type2', choices=['base', 'type1', 'type2', 'type3'])
 
 parser.add_argument('--train_reconstructor', type=str2bool, default='1')
 parser.add_argument('--reconstruct_datasets', type=str2bool, default='1')
 
-args = parser.parse_args()
+parser.add_argument('--ref_ratio', type=float, default=0.1)
 
+args = parser.parse_args()
 
 torch.cuda.set_device(args.gpu_id)
 
@@ -71,6 +73,7 @@ subset0 = Subset(merged_dataset, range(0, args.setsize))
 subset1 = Subset(merged_dataset, range(args.setsize, int(1.2 * args.setsize)))
 subset2 = Subset(merged_dataset, range(int(1.2 * args.setsize), int(1.4 * args.setsize)))
 subset3 = Subset(merged_dataset, range(int(1.4 * args.setsize), int(2.4 * args.setsize)))
+subset4 = Subset(merged_dataset, range(int(2.4 * args.setsize), int((2.4 + args.ref_ratio) * args.setsize)))
 
 class_datasets = {
     'train': subset0,
@@ -82,13 +85,20 @@ for dataset_type, dataset in class_datasets.items():
     print('Class {:<5} dataset: {}'.format(dataset_type, len(dataset)))
 print()
 
+ref_dataset = subset4
+for _ in range(int(1 / args.ref_ratio) - 1):
+    ref_dataset = ConcatDataset((ref_dataset, subset4))
+
 if args.reconstruction_model == 'AE':
     reconstructor = ReconstructorAE(args)
 elif args.reconstruction_model == 'VAE':
     reconstructor = ReconstructorVAE(args)
 
 if args.train_reconstructor:
-    reconstructor.train(class_datasets['train'], class_datasets['valid'])
+    if args.disentanglement_type in ['base', 'type1', 'type2']:
+        reconstructor.train(class_datasets['train'], class_datasets['valid'])
+    elif args.disentanglement_type in ['type3']:
+        reconstructor.train(class_datasets['train'], class_datasets['valid'], ref_dataset)
 
 if args.reconstruct_datasets:
     reconstructor.reconstruct(class_datasets, 'full_z')

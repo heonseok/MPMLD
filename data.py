@@ -4,7 +4,7 @@ import sys
 import numpy as np
 import os
 from utils import CustomDataset
-from torch.utils.data import ConcatDataset
+from torch.utils.data import ConcatDataset, Dataset
 import torch
 
 
@@ -96,6 +96,19 @@ def load_dataset(dataset, data_path):
     elif dataset == 'location':
         dataset = np.load(os.path.join(data_path, 'data_complete.npz'))
         # print(np.unique(dataset['y']-1))
-        total_set = CustomDataset(torch.FloatTensor(dataset['x']), dataset['y']-1)
+        total_set = CustomDataset(torch.FloatTensor(dataset['x']), dataset['y'] - 1)
 
     return total_set
+
+
+class DoubleDataset(Dataset):
+    def __init__(self, dataset1, dataset2):
+        self.dataset1 = dataset1
+        self.dataset2 = dataset2
+
+    def __len__(self):
+        return len(self.dataset1)
+
+    def __getitem__(self, idx):
+        return self.dataset1[idx][0], self.dataset1[idx][1], self.dataset2[idx][0], self.dataset2[idx][1]
+        # return self.dataset1[idx], self.dataset2[idx]
