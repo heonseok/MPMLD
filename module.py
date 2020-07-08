@@ -250,9 +250,6 @@ class FCNEncoder(nn.Module):
 
         self.main = nn.Sequential(
             nn.Linear(input_dim, latent_dim, bias=True),
-            # nn.ReLU(True),
-            # nn.Linear(input_dim, latent_dim, bias=True),
-            # nn.ReLU(True),
         )
 
         init_layers(self._modules)
@@ -266,7 +263,7 @@ class FCNDecoder(nn.Module):
         super().__init__()
 
         self.main = nn.Sequential(
-            nn.Linear(latent_dim, input_dim, bias=True)
+            nn.Linear(latent_dim, input_dim, bias=True),
         )
 
         init_layers(self._modules)
@@ -274,6 +271,38 @@ class FCNDecoder(nn.Module):
     def forward(self, x):
         return self.main(x)
 
+# class FCNEncoder(nn.Module):
+#     def __init__(self, input_dim, latent_dim):
+#         super().__init__()
+#
+#         self.main = nn.Sequential(
+#             nn.Linear(input_dim, 2 * latent_dim, bias=True),
+#             nn.ReLU(True),
+#             nn.Linear(2 * latent_dim, latent_dim, bias=True),
+#             nn.ReLU(True),
+#         )
+#
+#         init_layers(self._modules)
+#
+#     def forward(self, x):
+#         return self.main(x)
+#
+#
+# class FCNDecoder(nn.Module):
+#     def __init__(self, input_dim, latent_dim):
+#         super().__init__()
+#
+#         self.main = nn.Sequential(
+#             nn.Linear(latent_dim, 2 * latent_dim, bias=True),
+#             nn.ReLU(True),
+#             nn.Linear(2 * latent_dim, input_dim, bias=True),
+#             nn.ReLU(True),
+#         )
+#
+#         init_layers(self._modules)
+#
+#     def forward(self, x):
+#         return self.main(x)
 
 class VAEFCNEncoder(nn.Module):
     def __init__(self, input_dim, latent_dim):

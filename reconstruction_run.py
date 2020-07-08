@@ -26,9 +26,12 @@ reconstruction_model_list = [
 ]
 
 disentanglement_type_list = [
+    'type5',
     'base',
     'type1',
     'type2',
+    'type3',
+    'type4',
     # 'type3',
 ]
 
