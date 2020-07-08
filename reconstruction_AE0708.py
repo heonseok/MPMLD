@@ -1,4 +1,5 @@
 import module
+from sklearn import metrics
 import torch
 import torch.optim as optim
 import torch.nn as nn
@@ -8,6 +9,7 @@ import torchvision.utils as vutils
 import os
 import data
 
+# torch.set_default_tensor_type(torch.FloatTensor)
 
 class ReconstructorAE(object):
     def __init__(self, args):
@@ -41,8 +43,12 @@ class ReconstructorAE(object):
         elif args.dataset in ['adult', 'location']:
             self.encoder = module.FCNEncoder(args.encoder_input_dim, self.z_dim)
             self.decoder = module.FCNDecoder(args.encoder_input_dim, self.z_dim)
+
             self.class_classifier_with_content = module.Discriminator(self.disc_input_dim, args.class_num)
             self.class_classifier_with_style = module.Discriminator(self.disc_input_dim, args.class_num)
+
+            self.membership_classifier_with_content = module.MembershipDiscriminator(self.disc_input_dim, 1)
+            self.membership_classifier_with_style = module.MembershipDiscriminator(self.disc_input_dim, 1)
 
         self.optimizer_enc = optim.Adam(self.encoder.parameters(), lr=args.lr, betas=(0.5, 0.999))
         self.optimizer_dec = optim.Adam(self.decoder.parameters(), lr=args.lr, betas=(0.5, 0.999))
@@ -50,25 +56,33 @@ class ReconstructorAE(object):
                                                   betas=(0.5, 0.999))
         self.optimizer_class_style = optim.Adam(self.class_classifier_with_style.parameters(), lr=args.lr,
                                                 betas=(0.5, 0.999))
+        self.optimizer_membership_content = optim.Adam(self.membership_classifier_with_content.parameters(), lr=args.lr,
+                                                     betas=(0.5, 0.999))
+        self.optimizer_membership_style = optim.Adam(self.membership_classifier_with_style.parameters(), lr=args.lr,
+                                                     betas=(0.5, 0.999))
 
-        # self.criterion = nn.BCEWithLogitsLoss()
-        # self.criterion = nn.BCELoss()
         self.recon_loss = nn.MSELoss()
         self.class_loss = nn.CrossEntropyLoss()
+        # self.membership_loss = nn.CrossEntropyLoss()
+        self.membership_loss = nn.BCEWithLogitsLoss()
+        # nn.
+        # self.membership_loss = nn.BCELoss()
 
         self.device = torch.device("cuda:{}".format(args.gpu_id))
         self.encoder = self.encoder.to(self.device)
         self.decoder = self.decoder.to(self.device)
         self.class_classifier_with_content = self.class_classifier_with_content.to(self.device)
         self.class_classifier_with_style = self.class_classifier_with_style.to(self.device)
+        self.membership_classifier_with_content = self.membership_classifier_with_content.to(self.device)
+        self.membership_classifier_with_style = self.membership_classifier_with_style.to(self.device)
 
         self.start_epoch = 0
         self.best_valid_loss = float("inf")
         self.train_loss = 0
         self.early_stop_count = 0
 
-        self.class_content_train_acc = 0
-        self.class_style_train_acc = 0
+        # self.class_content_train_acc = 0
+        # self.class_style_train_acc = 0
 
         # print(self.encoder)
         # print(self.decoder)
@@ -107,6 +121,7 @@ class ReconstructorAE(object):
         total = 0
         for batch_idx, (inputs, targets, inputs_ref, targets_ref) in enumerate(train_ref_loader):
             inputs, targets = inputs.to(self.device), targets.to(self.device)
+            inputs_ref, targets_ref = inputs_ref.to(self.device), targets_ref.to(self.device)
 
             # ---- Reconstruction (Encoder & Decoder) ---- #
             recon_loss = self.train_AE(inputs)
@@ -114,6 +129,10 @@ class ReconstructorAE(object):
             # ---- Class classifiers ---- #
             self.train_class_classifier_with_content(inputs, targets)
             self.train_class_classifier_with_style(inputs, targets)
+
+            # ---- Membership classifiers ---- #
+            self.train_membership_classifier_with_content(inputs, targets, inputs_ref, targets_ref)
+            self.train_membership_classifier_with_style(inputs, targets, inputs_ref, targets_ref)
 
             # ---- Disentanglement (Encoder & Classifiers) ---- #
             if self.disentanglement_type == 'type1':
@@ -123,7 +142,6 @@ class ReconstructorAE(object):
                 self.disentangle_type2(inputs, targets)
 
             elif self.disentanglement_type == 'type3':
-                inputs_ref, targets_ref = inputs_ref.to(self.device), targets_ref.to(self.device)
                 self.disentangle_type3(inputs, targets, inputs_ref, targets_ref)
 
             recon_train_loss += recon_loss.item()
@@ -136,25 +154,6 @@ class ReconstructorAE(object):
         # if self.disentanglement_type != 'base':
         #     self.train_acc = correct / total
 
-    def train_class_classifier_with_style(self, inputs, targets):
-        self.optimizer_class_style.zero_grad()
-        z = self.encoder(inputs)
-        _, style_z = self.split_z(z)
-        pred_label = self.class_classifier_with_style(style_z)
-        class_loss_style = self.class_loss(pred_label, targets)
-        class_loss_style.backward()
-        self.optimizer_class_style.step()
-        return pred_label
-
-    def train_class_classifier_with_content(self, inputs, targets):
-        self.optimizer_class_content.zero_grad()
-        z = self.encoder(inputs)
-        content_z, _ = self.split_z(z)
-        pred_label = self.class_classifier_with_content(content_z)
-        class_loss_content = self.class_loss(pred_label, targets)
-        class_loss_content.backward()
-        self.optimizer_class_content.step()
-
     def train_AE(self, inputs):
         self.optimizer_enc.zero_grad()
         self.optimizer_dec.zero_grad()
@@ -166,53 +165,128 @@ class ReconstructorAE(object):
         self.optimizer_dec.step()
         return recon_loss
 
-    def disentangle_type1(self, inputs, targets):
-        self.optimizer_enc.zero_grad()
-        z = self.encoder(inputs)
-        _, style_z = self.split_z(z)
-        pred_label = self.class_classifier_with_style(style_z)
-        class_loss = -self.class_loss(pred_label, targets)
-        class_loss.backward()
-        self.optimizer_enc.step()
-
+    def train_class_classifier_with_style(self, inputs, targets):
         self.optimizer_class_style.zero_grad()
         z = self.encoder(inputs)
         _, style_z = self.split_z(z)
         pred_label = self.class_classifier_with_style(style_z)
-        class_loss = self.class_loss(pred_label, targets)
-        class_loss.backward()
+        class_loss_style = self.class_loss(pred_label, targets)
+        class_loss_style.backward()
         self.optimizer_class_style.step()
 
-        return pred_label
+    def train_class_classifier_with_content(self, inputs, targets):
+        self.optimizer_class_content.zero_grad()
+        z = self.encoder(inputs)
+        content_z, _ = self.split_z(z)
+        pred = self.class_classifier_with_content(content_z)
+        class_loss_content = self.class_loss(pred, targets)
+        class_loss_content.backward()
+        self.optimizer_class_content.step()
+
+    def train_membership_classifier_with_style(self, inputs, targets, inputs_ref, targets_ref):
+        self.optimizer_membership_style.zero_grad()
+        z = self.encoder(inputs)
+        _, style_z = self.split_z(z)
+        pred = self.membership_classifier_with_style(style_z)
+        in_loss = self.membership_loss(pred, torch.ones_like(pred))
+
+        z_ref = self.encoder(inputs_ref)
+        _, style_z_ref = self.split_z(z_ref)
+        pred_ref = self.membership_classifier_with_style(style_z_ref)
+        out_loss = self.membership_loss(pred_ref, torch.zeros_like(pred_ref))
+
+        membership_loss = in_loss + out_loss
+        membership_loss.backward()
+        self.optimizer_membership_style.step()
+
+    def train_membership_classifier_with_content(self, inputs, targets, inputs_ref, targets_ref):
+        self.optimizer_membership_content.zero_grad()
+        z = self.encoder(inputs)
+        content_z, _ = self.split_z(z)
+        pred = self.membership_classifier_with_content(content_z)
+        in_loss = self.membership_loss(pred, torch.ones_like(pred))
+        # in_loss = self.membership_loss(pred, torch.ones(pred.shape[0], dtype=torch.long, device=self.device))
+        # print(pred.shape)
+        # print(torch.ones_like(pred).shape)
+        #
+        # print(pred[0:10])
+        # print(targets[0:10])
+        # print(torch.ones_like(pred)[0:10])
+
+        # in_loss = self.membership_loss(pred, (torch.ones_like(pred, dtype=torch.long, device=self.device)))
+        # in_loss = self.membership_loss(pred, torch.ones(pred.shape[0], device=self.device))
+        # in_loss = self.membership_loss(pred, torch.ones_like(pred, dtype=torch.long))
+
+        z_ref = self.encoder(inputs_ref)
+        _, content_z_ref = self.split_z(z_ref)
+        pred_ref = self.membership_classifier_with_content(content_z_ref)
+        out_loss = self.membership_loss(pred_ref, torch.zeros_like(pred_ref))
+        # out_loss = self.membership_loss(pred_ref, torch.zeros(pred_ref.shape[0], dtype=torch.long, device=self.device))
+
+        membership_loss = in_loss + out_loss
+        membership_loss.backward()
+        # in_loss.backward()
+        self.optimizer_membership_content.step()
+
+    def disentangle_type1(self, inputs, targets):
+        self.optimizer_enc.zero_grad()
+        z = self.encoder(inputs)
+        _, style_z = self.split_z(z)
+        pred = self.class_classifier_with_style(style_z)
+        class_loss = -self.class_loss(pred, targets)
+        class_loss.backward()
+        self.optimizer_enc.step()
+
+        # self.optimizer_class_style.zero_grad()
+        # z = self.encoder(inputs)
+        # _, style_z = self.split_z(z)
+        # pred = self.class_classifier_with_style(style_z)
+        # class_loss = self.class_loss(pred, targets)
+        # class_loss.backward()
+        # self.optimizer_class_style.step()
 
     def disentangle_type2(self, inputs, targets):
         self.optimizer_enc.zero_grad()
         z = self.encoder(inputs)
         content_z, _ = self.split_z(z)
-        pred_label = self.class_classifier_with_content(content_z)
-        class_loss = self.class_loss(pred_label, targets)
+        pred = self.class_classifier_with_content(content_z)
+        class_loss = self.class_loss(pred, targets)
         class_loss.backward()
         self.optimizer_enc.step()
 
-        self.optimizer_class_content.zero_grad()
-        z = self.encoder(inputs)
-        content_z, _ = self.split_z(z)
-        pred_label = self.class_classifier_with_content(content_z)
-        class_loss = self.class_loss(pred_label, targets)
-        class_loss.backward()
-        self.optimizer_class_content.step()
-
-        return pred_label
+        # self.optimizer_class_content.zero_grad()
+        # z = self.encoder(inputs)
+        # content_z, _ = self.split_z(z)
+        # pred = self.class_classifier_with_content(content_z)
+        # class_loss = self.class_loss(pred, targets)
+        # class_loss.backward()
+        # self.optimizer_class_content.step()
 
     def disentangle_type3(self, inputs, targets, inputs_ref, targets_ref):
-        pass
+        self.optimizer_encoder.zero_grad()
+        z = self.encoder(inputs)
+        _, style_z = self.split_z(z)
+        pred = self.membership_classifier_with_style(style_z)
+        in_loss = self.membership_loss(pred, torch.ones_like(pred))
+
+        z_ref = self.encoder(inputs_ref)
+        _, style_z_ref = self.split_z(z_ref)
+        pred_ref = self.membership_classifier_with_style(style_z_ref)
+        out_loss = self.membership_loss(pred_ref, torch.zeros_like(pred_ref))
+
+        membership_loss = - (in_loss + out_loss)
+        membership_loss.backward()
+        self.optimizer_encoder_style.step()
 
     def inference(self, loader, epoch, type='valid'):
         self.encoder.eval()
         self.decoder.eval()
         loss = 0
-        correct_from_content = 0
-        correct_from_style = 0
+        correct_class_from_content = 0
+        correct_class_from_style = 0
+        correct_membership_from_content = 0
+        correct_membership_from_style = 0
+
         total = 0
         with torch.no_grad():
             for batch_idx, (inputs, targets) in enumerate(loader):
@@ -223,26 +297,43 @@ class ReconstructorAE(object):
                 recon_loss = self.recon_loss(recons, inputs)
                 loss += recon_loss.item()
 
-                if self.disentanglement_type != 'base':
-                    total += targets.size(0)
+                total += targets.size(0)
+                content_z, style_z = self.split_z(z)
 
-                    content_z, style_z = self.split_z(z)
-                    pred_label_from_content = self.class_classifier_with_content(content_z)
-                    pred_label_from_style = self.class_classifier_with_style(style_z)
+                # -- Class (valid) -- #
+                _, pred_class_from_content = self.class_classifier_with_content(content_z).max(1)
+                _, pred_class_from_style = self.class_classifier_with_style(style_z).max(1)
 
-                    _, predicted_from_content = pred_label_from_content.max(1)
-                    _, predicted_from_style = pred_label_from_style.max(1)
+                # _, predicted_from_content = pred_class_from_content.max(1)
+                # _, predicted_from_style = pred_class_from_style.max(1)
 
-                    correct_from_content += predicted_from_content.eq(targets).sum().item()
-                    correct_from_style += predicted_from_style.eq(targets).sum().item()
+                correct_class_from_content += pred_class_from_content.eq(targets).sum().item()
+                correct_class_from_style += pred_class_from_style.eq(targets).sum().item()
+
+                # -- Membership (train: in, valid:out) -- #
+                _, pred_membership_from_content = self.membership_classifier_with_content(content_z).max(1)
+                _, pred_membership_from_style = self.membership_classifier_with_style(style_z).max(1)
+
+                correct_membership_from_content += pred_membership_from_content.eq(
+                    torch.zeros_like(targets)).sum().item()
+                correct_membership_from_style += pred_membership_from_style.eq(
+                    torch.zeros_like(targets)).sum().item()
 
         if type == 'valid':
-            if self.disentanglement_type == 'base':
-                print('Epoch: {:>3}, Train Loss: {:.4f}, Valid Loss: {:.4f}'.format(epoch, self.train_loss, loss))
-            else:
-                print(
-                    'Epoch: {:>3}, Train Loss: {:.4f}, Valid Loss: {:.4f}, Valid Acc from Content : {:.4f}, Valid Acc from Stlye : {:.4f}'.format(
-                        epoch, self.train_loss, loss, correct_from_content / total, correct_from_style / total))
+            # if self.disentanglement_type == 'base':
+            #     print('Epoch: {:>3}, Train Loss: {:.4f}, Valid Loss: {:.4f}'.format(epoch, self.train_loss, loss))
+            # else:
+            # print(
+            #     'Epoch: {:>3}, Train Loss: {:.4f}, Valid Loss: {:.4f}, Valid Acc from Content : {:.4f}, Valid Acc from Style : {:.4f}'.format(
+            #         epoch, self.train_loss, loss, correct_class_from_content / total,
+            #                                       correct_class_from_style / total))
+            print("""Epoch: {:>3}, Train Loss: {:.4f}, Valid Loss: {:.4f}, 
+                Class Valid Acc from Content : {:.4f}, Class Valid Acc from Style : {:.4f}, 
+                Membership Specificity from Content : {:.4f}, Membership Specificity from Style : {:.4f}""".format(
+                epoch, self.train_loss, loss,
+                correct_class_from_content / total, correct_class_from_style / total,
+                correct_membership_from_content / total, correct_membership_from_style / total)
+            )
 
             if loss < self.best_valid_loss:
                 print('Saving..')

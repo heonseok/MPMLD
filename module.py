@@ -60,12 +60,36 @@ class Discriminator(nn.Module):
 
         self.net = nn.Sequential(
             nn.Linear(input_dim, 128),
-            nn.BatchNorm1d(128),
-            nn.LeakyReLU(0.2),
+            # nn.BatchNorm1d(128),
+            nn.ReLU(),
+            # nn.LeakyReLU(0.2),
             nn.Linear(128, 32),
-            nn.BatchNorm1d(32),
-            nn.LeakyReLU(0.2),
+            # nn.BatchNorm1d(32),
+            nn.ReLU(),
+            # nn.LeakyReLU(0.2),
             nn.Linear(32, output_dim),
+        )
+        init_layers(self._modules)
+
+    def forward(self, x):
+        return self.net(x)
+
+
+class MembershipDiscriminator(nn.Module):
+    def __init__(self, input_dim, output_dim):
+        super().__init__()
+
+        self.net = nn.Sequential(
+            nn.Linear(input_dim, 128),
+            # nn.BatchNorm1d(128),
+            nn.ReLU(),
+            # nn.LeakyReLU(0.2),
+            nn.Linear(128, 32),
+            # nn.BatchNorm1d(32),
+            nn.ReLU(),
+            # nn.LeakyReLU(0.2),
+            nn.Linear(32, output_dim),
+            nn.Sigmoid(),
         )
         init_layers(self._modules)
 
@@ -255,11 +279,11 @@ class VAEFCNEncoder(nn.Module):
     def __init__(self, input_dim, latent_dim):
         super().__init__()
 
-        self.mu = nn.Linear(2*latent_dim, latent_dim)
-        self.logvar = nn.Linear(2*latent_dim, latent_dim)
+        self.mu = nn.Linear(2 * latent_dim, latent_dim)
+        self.logvar = nn.Linear(2 * latent_dim, latent_dim)
 
         self.main = nn.Sequential(
-            nn.Linear(input_dim, 2*latent_dim, bias=True),
+            nn.Linear(input_dim, 2 * latent_dim, bias=True),
             nn.ReLU(),
             # nn.ReLU(True),
             # nn.Linear(input_dim, latent_dim, bias=True),

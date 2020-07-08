@@ -30,7 +30,7 @@ parser.add_argument('--repeat_idx', type=int, default=0)
 parser.add_argument('--gpu_id', type=int, default=3)
 
 parser.add_argument('--z_dim', type=int, default=64)
-parser.add_argument('--disentanglement_type', type=str, default='type2', choices=['base', 'type1', 'type2', 'type3'])
+parser.add_argument('--disentanglement_type', type=str, default='base', choices=['base', 'type1', 'type2', 'type3'])
 
 parser.add_argument('--train_reconstructor', type=str2bool, default='1')
 parser.add_argument('--reconstruct_datasets', type=str2bool, default='1')
