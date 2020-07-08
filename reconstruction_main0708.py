@@ -6,16 +6,16 @@ from torch.utils.data import Subset
 
 from data import load_dataset
 from utils import str2bool
-from reconstruction_AE import ReconstructorAE
+from reconstruction_AE0708 import ReconstructorAE
 from reconstruction_VAE import ReconstructorVAE
 from torch.utils.data import ConcatDataset
 import sys
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--dataset', type=str, default='MNIST',
+parser.add_argument('--dataset', type=str, default='location',
                     choices=['MNIST', 'Fashion-MNIST', 'CIFAR-10', 'adult', 'location'])
-parser.add_argument('--setsize', type=int, default=10000)
-parser.add_argument('--lr', type=float, default=0.02)
+parser.add_argument('--setsize', type=int, default=2000)
+parser.add_argument('--lr', type=float, default=0.002)
 parser.add_argument('--base_path', type=str, default='/mnt/disk1/heonseok/MPMLD')
 parser.add_argument('--resume', type=str2bool, default='0')
 parser.add_argument('--train_batch_size', type=int, default=100)
@@ -23,11 +23,11 @@ parser.add_argument('--valid_batch_size', type=int, default=100)
 parser.add_argument('--test_batch_size', type=int, default=100)
 
 parser.add_argument('--reconstruction_model', type=str, default='AE', choices=['AE', 'VAE'])
-parser.add_argument('--epochs', type=int, default=1500)
+parser.add_argument('--epochs', type=int, default=500)
 parser.add_argument('--early_stop', type=str2bool, default='1')
 parser.add_argument('--early_stop_observation_period', type=int, default=20)
 parser.add_argument('--repeat_idx', type=int, default=0)
-parser.add_argument('--gpu_id', type=int, default=0)
+parser.add_argument('--gpu_id', type=int, default=3)
 
 parser.add_argument('--z_dim', type=int, default=64)
 parser.add_argument('--disentanglement_type', type=str, default='type2', choices=['base', 'type1', 'type2', 'type3'])

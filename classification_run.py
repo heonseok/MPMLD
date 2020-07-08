@@ -38,9 +38,12 @@ target_data_list = [
     # 'AE_z64_base',
     # 'AE_z64_type1',
     # 'AE_z64_type2',
-    'AE_z64_base',
-    'AE_z64_type1',
-    'AE_z64_type2',
+    'AE_z32_base',
+    'AE_z32_type1',
+    'AE_z32_type2',
+    # 'AE_z64_base',
+    # 'AE_z64_type1',
+    # 'AE_z64_type2',
 ]
 
 recon_type_list = [

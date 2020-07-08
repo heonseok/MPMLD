@@ -26,25 +26,25 @@ reconstruction_model_list = [
 ]
 
 disentanglement_type_list = [
-    # 'base',
-    # 'type1',
-    # 'type2',
-    'type3',
+    'base',
+    'type1',
+    'type2',
+    # 'type3',
 ]
 
 repeat_idx_list = [
     0,
-    # 1,
-    # 2,
-    # 3,
-    # 4,
+    1,
+    2,
+    3,
+    4,
 ]
 
 setup_dict = {
     'train_reconstructor': '1',
     'reconstruct_datasets': '1',
 
-    'z_dim': 64,
+    'z_dim': 32,
 
     'epochs': 500,
     'early_stop': '1',
