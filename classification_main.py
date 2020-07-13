@@ -11,35 +11,36 @@ import utils
 import sys
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--dataset', type=str, default='adult', choices=['MNIST', 'Fashion-MNIST', 'CIFAR-10', 'CIFAR-100', 'adult', 'location'])
-parser.add_argument('--setsize', type=int, default=100)
-# parser.add_argument('--lr', type=float, default=0.0001)
+parser.add_argument('--dataset', type=str, default='location',
+                    choices=['MNIST', 'Fashion-MNIST', 'CIFAR-10', 'CIFAR-100', 'adult', 'location'])
 parser.add_argument('--lr', type=float, default=0.0001)
 parser.add_argument('--base_path', type=str, default='/mnt/disk1/heonseok/MPMLD')
 parser.add_argument('--resume', type=str2bool, default='0')
 parser.add_argument('--train_batch_size', type=int, default=100)
 parser.add_argument('--valid_batch_size', type=int, default=100)
 parser.add_argument('--test_batch_size', type=int, default=100)
-parser.add_argument('--classification_model', type=str, default='FCN',
-                    choices=['FCNClassifier', 'ConvClassifier', 'VGG19', 'ResNet18', 'ResNet50', 'ResNet101', 'DenseNet121'])
-parser.add_argument('--epochs', type=int, default=1500)
+parser.add_argument('--classification_model', type=str, default='FCNClassifier',
+                    choices=['FCNClassifier', 'ConvClassifier', 'VGG19', 'ResNet18', 'ResNet50', 'ResNet101',
+                             'DenseNet121'])
+parser.add_argument('--epochs', type=int, default=500)
 parser.add_argument('--early_stop', type=str2bool, default='1')
 parser.add_argument('--early_stop_observation_period', type=int, default=20)
 parser.add_argument('--repeat_idx', type=int, default=0)
-parser.add_argument('--gpu_id', type=int, default=0)
+parser.add_argument('--gpu_id', type=int, default=3)
 
-# parser.add_argument('--target_data', type=str, default='original')
-parser.add_argument('--target_data', type=str, default='AE_z8_base')
-parser.add_argument('--recon_type', type=str, default='partial_z')
+parser.add_argument('--target_data', type=str, default='original_setsize2000')
+# parser.add_argument('--recon_type', type=str, default='full_z')
+parser.add_argument('--recon_type', type=str, default='content_z')
+# parser.add_argument('--recon_type', type=str, default='style_z')
 
 parser.add_argument('--train_classifier', type=str2bool, default='1')
 parser.add_argument('--test_classifier', type=str2bool, default='1')
 parser.add_argument('--extract_classifier_features', type=str2bool, default='1')
+parser.add_argument('--classifier_type', type=str, default='A')
+
+parser.add_argument('--print_training', type=str2bool, default='0')
 
 args = parser.parse_args()
-
-# print(eval('\'' + args.target_data + '\'' + '.format(args.repeat_idx)'))
-# sys.exit(1)
 
 torch.cuda.set_device(args.gpu_id)
 
@@ -55,6 +56,11 @@ if not os.path.exists(args.data_path):
 merged_dataset = load_dataset(args.dataset, args.data_path)
 print(merged_dataset.__len__())
 print('Number of features: ' + str(merged_dataset.__getitem__(0)[0].numpy().shape[0]))
+
+if 'original' in args.target_data:
+    args.setsize = int(args.target_data.split('_')[1][7:])
+else:
+    args.setsize = int(args.target_data.split('_')[2][7:])
 
 if args.setsize * 2.4 > len(merged_dataset):
     print('Setsize * 2.4 > len(concatset); Terminate program')
@@ -77,26 +83,30 @@ inout_datasets = {
     'out': subset3,
 }
 
-if args.target_data == 'original':
+if 'original' in args.target_data:
     args.classification_name = os.path.join(
-        '{}_setsize{}_{}'.format(args.classification_model, args.setsize, args.target_data),
+        '{}_{}{}_{}'.format(args.target_data, args.classification_model, args.classifier_type),
         'repeat{}'.format(args.repeat_idx))
+    # print(args.classification_name)
+    # sys.exit(1)
 else:
     args.classification_name = os.path.join(
-        '{}_setsize{}_{}'.format(args.classification_model, args.setsize, args.target_data), args.recon_type,
+        '{}_{}{}'.format(args.target_data, args.classification_model, args.classifier_type), args.recon_type,
         'repeat{}'.format(args.repeat_idx))
-    print(args.classification_name)
+    # print(args.classification_name)
 
     args.reconstruction_path = os.path.join(args.output_path, 'reconstructor',
-                                            args.target_data + '_setsize{}'.format(args.setsize),
+                                            args.target_data,
                                             'repeat{}'.format(args.repeat_idx),
                                             'recon_{}.pt'.format(args.recon_type),
                                             )
+    # print(args.reconstruction_path)
+    # sys.exit(1)
     try:
         recon_datasets = utils.build_reconstructed_datasets(args.reconstruction_path)
         class_datasets['train'] = recon_datasets['train']
     except FileNotFoundError:
-        print('There is no reconstructed data')
+        print('There is no reconstructed data: ', args.reconstruction_path)
         sys.exit(1)
 
 for dataset_type, dataset in class_datasets.items():

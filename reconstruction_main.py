@@ -40,6 +40,7 @@ parser.add_argument('--ref_ratio', type=float, default=1)
 parser.add_argument('--class_weight', type=float, default=0.1)
 parser.add_argument('--membership_weight', type=float, default=0.1)
 parser.add_argument('--architecture', type=str, default='A')
+parser.add_argument('--print_training', type=str2bool, default='False')
 
 args = parser.parse_args()
 

@@ -18,6 +18,7 @@ class Classifier(object):
         self.early_stop = args.early_stop
         self.early_stop_observation_period = args.early_stop_observation_period
 
+        self.print_training = args.print_training
         # self.classification_name = args.classification_name
         self.classification_path = args.classification_path
         if not os.path.exists(self.classification_path):
@@ -86,7 +87,6 @@ class Classifier(object):
         self.train_acc = checkpoint['train_acc']
         self.start_epoch = checkpoint['epoch']
 
-
     def train_epoch(self, trainloader, epoch):
         self.net.train()
         train_loss = 0
@@ -140,9 +140,11 @@ class Classifier(object):
 
         acc = correct / total
         if type == 'valid':
-            print('Epoch: {:>3}, Train Acc: {:.4f}, Valid Acc: {:.4f}'.format(epoch, self.train_acc, acc))
+            if self.print_training:
+                print('Epoch: {:>3}, Train Acc: {:.4f}, Valid Acc: {:.4f}'.format(epoch, self.train_acc, acc))
             if acc > self.best_valid_acc:
-                print('Saving..')
+                if self.print_training:
+                    print('Saving..')
                 state = {
                     'net': self.net.state_dict(),
                     'best_valid_acc': acc,
@@ -154,10 +156,12 @@ class Classifier(object):
                 self.early_stop_count = 0
             else:
                 self.early_stop_count += 1
-                print('Early stop count: {}'.format(self.early_stop_count))
+                if self.print_training:
+                    print('Early stop count: {}'.format(self.early_stop_count))
 
             if self.early_stop_count == self.early_stop_observation_period:
-                print('Early stop count == {}; Terminate training\n'.format(self.early_stop_observation_period))
+                if self.print_training:
+                    print('Early stop count == {}; Terminate training\n'.format(self.early_stop_observation_period))
                 self.train_flag = False
 
         elif type == 'test':

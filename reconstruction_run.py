@@ -60,11 +60,11 @@ membership_weight_list = [
 ]
 
 repeat_idx_list = [
-    0,
-    # 1,
-    # 2,
-    # 3,
-    # 4,
+    # 0,
+    1,
+    2,
+    3,
+    4,
 ]
 
 setup_dict = {

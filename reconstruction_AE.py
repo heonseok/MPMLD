@@ -19,6 +19,7 @@ class ReconstructorAE(object):
         self.early_stop_observation_period = args.early_stop_observation_period
         self.use_scheduler = False
         self.architecture = args.architecture
+        self.print_training = args.print_training
 
         self.z_dim = args.z_dim
         self.disc_input_dim = int(self.z_dim / 2)
@@ -214,10 +215,11 @@ class ReconstructorAE(object):
         self.membership_acc_content = correct_membership_from_content / (2 * total)
         self.membership_acc_style = correct_membership_from_style / (2 * total)
 
-        print(
-            'Epoch: {:>3}, Train Loss: {:.4f}, Class Acc Full : {:.4f}, Class Acc Content : {:.4f}, Class Acc Style : {:.4f}, Membership Acc Full : {:.4f}, Membership Acc Content : {:.4f}, Membership Acc Style : {:.4f}'.format(
-                epoch, self.train_loss, self.class_acc_full, self.class_acc_content, self.class_acc_style,
-                self.membership_acc_full, self.membership_acc_content, self.membership_acc_style, ))
+        if self.print_training:
+            print(
+                'Epoch: {:>3}, Train Loss: {:.4f}, Class Acc Full : {:.4f}, Class Acc Content : {:.4f}, Class Acc Style : {:.4f}, Membership Acc Full : {:.4f}, Membership Acc Content : {:.4f}, Membership Acc Style : {:.4f}'.format(
+                    epoch, self.train_loss, self.class_acc_full, self.class_acc_content, self.class_acc_style,
+                    self.membership_acc_full, self.membership_acc_content, self.membership_acc_style, ))
 
     def train_AE(self, inputs):
         self.optimizer_enc.zero_grad()
@@ -374,12 +376,14 @@ class ReconstructorAE(object):
         pred = self.membership_classifier_with_content(content_z)
         in_loss = self.membership_loss(pred, torch.ones_like(pred))
 
-        z_ref = self.encoder(inputs_ref)
-        content_z_ref, _ = self.split_z(z_ref)
-        pred_ref = self.membership_classifier_with_content(content_z_ref)
-        out_loss = self.membership_loss(pred_ref, torch.zeros_like(pred_ref))
+        # z_ref = self.encoder(inputs_ref)
+        # content_z_ref, _ = self.split_z(z_ref)
+        # pred_ref = self.membership_classifier_with_content(content_z_ref)
+        # out_loss = self.membership_loss(pred_ref, torch.zeros_like(pred_ref))
 
-        membership_loss = - self.membership_weight * (in_loss + out_loss)
+        # todo : remove out_loss,
+        membership_loss = - self.membership_weight * (in_loss)
+        # membership_loss = - self.membership_weight * (in_loss + out_loss)
         membership_loss.backward()
         self.optimizer_enc.step()
 
@@ -415,7 +419,8 @@ class ReconstructorAE(object):
 
         if type == 'valid':
             if loss < self.best_valid_loss:
-                print('Saving..')
+                if self.print_training:
+                    print('Saving..')
                 state = {
                     'encoder': self.encoder.state_dict(),
                     'decoder': self.decoder.state_dict(),
@@ -447,10 +452,12 @@ class ReconstructorAE(object):
 
             else:
                 self.early_stop_count += 1
-                print('Early stop count: {}'.format(self.early_stop_count))
+                if self.print_training:
+                    print('Early stop count: {}'.format(self.early_stop_count))
 
             if self.early_stop_count == self.early_stop_observation_period:
-                print('Early stop count == {}; Terminate training\n'.format(self.early_stop_observation_period))
+                if self.print_training:
+                    print('Early stop count == {}; Terminate training\n'.format(self.early_stop_observation_period))
                 self.train_flag = False
 
     # def membership_inference(self, loader, epoch):

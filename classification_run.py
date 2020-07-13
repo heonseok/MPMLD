@@ -19,50 +19,69 @@ classification_model_list = [
     # 'DenseNet121',
 ]
 
-setsize_list = [
-    # 100,
-    # 200,
-    # 300,
-    # 400,
-    # 500,
-    # 1000,
-    2000,
-    # 10000,
-    # 20000,
-    # 30000,
-    # 30000,
+classifier_type_list = [
+    'A',
+    # 'B',
 ]
 
+# setsize_list = [
+#     # 100,
+#     # 200,
+#     # 300,
+#     # 400,
+#     # 500,
+#     # 1000,
+#     2000,
+#     # 10000,
+#     # 20000,
+#     # 30000,
+#     # 30000,
+# ]
+
 target_data_list = [
-    'original',
-    # 'AE_z64_base',
-    # 'AE_z64_type1',
-    # 'AE_z64_type2',
-    # 'AE_z32_base',
-    # 'AE_z32_type1',
-    # 'AE_z32_type2',
-    # 'AE_z32_type3',
-    # 'AE_z32_type4',
-    # 'AE_z32_type5',
-    # 'AE_z64_base',
-    # 'AE_z64_type1',
-    # 'AE_z64_type2',
-    # 'AE_z64_type5',
-    # 'AE_z16_type5',
+    # 'original_setsize2000',
+
+    'AE_z64_setsize2000_lr0.001_ref0.1_arcA_type5_cw0.01_mw0.01',
+    'AE_z64_setsize2000_lr0.01_ref0.1_arcA_type5_cw0.01_mw0.01',
+    'AE_z64_setsize2000_lr0.1_ref0.1_arcA_type5_cw0.01_mw0.01',
+
+    'AE_z64_setsize2000_lr0.001_ref0.1_arcA_type5_cw0.1_mw0.01',
+    'AE_z64_setsize2000_lr0.01_ref0.1_arcA_type5_cw0.1_mw0.01',
+    'AE_z64_setsize2000_lr0.1_ref0.1_arcA_type5_cw0.1_mw0.01',
+
+    'AE_z64_setsize2000_lr0.001_ref0.1_arcA_type5_cw0.01_mw0.1',
+    'AE_z64_setsize2000_lr0.01_ref0.1_arcA_type5_cw0.01_mw0.1',
+    'AE_z64_setsize2000_lr0.1_ref0.1_arcA_type5_cw0.01_mw0.1',
+
+    'AE_z64_setsize2000_lr0.001_ref0.1_arcA_type5_cw0.1_mw0.1',
+    'AE_z64_setsize2000_lr0.01_ref0.1_arcA_type5_cw0.1_mw0.1',
+    'AE_z64_setsize2000_lr0.1_ref0.1_arcA_type5_cw0.1_mw0.1',
+
+    'AE_z64_setsize2000_lr0.001_ref0.1_arcA_type5_cw1.0_mw0.1',
+    'AE_z64_setsize2000_lr0.01_ref0.1_arcA_type5_cw1.0_mw0.1',
+    'AE_z64_setsize2000_lr0.1_ref0.1_arcA_type5_cw1.0_mw0.1',
+
+    'AE_z64_setsize2000_lr0.001_ref0.1_arcA_type5_cw0.1_mw1.0',
+    'AE_z64_setsize2000_lr0.01_ref0.1_arcA_type5_cw0.1_mw1.0',
+    'AE_z64_setsize2000_lr0.1_ref0.1_arcA_type5_cw0.1_mw1.0',
+
+    'AE_z64_setsize2000_lr0.001_ref0.1_arcA_type5_cw1.0_mw1.0',
+    'AE_z64_setsize2000_lr0.01_ref0.1_arcA_type5_cw1.0_mw1.0',
+    'AE_z64_setsize2000_lr0.1_ref0.1_arcA_type5_cw1.0_mw1.0',
 ]
 
 recon_type_list = [
     'full_z',
-    # 'content_z',
-    # 'style_z',
+    'content_z',
+    'style_z',
 ]
 
 repeat_idx_list = [
     0,
-    # 1,
-    # 2,
-    # 3,
-    # 4,
+    1,
+    2,
+    3,
+    4,
 ]
 
 setup_dict = {
@@ -76,12 +95,13 @@ setup_dict = {
     'epochs': 500,
     'early_stop': '1',
     'early_stop_observation_period': 20,
-    'gpu_id': 0,
+    'gpu_id': 3,
 }
 
 for dataset in dataset_list:
     for classification_model in classification_model_list:
-        for setsize in setsize_list:
+        # for setsize in setsize_list:
+        for classifier_type in classifier_type_list:
             for target_data in target_data_list:
                 for recon_type in recon_type_list:
                     for repeat_idx in repeat_idx_list:
@@ -89,9 +109,10 @@ for dataset in dataset_list:
                         target_setup_dict = setup_dict
                         target_setup_dict['dataset'] = dataset
                         target_setup_dict['classification_model'] = classification_model
-                        target_setup_dict['setsize'] = setsize
+                        # target_setup_dict['setsize'] = setsize
                         target_setup_dict['target_data'] = target_data
                         target_setup_dict['recon_type'] = recon_type
+                        target_setup_dict['classifier_type'] = classifier_type
 
                         target_setup_dict['repeat_idx'] = str(repeat_idx)
 
