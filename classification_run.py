@@ -34,30 +34,35 @@ setsize_list = [
 ]
 
 target_data_list = [
-    # 'original',
+    'original',
     # 'AE_z64_base',
     # 'AE_z64_type1',
     # 'AE_z64_type2',
-    'AE_z32_base',
-    'AE_z32_type1',
-    'AE_z32_type2',
+    # 'AE_z32_base',
+    # 'AE_z32_type1',
+    # 'AE_z32_type2',
+    # 'AE_z32_type3',
+    # 'AE_z32_type4',
+    # 'AE_z32_type5',
     # 'AE_z64_base',
     # 'AE_z64_type1',
     # 'AE_z64_type2',
+    # 'AE_z64_type5',
+    # 'AE_z16_type5',
 ]
 
 recon_type_list = [
     'full_z',
-    'content_z',
-    'style_z',
+    # 'content_z',
+    # 'style_z',
 ]
 
 repeat_idx_list = [
     0,
-    1,
-    2,
-    3,
-    4,
+    # 1,
+    # 2,
+    # 3,
+    # 4,
 ]
 
 setup_dict = {
@@ -70,7 +75,7 @@ setup_dict = {
 
     'epochs': 500,
     'early_stop': '1',
-    'early_stop_observation_period': 100,
+    'early_stop_observation_period': 20,
     'gpu_id': 0,
 }
 

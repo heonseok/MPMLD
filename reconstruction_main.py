@@ -6,8 +6,8 @@ from torch.utils.data import Subset
 
 from data import load_dataset
 from utils import str2bool
-from reconstruction_AE0708 import ReconstructorAE
-from reconstruction_VAE import ReconstructorVAE
+from reconstruction_AE import ReconstructorAE
+# from reconstruction_VAE import ReconstructorVAE
 from torch.utils.data import ConcatDataset
 import sys
 
@@ -30,12 +30,16 @@ parser.add_argument('--repeat_idx', type=int, default=0)
 parser.add_argument('--gpu_id', type=int, default=3)
 
 parser.add_argument('--z_dim', type=int, default=64)
-parser.add_argument('--disentanglement_type', type=str, default='type5', choices=['base', 'type1', 'type2', 'type3', 'type4', 'type5'])
+parser.add_argument('--disentanglement_type', type=str, default='base',
+                    choices=['base', 'type1', 'type2', 'type3', 'type4', 'type5'])
 
 parser.add_argument('--train_reconstructor', type=str2bool, default='1')
 parser.add_argument('--reconstruct_datasets', type=str2bool, default='1')
 
-parser.add_argument('--ref_ratio', type=float, default=0.1)
+parser.add_argument('--ref_ratio', type=float, default=1)
+parser.add_argument('--class_weight', type=float, default=0.1)
+parser.add_argument('--membership_weight', type=float, default=0.1)
+parser.add_argument('--architecture', type=str, default='A')
 
 args = parser.parse_args()
 
@@ -50,8 +54,20 @@ args.data_path = os.path.join(args.base_path, 'data', args.dataset)
 if not os.path.exists(args.data_path):
     os.makedirs(args.data_path)
 
-args.reconstruction_name = os.path.join(
-    '{}_z{}_{}_setsize{}'.format(args.reconstruction_model, args.z_dim, args.disentanglement_type, args.setsize))
+if args.disentanglement_type == 'base':
+    args.reconstruction_name = os.path.join(
+        '{}_z{}_setsize{}_lr{}_ref{}_arc{}_{}'.format(args.reconstruction_model, args.z_dim, args.setsize, args.lr,
+                                                      args.ref_ratio, args.architecture, args.disentanglement_type,
+                                                      ))
+else:
+    args.reconstruction_name = os.path.join(
+        '{}_z{}_setsize{}_lr{}_ref{}_arc{}_{}_cw{}_mw{}'.format(args.reconstruction_model, args.z_dim, args.setsize,
+                                                                args.lr, args.ref_ratio, args.architecture,
+                                                                args.disentanglement_type,
+                                                                args.class_weight, args.membership_weight,
+                                                                ))
+# args.reconstruction_name = os.path.join(
+#     '{}_z{}_{}_setsize{}'.format(args.reconstruction_model, args.z_dim, args.disentanglement_type, args.setsize))
 args.reconstruction_path = os.path.join(args.output_path, 'reconstructor', args.reconstruction_name,
                                         'repeat{}'.format(args.repeat_idx))
 
@@ -91,8 +107,8 @@ for _ in range(int(1 / args.ref_ratio) - 1):
 
 if args.reconstruction_model == 'AE':
     reconstructor = ReconstructorAE(args)
-elif args.reconstruction_model == 'VAE':
-    reconstructor = ReconstructorVAE(args)
+# elif args.reconstruction_model == 'VAE':
+#     reconstructor = ReconstructorVAE(args)
 
 if args.train_reconstructor:
     # if args.disentanglement_type in ['base', 'type1', 'type2']:

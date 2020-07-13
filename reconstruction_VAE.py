@@ -36,7 +36,7 @@ class ReconstructorVAE(object):
         if args.dataset in ['MNIST', 'Fashion-MNIST',]:
             self.encoder = module.VAEConvEncoder(self.z_dim, self.num_channels)
             self.decoder = module.VAEConvDecoder(self.z_dim, self.num_channels)
-            self.classifier = module.Discriminator(self.disc_input_dim, 10)
+            self.classifier = module.ClassDiscriminator(self.disc_input_dim, 10)
         # elif args.dataset == 'CIFAR-10':
         #     self.encoder = module.ConvEncoderVAE(self.z_dim, self.num_channels)
         #     self.decoder = module.ConvDecoderVAE(self.z_dim, self.num_channels)
@@ -44,7 +44,7 @@ class ReconstructorVAE(object):
         elif args.dataset in ['adult', 'location']:
             self.encoder = module.VAEFCNEncoder(args.encoder_input_dim, self.z_dim)
             self.decoder = module.VAEFCNDecoder(args.encoder_input_dim, self.z_dim)
-            self.classifier = module.Discriminator(self.disc_input_dim, args.class_num)
+            self.classifier = module.ClassDiscriminator(self.disc_input_dim, args.class_num)
 
         self.optimizer_enc = optim.Adam(self.encoder.parameters(), lr=args.lr, betas=(0.5, 0.999))
         self.optimizer_dec = optim.Adam(self.decoder.parameters(), lr=args.lr, betas=(0.5, 0.999))

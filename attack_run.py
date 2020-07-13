@@ -44,15 +44,26 @@ target_classifier_list = [
     # 'FCNClassifier_setsize500_original',
     # 'FCNClassifier_setsize1000_original',
     'FCNClassifier_setsize2000_original',
-    'FCNClassifier_setsize2000_AE_z64_base/full_z',
-    'FCNClassifier_setsize2000_AE_z64_base/content_z',
-    'FCNClassifier_setsize2000_AE_z64_base/style_z',
-    'FCNClassifier_setsize2000_AE_z64_type1/full_z',
-    'FCNClassifier_setsize2000_AE_z64_type1/content_z',
-    'FCNClassifier_setsize2000_AE_z64_type1/style_z',
-    'FCNClassifier_setsize2000_AE_z64_type2/full_z',
-    'FCNClassifier_setsize2000_AE_z64_type2/content_z',
-    'FCNClassifier_setsize2000_AE_z64_type2/style_z',
+    # 'FCNClassifier_setsize2000_AE_z64_base/full_z',
+    # 'FCNClassifier_setsize2000_AE_z64_base/content_z',
+    # 'FCNClassifier_setsize2000_AE_z64_base/style_z',
+
+    # 'FCNClassifier_setsize2000_AE_z64_type1/full_z',
+    # 'FCNClassifier_setsize2000_AE_z64_type1/content_z',
+    # 'FCNClassifier_setsize2000_AE_z64_type1/style_z',
+    # 'FCNClassifier_setsize2000_AE_z64_type5/full_z',
+    # 'FCNClassifier_setsize2000_AE_z64_type5/content_z',
+    # 'FCNClassifier_setsize2000_AE_z64_type5/style_z',
+    # 'FCNClassifier_setsize2000_AE_z16_type5/full_z',
+    # 'FCNClassifier_setsize2000_AE_z16_type5/content_z',
+    # 'FCNClassifier_setsize2000_AE_z16_type5/style_z',
+
+    # 'FCNClassifier_setsize2000_AE_z64_type1/full_z',
+    # 'FCNClassifier_setsize2000_AE_z64_type1/content_z',
+    # 'FCNClassifier_setsize2000_AE_z64_type1/style_z',
+    # 'FCNClassifier_setsize2000_AE_z64_type2/full_z',
+    # 'FCNClassifier_setsize2000_AE_z64_type2/content_z',
+    # 'FCNClassifier_setsize2000_AE_z64_type2/style_z',
 
     # 'FCNClassifier_setsize2000_VAE_z64_base/full_z',
 
@@ -60,10 +71,10 @@ target_classifier_list = [
 
 repeat_idx_list = [
     0,
-    1,
-    2,
-    3,
-    4,
+    # 1,
+    # 2,
+    # 3,
+    # 4,
 ]
 
 setup_dict = {
@@ -75,7 +86,7 @@ setup_dict = {
 
     'epochs': 500,
     'early_stop': '1',
-    'early_stop_observation_period': 50,
+    'early_stop_observation_period': 20,
     'gpu_id': 0,
 }
 
