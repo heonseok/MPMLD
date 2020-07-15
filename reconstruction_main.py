@@ -15,7 +15,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--dataset', type=str, default='location',
                     choices=['MNIST', 'Fashion-MNIST', 'CIFAR-10', 'adult', 'location'])
 parser.add_argument('--setsize', type=int, default=2000)
-parser.add_argument('--lr', type=float, default=0.002)
+parser.add_argument('--lr', type=float, default=0.001)
 parser.add_argument('--base_path', type=str, default='/mnt/disk1/heonseok/MPMLD')
 parser.add_argument('--resume', type=str2bool, default='0')
 parser.add_argument('--train_batch_size', type=int, default=100)
@@ -30,17 +30,17 @@ parser.add_argument('--repeat_idx', type=int, default=0)
 parser.add_argument('--gpu_id', type=int, default=3)
 
 parser.add_argument('--z_dim', type=int, default=64)
-parser.add_argument('--disentanglement_type', type=str, default='base',
+parser.add_argument('--disentanglement_type', type=str, default='type5',
                     choices=['base', 'type1', 'type2', 'type3', 'type4', 'type5'])
 
-parser.add_argument('--train_reconstructor', type=str2bool, default='1')
+parser.add_argument('--train_reconstructor', type=str2bool, default='0')
 parser.add_argument('--reconstruct_datasets', type=str2bool, default='1')
 
-parser.add_argument('--ref_ratio', type=float, default=1)
+parser.add_argument('--ref_ratio', type=float, default=0.1)
 parser.add_argument('--class_weight', type=float, default=0.1)
 parser.add_argument('--membership_weight', type=float, default=0.1)
-parser.add_argument('--architecture', type=str, default='A')
-parser.add_argument('--print_training', type=str2bool, default='False')
+parser.add_argument('--architecture', type=str, default='C')
+parser.add_argument('--print_training', type=str2bool, default='True')
 
 args = parser.parse_args()
 

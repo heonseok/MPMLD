@@ -48,8 +48,8 @@ class ReconstructorAE(object):
             self.class_classifier_with_style = module.ClassDiscriminator(self.disc_input_dim, 10)
         elif args.dataset in ['adult', 'location']:
             if args.architecture == 'A':
-                self.encoder = module.FCNEncoder(args.encoder_input_dim, self.z_dim)
-                self.decoder = module.FCNDecoder(args.encoder_input_dim, self.z_dim)
+                self.encoder = module.FCNEncoderA(args.encoder_input_dim, self.z_dim)
+                self.decoder = module.FCNDecoderA(args.encoder_input_dim, self.z_dim)
 
                 self.class_classifier_with_full = module.ClassDiscriminator(self.z_dim, args.class_num)
                 self.class_classifier_with_content = module.ClassDiscriminator(self.disc_input_dim, args.class_num)
@@ -58,8 +58,31 @@ class ReconstructorAE(object):
                 self.membership_classifier_with_full = module.MembershipDiscriminator(self.z_dim, 1)
                 self.membership_classifier_with_content = module.MembershipDiscriminator(self.disc_input_dim, 1)
                 self.membership_classifier_with_style = module.MembershipDiscriminator(self.disc_input_dim, 1)
+                self.recon_loss = nn.MSELoss()
             elif args.architecture == 'B':
-                pass
+                self.encoder = module.FCNEncoderB(args.encoder_input_dim, self.z_dim)
+                self.decoder = module.FCNDecoderB(args.encoder_input_dim, self.z_dim)
+
+                self.class_classifier_with_full = module.ClassDiscriminator(self.z_dim, args.class_num)
+                self.class_classifier_with_content = module.ClassDiscriminator(self.disc_input_dim, args.class_num)
+                self.class_classifier_with_style = module.ClassDiscriminator(self.disc_input_dim, args.class_num)
+
+                self.membership_classifier_with_full = module.MembershipDiscriminator(self.z_dim, 1)
+                self.membership_classifier_with_content = module.MembershipDiscriminator(self.disc_input_dim, 1)
+                self.membership_classifier_with_style = module.MembershipDiscriminator(self.disc_input_dim, 1)
+                self.recon_loss = nn.MSELoss()
+            elif args.architecture == 'C':
+                self.encoder = module.FCNEncoderC(args.encoder_input_dim, self.z_dim)
+                self.decoder = module.FCNDecoderC(args.encoder_input_dim, self.z_dim)
+
+                self.class_classifier_with_full = module.ClassDiscriminator(self.z_dim, args.class_num)
+                self.class_classifier_with_content = module.ClassDiscriminator(self.disc_input_dim, args.class_num)
+                self.class_classifier_with_style = module.ClassDiscriminator(self.disc_input_dim, args.class_num)
+
+                self.membership_classifier_with_full = module.MembershipDiscriminator(self.z_dim, 1)
+                self.membership_classifier_with_content = module.MembershipDiscriminator(self.disc_input_dim, 1)
+                self.membership_classifier_with_style = module.MembershipDiscriminator(self.disc_input_dim, 1)
+                self.recon_loss = nn.BCELoss()
 
         self.optimizer_enc = optim.Adam(self.encoder.parameters(), lr=args.lr, betas=(0.5, 0.999))
         self.optimizer_dec = optim.Adam(self.decoder.parameters(), lr=args.lr, betas=(0.5, 0.999))
@@ -83,7 +106,6 @@ class ReconstructorAE(object):
         self.scheduler_enc = StepLR(self.optimizer_enc, step_size=100, gamma=0.1)
         self.scheduler_dec = StepLR(self.optimizer_dec, step_size=100, gamma=0.1)
 
-        self.recon_loss = nn.MSELoss()
         self.class_loss = nn.CrossEntropyLoss()
         self.membership_loss = nn.BCEWithLogitsLoss()
 
@@ -536,7 +558,14 @@ class ReconstructorAE(object):
                         z = torch.cat((torch.zeros_like(content_z), style_z), axis=1)
 
                     recons_batch = self.decoder(z).cpu()
+                    # recons_batch = torch.sigmoid(self.decoder(z)).cpu()
                     labels_batch = targets
+
+                    # print(inputs)
+                    # print(torch.max(inputs), torch.min(inputs))
+                    # print(recons_batch)
+                    # print(torch.max(recons_batch), torch.min(recons_batch))
+                    # sys.exit(1)
                     if len(recons) == 0:
                         recons = recons_batch
                         labels = labels_batch

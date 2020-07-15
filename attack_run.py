@@ -11,70 +11,50 @@ dataset_list = [
 ]
 
 target_classifier_list = [
-    # 'ResNet18_setsize1000_original',
-    # 'ResNet18_setsize1000_AE_z64_base/full_z',
+    # 'original_setsize2000_FCNClassifierA',
 
-    # 'ResNet18_setsize10000_original',
-    # 'ResNet18_setsize10000_AE_z64_base/full_z',
+    'AE_z64_setsize2000_lr0.001_ref0.1_arcA_type5_cw0.01_mw0.01_FCNClassifierA',
+    # 'AE_z64_setsize2000_lr0.01_ref0.1_arcA_type5_cw0.01_mw0.01_FCNClassifierA',
+    # 'AE_z64_setsize2000_lr0.1_ref0.1_arcA_type5_cw0.01_mw0.01_FCNClassifierA',
+    #
+    # 'AE_z64_setsize2000_lr0.001_ref0.1_arcA_type5_cw0.1_mw0.01_FCNClassifierA',
+    # 'AE_z64_setsize2000_lr0.01_ref0.1_arcA_type5_cw0.1_mw0.01_FCNClassifierA',
+    # 'AE_z64_setsize2000_lr0.1_ref0.1_arcA_type5_cw0.1_mw0.01_FCNClassifierA',
+    #
+    # 'AE_z64_setsize2000_lr0.001_ref0.1_arcA_type5_cw0.01_mw0.1_FCNClassifierA',
+    # 'AE_z64_setsize2000_lr0.01_ref0.1_arcA_type5_cw0.01_mw0.1_FCNClassifierA',
+    # 'AE_z64_setsize2000_lr0.1_ref0.1_arcA_type5_cw0.01_mw0.1_FCNClassifierA',
+    #
+    # 'AE_z64_setsize2000_lr0.001_ref0.1_arcA_type5_cw0.1_mw0.1_FCNClassifierA',
+    # 'AE_z64_setsize2000_lr0.01_ref0.1_arcA_type5_cw0.1_mw0.1_FCNClassifierA',
+    # 'AE_z64_setsize2000_lr0.1_ref0.1_arcA_type5_cw0.1_mw0.1_FCNClassifierA',
+    #
+    # 'AE_z64_setsize2000_lr0.001_ref0.1_arcA_type5_cw1.0_mw0.1_FCNClassifierA',
+    # 'AE_z64_setsize2000_lr0.01_ref0.1_arcA_type5_cw1.0_mw0.1_FCNClassifierA',
+    # 'AE_z64_setsize2000_lr0.1_ref0.1_arcA_type5_cw1.0_mw0.1_FCNClassifierA',
+    #
+    # 'AE_z64_setsize2000_lr0.001_ref0.1_arcA_type5_cw0.1_mw1.0_FCNClassifierA',
+    # 'AE_z64_setsize2000_lr0.01_ref0.1_arcA_type5_cw0.1_mw1.0_FCNClassifierA',
+    # 'AE_z64_setsize2000_lr0.1_ref0.1_arcA_type5_cw0.1_mw1.0_FCNClassifierA',
+    #
+    # 'AE_z64_setsize2000_lr0.001_ref0.1_arcA_type5_cw1.0_mw1.0_FCNClassifierA',
+    # 'AE_z64_setsize2000_lr0.01_ref0.1_arcA_type5_cw1.0_mw1.0_FCNClassifierA',
+    # 'AE_z64_setsize2000_lr0.1_ref0.1_arcA_type5_cw1.0_mw1.0_FCNClassifierA',
 
-    # 'ResNet50_setsize10000_original',
-    # 'ResNet50_setsize10000_AE_z64_base/partial_z',
-    # 'ResNet50_setsize10000_AE_z64_base/full_z',
-    # 'ResNet50_setsize10000_AE_z64_type1/partial_z',
-    # 'ResNet50_setsize10000_AE_z64_type2/full_z',
-    # 'ResNet50_setsize10000_AE_z64_type2/partial_z',
+]
 
-    # 'ResNet50_setsize20000_original',
-
-    # 'ResNet101_setsize10000_original',
-    # 'ResNet101_setsize20000_original',
-
-    # 'FCN_setsize100_original',
-    # 'FCN_setsize100_AE_z8_base/partial_z',
-    # 'FCN_setsize100_AE_z8_type1/partial_z',
-    # 'FCN_setsize100_AE_z8_type2/partial_z',
-
-    # 'ConvClassifier_setsize200_original',
-    # 'ConvClassifier_setsize300_original',
-    # 'ConvClassifier_setsize400_original',
-    # 'ConvClassifier_setsize500_original',
-#     'ConvClassifier_setsize1000_original',
-#     'ConvClassifier_setsize10000_original',
-
-    # 'FCNClassifier_setsize500_original',
-    # 'FCNClassifier_setsize1000_original',
-    'FCNClassifier_setsize2000_original',
-    # 'FCNClassifier_setsize2000_AE_z64_base/full_z',
-    # 'FCNClassifier_setsize2000_AE_z64_base/content_z',
-    # 'FCNClassifier_setsize2000_AE_z64_base/style_z',
-
-    # 'FCNClassifier_setsize2000_AE_z64_type1/full_z',
-    # 'FCNClassifier_setsize2000_AE_z64_type1/content_z',
-    # 'FCNClassifier_setsize2000_AE_z64_type1/style_z',
-    # 'FCNClassifier_setsize2000_AE_z64_type5/full_z',
-    # 'FCNClassifier_setsize2000_AE_z64_type5/content_z',
-    # 'FCNClassifier_setsize2000_AE_z64_type5/style_z',
-    # 'FCNClassifier_setsize2000_AE_z16_type5/full_z',
-    # 'FCNClassifier_setsize2000_AE_z16_type5/content_z',
-    # 'FCNClassifier_setsize2000_AE_z16_type5/style_z',
-
-    # 'FCNClassifier_setsize2000_AE_z64_type1/full_z',
-    # 'FCNClassifier_setsize2000_AE_z64_type1/content_z',
-    # 'FCNClassifier_setsize2000_AE_z64_type1/style_z',
-    # 'FCNClassifier_setsize2000_AE_z64_type2/full_z',
-    # 'FCNClassifier_setsize2000_AE_z64_type2/content_z',
-    # 'FCNClassifier_setsize2000_AE_z64_type2/style_z',
-
-    # 'FCNClassifier_setsize2000_VAE_z64_base/full_z',
-
+recon_type_list = [
+    'full_z',
+    'content_z',
+    'style_z',
 ]
 
 repeat_idx_list = [
     0,
-    # 1,
-    # 2,
-    # 3,
-    # 4,
+    1,
+    2,
+    3,
+    4,
 ]
 
 setup_dict = {
@@ -87,7 +67,7 @@ setup_dict = {
     'epochs': 500,
     'early_stop': '1',
     'early_stop_observation_period': 20,
-    'gpu_id': 0,
+    'gpu_id': 3,
 }
 
 if not os.path.exists('log'):
@@ -97,21 +77,22 @@ f.write(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S') + '\n')
 
 for dataset in dataset_list:
     for target_classifier in target_classifier_list:
-        for repeat_idx in repeat_idx_list:
-            args_list = []
-            target_setup_dict = setup_dict
-            target_setup_dict['dataset'] = dataset
-            target_setup_dict['target_classifier'] = target_classifier
-            target_setup_dict['repeat_idx'] = str(repeat_idx)
+        for recon_type in recon_type_list:
+            for repeat_idx in repeat_idx_list:
+                args_list = []
+                target_setup_dict = setup_dict
+                target_setup_dict['dataset'] = dataset
+                target_setup_dict['target_classifier'] = target_classifier
+                target_setup_dict['repeat_idx'] = str(repeat_idx)
 
-            args_list.append('python attack_main.py')
-            for k, v in target_setup_dict.items():
-                args_list.append('--{} {}'.format(k, v))
+                args_list.append('python attack_main.py')
+                for k, v in target_setup_dict.items():
+                    args_list.append('--{} {}'.format(k, v))
 
-            model = ' '.join(args_list)
-            print(model)
-            f.write(model + '\n')
-            os.system(model)
+                model = ' '.join(args_list)
+                print(model)
+                f.write(model + '\n')
+                os.system(model)
 
 f.write('\n')
 f.close()

@@ -24,8 +24,9 @@ parser.add_argument('--early_stop_observation_period', type=int, default=20)
 parser.add_argument('--repeat_idx', type=int, default=0)
 parser.add_argument('--gpu_id', type=int, default=0)
 parser.add_argument('--attack_type', type=str, default='black', choices=['black', 'white'])
+parser.add_argument('--recon_type', type=str, default='full_z', choices=['full_z', 'content_z', 'style_z'])
 
-parser.add_argument('--target_classifier', type=str, default='FCN_setsize100_AE_z8_base/partial_z')
+parser.add_argument('--target_classifier', type=str, default='FCN_setsize100_AE_z8_base')
 # parser.add_argument('--target_classifier', type=str, default='FCN_setsize100_original')
 # parser.add_argument('--target_classifier', type=str, default='ResNet18_setsize10000_original')
 
@@ -44,6 +45,8 @@ torch.cuda.set_device(args.gpu_id)
 args.output_path = os.path.join(args.base_path, 'output', args.dataset)
 if not os.path.exists(args.output_path):
     os.makedirs(args.output_path)
+
+args.target_classifier = os.path.join(args.target_classifier, args.recon_type)
 
 args.classification_name = os.path.join(args.target_classifier, 'repeat{}'.format(args.repeat_idx))
 # if 'original' in args.target_classifier:

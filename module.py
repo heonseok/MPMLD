@@ -97,7 +97,7 @@ class MembershipDiscriminator(nn.Module):
         return self.net(x)
 
 
-class FCNClassifier(nn.Module):
+class FCNClassifierA(nn.Module):
     def __init__(self, input_dim, output_dim):
         super().__init__()
 
@@ -114,6 +114,25 @@ class FCNClassifier(nn.Module):
             nn.LeakyReLU(0.2),
             nn.Linear(128, output_dim),
             # nn.Softmax(dim=1),
+        )
+        init_layers(self._modules)
+
+    def forward(self, x):
+        return self.net(x)
+
+
+class FCNClassifierB(nn.Module):
+    def __init__(self, input_dim, output_dim):
+        super().__init__()
+
+        self.net = nn.Sequential(
+            nn.Linear(input_dim, 256),
+            nn.BatchNorm1d(256),
+            nn.LeakyReLU(0.2),
+            nn.Linear(256, 128),
+            nn.BatchNorm1d(128),
+            nn.LeakyReLU(0.2),
+            nn.Linear(128, output_dim),
         )
         init_layers(self._modules)
 
@@ -271,7 +290,7 @@ class AEConvDecoder(nn.Module):
 #     def forward(self, x):
 #         return self.main(x)
 
-class FCNEncoder(nn.Module):
+class FCNEncoderA(nn.Module):
     def __init__(self, input_dim, latent_dim):
         super().__init__()
 
@@ -288,7 +307,7 @@ class FCNEncoder(nn.Module):
         return self.main(x)
 
 
-class FCNDecoder(nn.Module):
+class FCNDecoderA(nn.Module):
     def __init__(self, input_dim, latent_dim):
         super().__init__()
 
@@ -297,6 +316,74 @@ class FCNDecoder(nn.Module):
             nn.ReLU(True),
             nn.Linear(2 * latent_dim, input_dim, bias=True),
             nn.ReLU(True),
+        )
+
+        init_layers(self._modules)
+
+    def forward(self, x):
+        return self.main(x)
+
+
+class FCNEncoderB(nn.Module):
+    def __init__(self, input_dim, latent_dim):
+        super().__init__()
+
+        self.main = nn.Sequential(
+            nn.Linear(input_dim, 2 * latent_dim, bias=True),
+            nn.ReLU(True),
+            nn.Linear(2 * latent_dim, latent_dim, bias=True),
+            # nn.ReLU(True),
+        )
+
+        init_layers(self._modules)
+
+    def forward(self, x):
+        return self.main(x)
+
+
+class FCNDecoderB(nn.Module):
+    def __init__(self, input_dim, latent_dim):
+        super().__init__()
+
+        self.main = nn.Sequential(
+            nn.Linear(latent_dim, 2 * latent_dim, bias=True),
+            nn.ReLU(True),
+            nn.Linear(2 * latent_dim, input_dim, bias=True),
+            # nn.ReLU(True),
+        )
+
+        init_layers(self._modules)
+
+    def forward(self, x):
+        return self.main(x)
+
+class FCNEncoderC(nn.Module):
+    def __init__(self, input_dim, latent_dim):
+        super().__init__()
+
+        self.main = nn.Sequential(
+            nn.Linear(input_dim, 2 * latent_dim, bias=True),
+            nn.ReLU(True),
+            nn.Linear(2 * latent_dim, latent_dim, bias=True),
+            # nn.ReLU(True),
+        )
+
+        init_layers(self._modules)
+
+    def forward(self, x):
+        return self.main(x)
+
+
+class FCNDecoderC(nn.Module):
+    def __init__(self, input_dim, latent_dim):
+        super().__init__()
+
+        self.main = nn.Sequential(
+            nn.Linear(latent_dim, 2 * latent_dim, bias=True),
+            nn.ReLU(True),
+            nn.Linear(2 * latent_dim, input_dim, bias=True),
+            nn.Sigmoid(),
+            # nn.ReLU(True),
         )
 
         init_layers(self._modules)

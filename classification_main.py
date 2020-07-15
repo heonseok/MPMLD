@@ -28,7 +28,8 @@ parser.add_argument('--early_stop_observation_period', type=int, default=20)
 parser.add_argument('--repeat_idx', type=int, default=0)
 parser.add_argument('--gpu_id', type=int, default=3)
 
-parser.add_argument('--target_data', type=str, default='original_setsize2000')
+# parser.add_argument('--target_data', type=str, default='original_setsize2000')
+parser.add_argument('--target_data', type=str, default='AE_z64_setsize2000_lr0.001_ref0.1_arcC_type5_cw0.1_mw0.1')
 # parser.add_argument('--recon_type', type=str, default='full_z')
 parser.add_argument('--recon_type', type=str, default='content_z')
 # parser.add_argument('--recon_type', type=str, default='style_z')
@@ -36,9 +37,9 @@ parser.add_argument('--recon_type', type=str, default='content_z')
 parser.add_argument('--train_classifier', type=str2bool, default='1')
 parser.add_argument('--test_classifier', type=str2bool, default='1')
 parser.add_argument('--extract_classifier_features', type=str2bool, default='1')
-parser.add_argument('--classifier_type', type=str, default='A')
+parser.add_argument('--classifier_type', type=str, default='B')
 
-parser.add_argument('--print_training', type=str2bool, default='0')
+parser.add_argument('--print_training', type=str2bool, default='1')
 
 args = parser.parse_args()
 
@@ -85,7 +86,7 @@ inout_datasets = {
 
 if 'original' in args.target_data:
     args.classification_name = os.path.join(
-        '{}_{}{}_{}'.format(args.target_data, args.classification_model, args.classifier_type),
+        '{}_{}{}'.format(args.target_data, args.classification_model, args.classifier_type),
         'repeat{}'.format(args.repeat_idx))
     # print(args.classification_name)
     # sys.exit(1)
