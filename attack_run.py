@@ -11,35 +11,17 @@ dataset_list = [
 ]
 
 target_classifier_list = [
-    # 'original_setsize2000_FCNClassifierA',
+    'original_setsize2000_FCNClassifierA',
 
-    'AE_z64_setsize2000_lr0.001_ref0.1_arcA_type5_cw0.01_mw0.01_FCNClassifierA',
-    # 'AE_z64_setsize2000_lr0.01_ref0.1_arcA_type5_cw0.01_mw0.01_FCNClassifierA',
-    # 'AE_z64_setsize2000_lr0.1_ref0.1_arcA_type5_cw0.01_mw0.01_FCNClassifierA',
-    #
-    # 'AE_z64_setsize2000_lr0.001_ref0.1_arcA_type5_cw0.1_mw0.01_FCNClassifierA',
-    # 'AE_z64_setsize2000_lr0.01_ref0.1_arcA_type5_cw0.1_mw0.01_FCNClassifierA',
-    # 'AE_z64_setsize2000_lr0.1_ref0.1_arcA_type5_cw0.1_mw0.01_FCNClassifierA',
-    #
-    # 'AE_z64_setsize2000_lr0.001_ref0.1_arcA_type5_cw0.01_mw0.1_FCNClassifierA',
-    # 'AE_z64_setsize2000_lr0.01_ref0.1_arcA_type5_cw0.01_mw0.1_FCNClassifierA',
-    # 'AE_z64_setsize2000_lr0.1_ref0.1_arcA_type5_cw0.01_mw0.1_FCNClassifierA',
-    #
-    # 'AE_z64_setsize2000_lr0.001_ref0.1_arcA_type5_cw0.1_mw0.1_FCNClassifierA',
-    # 'AE_z64_setsize2000_lr0.01_ref0.1_arcA_type5_cw0.1_mw0.1_FCNClassifierA',
-    # 'AE_z64_setsize2000_lr0.1_ref0.1_arcA_type5_cw0.1_mw0.1_FCNClassifierA',
-    #
-    # 'AE_z64_setsize2000_lr0.001_ref0.1_arcA_type5_cw1.0_mw0.1_FCNClassifierA',
-    # 'AE_z64_setsize2000_lr0.01_ref0.1_arcA_type5_cw1.0_mw0.1_FCNClassifierA',
-    # 'AE_z64_setsize2000_lr0.1_ref0.1_arcA_type5_cw1.0_mw0.1_FCNClassifierA',
-    #
-    # 'AE_z64_setsize2000_lr0.001_ref0.1_arcA_type5_cw0.1_mw1.0_FCNClassifierA',
-    # 'AE_z64_setsize2000_lr0.01_ref0.1_arcA_type5_cw0.1_mw1.0_FCNClassifierA',
-    # 'AE_z64_setsize2000_lr0.1_ref0.1_arcA_type5_cw0.1_mw1.0_FCNClassifierA',
-    #
-    # 'AE_z64_setsize2000_lr0.001_ref0.1_arcA_type5_cw1.0_mw1.0_FCNClassifierA',
-    # 'AE_z64_setsize2000_lr0.01_ref0.1_arcA_type5_cw1.0_mw1.0_FCNClassifierA',
-    # 'AE_z64_setsize2000_lr0.1_ref0.1_arcA_type5_cw1.0_mw1.0_FCNClassifierA',
+    # 'AE_z64_setsize2000_lr0.001_ref0.1_arcC_type5_cw0.01_mw0.01_FCNClassifierA',
+    # 'AE_z64_setsize2000_lr0.001_ref0.1_arcC_type5_cw0.01_mw0.1_FCNClassifierA',
+    # 'AE_z64_setsize2000_lr0.001_ref0.1_arcC_type5_cw0.01_mw1.0_FCNClassifierA',
+    # 'AE_z64_setsize2000_lr0.001_ref0.1_arcC_type5_cw0.1_mw0.01_FCNClassifierA',
+    # 'AE_z64_setsize2000_lr0.001_ref0.1_arcC_type5_cw0.1_mw0.1_FCNClassifierA',
+    # 'AE_z64_setsize2000_lr0.001_ref0.1_arcC_type5_cw0.1_mw1.0_FCNClassifierA',
+    # 'AE_z64_setsize2000_lr0.001_ref0.1_arcC_type5_cw1.0_mw0.01_FCNClassifierA',
+    # 'AE_z64_setsize2000_lr0.001_ref0.1_arcC_type5_cw1.0_mw0.1_FCNClassifierA',
+    # 'AE_z64_setsize2000_lr0.001_ref0.1_arcC_type5_cw1.0_mw1.0_FCNClassifierA',
 
 ]
 
@@ -77,15 +59,27 @@ f.write(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S') + '\n')
 
 for dataset in dataset_list:
     for target_classifier in target_classifier_list:
-        for recon_type in recon_type_list:
-            for repeat_idx in repeat_idx_list:
-                args_list = []
-                target_setup_dict = setup_dict
-                target_setup_dict['dataset'] = dataset
-                target_setup_dict['target_classifier'] = target_classifier
-                target_setup_dict['repeat_idx'] = str(repeat_idx)
+        for repeat_idx in repeat_idx_list:
+            args_list = []
+            target_setup_dict = setup_dict
+            target_setup_dict['dataset'] = dataset
+            target_setup_dict['target_classifier'] = target_classifier
+            target_setup_dict['repeat_idx'] = str(repeat_idx)
 
-                args_list.append('python attack_main.py')
+            args_list.append('python attack_main.py')
+
+            if 'original' in target_classifier:
+                for k, v in target_setup_dict.items():
+                    args_list.append('--{} {}'.format(k, v))
+
+                model = ' '.join(args_list)
+                print(model)
+                f.write(model + '\n')
+                os.system(model)
+                continue
+
+            for recon_type in recon_type_list:
+                target_setup_dict['recon_type'] = recon_type
                 for k, v in target_setup_dict.items():
                     args_list.append('--{} {}'.format(k, v))
 
