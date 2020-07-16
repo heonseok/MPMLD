@@ -22,7 +22,7 @@ parser.add_argument('--train_batch_size', type=int, default=100)
 parser.add_argument('--valid_batch_size', type=int, default=100)
 parser.add_argument('--test_batch_size', type=int, default=100)
 
-parser.add_argument('--reconstruction_model', type=str, default='AE', choices=['AE', 'VAE'])
+parser.add_argument('--reconstruction_model', type=str, default='VAE', choices=['AE', 'VAE'])
 parser.add_argument('--epochs', type=int, default=500)
 parser.add_argument('--early_stop', type=str2bool, default='1')
 parser.add_argument('--early_stop_observation_period', type=int, default=20)
@@ -33,8 +33,9 @@ parser.add_argument('--z_dim', type=int, default=64)
 parser.add_argument('--disentanglement_type', type=str, default='type5',
                     choices=['base', 'type1', 'type2', 'type3', 'type4', 'type5'])
 
-parser.add_argument('--train_reconstructor', type=str2bool, default='0')
+parser.add_argument('--train_reconstructor', type=str2bool, default='1')
 parser.add_argument('--reconstruct_datasets', type=str2bool, default='1')
+parser.add_argument('--analyze_recons', type=str2bool, default='0')
 
 parser.add_argument('--ref_ratio', type=float, default=0.1)
 parser.add_argument('--class_weight', type=float, default=0.1)
@@ -118,6 +119,10 @@ if args.train_reconstructor:
     #     reconstructor.train(class_datasets['train'], class_datasets['valid'], ref_dataset)
 
 if args.reconstruct_datasets:
-    reconstructor.reconstruct(class_datasets, 'full_z')
-    reconstructor.reconstruct(class_datasets, 'content_z')
-    reconstructor.reconstruct(class_datasets, 'style_z')
+    reconstructor.reconstruct(class_datasets)
+    # reconstructor.reconstruct(class_datasets, 'full_z')
+    # reconstructor.reconstruct(class_datasets, 'content_z')
+    # reconstructor.reconstruct(class_datasets, 'style_z')
+
+if args.analyze_recons:
+    reconstructor.analyze_recons()

@@ -8,6 +8,7 @@ import sys
 import os
 import data
 from torch.optim.lr_scheduler import StepLR
+from torch.nn import functional as F
 
 
 class ReconstructorAE(object):
@@ -531,7 +532,7 @@ class ReconstructorAE(object):
             else:
                 break
 
-    def reconstruct(self, dataset_dict, reconstruction_type):
+    def reconstruct(self, dataset_dict):
         print('==> Reconstruct datasets')
         try:
             self.load()
@@ -541,50 +542,75 @@ class ReconstructorAE(object):
         self.encoder.eval()
         self.decoder.eval()
 
-        recon_datasets_dict = {}
-        for dataset_type, dataset in dataset_dict.items():
-            loader = torch.utils.data.DataLoader(dataset, batch_size=self.test_batch_size, shuffle=False, num_workers=2)
-            recons = []
-            labels = []
-            with torch.no_grad():
-                for batch_idx, (inputs, targets) in enumerate(loader):
-                    inputs = inputs.to(self.device)
-                    z = self.encoder(inputs)
+        mse_list = []
 
-                    content_z, style_z = self.split_z(z)
-                    if reconstruction_type == 'content_z':
-                        z = torch.cat((content_z, torch.zeros_like(style_z)), axis=1)
-                    elif reconstruction_type == 'style_z':
-                        z = torch.cat((torch.zeros_like(content_z), style_z), axis=1)
+        for reconstruction_type in ['full_z', 'content_z', 'style_z']:
+            recon_datasets_dict = {}
+            for dataset_type, dataset in dataset_dict.items():
+                loader = torch.utils.data.DataLoader(dataset, batch_size=self.test_batch_size, shuffle=False, num_workers=2)
+                raws = []
+                recons = []
+                labels = []
+                with torch.no_grad():
+                    for batch_idx, (inputs, targets) in enumerate(loader):
+                        inputs = inputs.to(self.device)
+                        z = self.encoder(inputs)
 
-                    recons_batch = self.decoder(z).cpu()
-                    # recons_batch = torch.sigmoid(self.decoder(z)).cpu()
-                    labels_batch = targets
+                        content_z, style_z = self.split_z(z)
+                        if reconstruction_type == 'content_z':
+                            z = torch.cat((content_z, torch.zeros_like(style_z)), axis=1)
+                        elif reconstruction_type == 'style_z':
+                            z = torch.cat((torch.zeros_like(content_z), style_z), axis=1)
 
-                    # print(inputs)
-                    # print(torch.max(inputs), torch.min(inputs))
-                    # print(recons_batch)
-                    # print(torch.max(recons_batch), torch.min(recons_batch))
-                    # sys.exit(1)
-                    if len(recons) == 0:
-                        recons = recons_batch
-                        labels = labels_batch
+                        recons_batch = self.decoder(z).cpu()
+                        # recons_batch = torch.sigmoid(self.decoder(z)).cpu()
+                        labels_batch = targets
 
-                    else:
-                        recons = torch.cat((recons, recons_batch), axis=0)
-                        labels = torch.cat((labels, labels_batch), axis=0)
+                        if len(recons) == 0:
+                            raws = inputs.cpu()
+                            recons = recons_batch
+                            labels = labels_batch
 
-            recon_datasets_dict[dataset_type] = {
-                'recons': recons,
-                'labels': labels,
-            }
+                        else:
+                            raws = torch.cat((raws, inputs.cpu()), axis=0)
+                            recons = torch.cat((recons, recons_batch), axis=0)
+                            labels = torch.cat((labels, labels_batch), axis=0)
 
-        # todo : refactor dict to CustomDataset
-        torch.save(recon_datasets_dict,
-                   os.path.join(self.reconstruction_path, 'recon_{}.pt'.format(reconstruction_type)))
+                recon_datasets_dict[dataset_type] = {
+                    'recons': recons,
+                    'labels': labels,
+                }
+
+                # print(reconstruction_type, dataset_type, F.mse_loss(recons, raws))
+                mse_list.append(F.mse_loss(recons, raws).item())
+
+            # todo : refactor dict to CustomDataset
+            torch.save(recon_datasets_dict,
+                       os.path.join(self.reconstruction_path, 'recon_{}.pt'.format(reconstruction_type)))
+
+        print(mse_list)
+        np.save(os.path.join(self.reconstruction_path, 'mse.npy'), mse_list)
 
     def split_z(self, z):
         content_z = z[:, 0:self.disc_input_dim]
         style_z = z[:, self.disc_input_dim:]
 
         return content_z, style_z
+
+    def analyze_recons(self):
+        recon_full_dict = torch.load(os.path.join(self.reconstruction_path, 'recon_{}.pt'.format('full_z')))
+        recon_content_dict = torch.load(os.path.join(self.reconstruction_path, 'recon_{}.pt'.format('content_z')))
+        recon_style_dict = torch.load(os.path.join(self.reconstruction_path, 'recon_{}.pt'.format('style_z')))
+
+        for dataset_type in ['train', 'valid', 'test']:
+            recon_full = recon_full_dict[dataset_type]['recons']
+            recon_content = recon_content_dict[dataset_type]['recons']
+            recon_style = recon_style_dict[dataset_type]['recons']
+
+            print(F.mse_loss(recon_content, recon_full))
+            print(F.mse_loss(recon_style, recon_full))
+            # print(torch.std_mean(recon_full - recon_style))
+            #
+            # print(torch.std_mean(recon_full - recon_content))
+            # print(torch.std_mean(recon_full - recon_style))
+

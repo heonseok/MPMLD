@@ -13,9 +13,9 @@ dataset_list = [
 setsize_list = [
     # 100,
     # 1000,
-    500,
+    # 500,
     # 1000,
-    # 2000,
+    2000,
     # 10000,
     # 20000,
 ]
@@ -79,7 +79,7 @@ repeat_idx_list = [
 ]
 
 setup_dict = {
-    'train_reconstructor': '1',
+    'train_reconstructor': '0',
     'reconstruct_datasets': '1',
 
     'epochs': 500,
