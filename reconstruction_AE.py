@@ -85,6 +85,19 @@ class ReconstructorAE(object):
                 self.membership_classifier_with_style = module.MembershipDiscriminator(self.disc_input_dim, 1)
                 self.recon_loss = nn.BCELoss()
 
+            elif args.architecture == 'D':
+                self.encoder = module.FCNEncoderD(args.encoder_input_dim, self.z_dim)
+                self.decoder = module.FCNDecoderD(args.encoder_input_dim, self.z_dim)
+
+                self.class_classifier_with_full = module.ClassDiscriminator(self.z_dim, args.class_num)
+                self.class_classifier_with_content = module.ClassDiscriminator(self.disc_input_dim, args.class_num)
+                self.class_classifier_with_style = module.ClassDiscriminator(self.disc_input_dim, args.class_num)
+
+                self.membership_classifier_with_full = module.MembershipDiscriminator(self.z_dim, 1)
+                self.membership_classifier_with_content = module.MembershipDiscriminator(self.disc_input_dim, 1)
+                self.membership_classifier_with_style = module.MembershipDiscriminator(self.disc_input_dim, 1)
+                self.recon_loss = nn.BCELoss()
+
         self.optimizer_enc = optim.Adam(self.encoder.parameters(), lr=args.lr, betas=(0.5, 0.999))
         self.optimizer_dec = optim.Adam(self.decoder.parameters(), lr=args.lr, betas=(0.5, 0.999))
 
@@ -596,21 +609,4 @@ class ReconstructorAE(object):
         style_z = z[:, self.disc_input_dim:]
 
         return content_z, style_z
-
-    def analyze_recons(self):
-        recon_full_dict = torch.load(os.path.join(self.reconstruction_path, 'recon_{}.pt'.format('full_z')))
-        recon_content_dict = torch.load(os.path.join(self.reconstruction_path, 'recon_{}.pt'.format('content_z')))
-        recon_style_dict = torch.load(os.path.join(self.reconstruction_path, 'recon_{}.pt'.format('style_z')))
-
-        for dataset_type in ['train', 'valid', 'test']:
-            recon_full = recon_full_dict[dataset_type]['recons']
-            recon_content = recon_content_dict[dataset_type]['recons']
-            recon_style = recon_style_dict[dataset_type]['recons']
-
-            print(F.mse_loss(recon_content, recon_full))
-            print(F.mse_loss(recon_style, recon_full))
-            # print(torch.std_mean(recon_full - recon_style))
-            #
-            # print(torch.std_mean(recon_full - recon_content))
-            # print(torch.std_mean(recon_full - recon_style))
 

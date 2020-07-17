@@ -56,16 +56,34 @@ target_data_list = [
     # 'AE_z64_setsize1000_lr0.001_ref0.1_arcC_type5_cw1.0_mw0.1',
     # 'AE_z64_setsize1000_lr0.001_ref0.1_arcC_type5_cw1.0_mw1.0',
 
-    'AE_z64_setsize500_lr0.001_ref0.1_arcC_type5_cw0.01_mw0.01',
-    'AE_z64_setsize500_lr0.001_ref0.1_arcC_type5_cw0.01_mw0.1',
-    'AE_z64_setsize500_lr0.001_ref0.1_arcC_type5_cw0.01_mw1.0',
-    'AE_z64_setsize500_lr0.001_ref0.1_arcC_type5_cw0.1_mw0.01',
-    'AE_z64_setsize500_lr0.001_ref0.1_arcC_type5_cw0.1_mw0.1',
-    'AE_z64_setsize500_lr0.001_ref0.1_arcC_type5_cw0.1_mw1.0',
-    'AE_z64_setsize500_lr0.001_ref0.1_arcC_type5_cw1.0_mw0.01',
-    'AE_z64_setsize500_lr0.001_ref0.1_arcC_type5_cw1.0_mw0.1',
-    'AE_z64_setsize500_lr0.001_ref0.1_arcC_type5_cw1.0_mw1.0',
+    # 'AE_z64_setsize500_lr0.001_ref0.1_arcC_type5_cw0.01_mw0.01',
+    # 'AE_z64_setsize500_lr0.001_ref0.1_arcC_type5_cw0.01_mw0.1',
+    # 'AE_z64_setsize500_lr0.001_ref0.1_arcC_type5_cw0.01_mw1.0',
+    # 'AE_z64_setsize500_lr0.001_ref0.1_arcC_type5_cw0.1_mw0.01',
+    # 'AE_z64_setsize500_lr0.001_ref0.1_arcC_type5_cw0.1_mw0.1',
+    # 'AE_z64_setsize500_lr0.001_ref0.1_arcC_type5_cw0.1_mw1.0',
+    # 'AE_z64_setsize500_lr0.001_ref0.1_arcC_type5_cw1.0_mw0.01',
+    # 'AE_z64_setsize500_lr0.001_ref0.1_arcC_type5_cw1.0_mw0.1',
+    # 'AE_z64_setsize500_lr0.001_ref0.1_arcC_type5_cw1.0_mw1.0',
 
+    'VAE0.1_z64_setsize2000_lr0.001_ref0.1_arcD_type5_cw0.01_mw0.01',
+    'VAE0.1_z64_setsize2000_lr0.001_ref0.1_arcD_type5_cw0.01_mw0.1',
+    'VAE0.1_z64_setsize2000_lr0.001_ref0.1_arcD_type5_cw0.01_mw1.0',
+    'VAE0.1_z64_setsize2000_lr0.001_ref0.1_arcD_type5_cw0.1_mw0.01',
+    'VAE0.1_z64_setsize2000_lr0.001_ref0.1_arcD_type5_cw0.1_mw0.1',
+    'VAE0.1_z64_setsize2000_lr0.001_ref0.1_arcD_type5_cw0.1_mw1.0',
+    'VAE0.1_z64_setsize2000_lr0.001_ref0.1_arcD_type5_cw1.0_mw0.01',
+    'VAE0.1_z64_setsize2000_lr0.001_ref0.1_arcD_type5_cw1.0_mw0.1',
+    'VAE0.1_z64_setsize2000_lr0.001_ref0.1_arcD_type5_cw1.0_mw1.0',
+    'VAE1.0_z64_setsize2000_lr0.001_ref0.1_arcD_type5_cw0.01_mw0.01',
+    'VAE1.0_z64_setsize2000_lr0.001_ref0.1_arcD_type5_cw0.01_mw0.1',
+    'VAE1.0_z64_setsize2000_lr0.001_ref0.1_arcD_type5_cw0.01_mw1.0',
+    'VAE1.0_z64_setsize2000_lr0.001_ref0.1_arcD_type5_cw0.1_mw0.01',
+    'VAE1.0_z64_setsize2000_lr0.001_ref0.1_arcD_type5_cw0.1_mw0.1',
+    'VAE1.0_z64_setsize2000_lr0.001_ref0.1_arcD_type5_cw0.1_mw1.0',
+    'VAE1.0_z64_setsize2000_lr0.001_ref0.1_arcD_type5_cw1.0_mw0.01',
+    'VAE1.0_z64_setsize2000_lr0.001_ref0.1_arcD_type5_cw1.0_mw0.1',
+    'VAE1.0_z64_setsize2000_lr0.001_ref0.1_arcD_type5_cw1.0_mw1.0'
 ]
 
 recon_type_list = [
@@ -76,10 +94,10 @@ recon_type_list = [
 
 repeat_idx_list = [
     0,
-    1,
-    2,
-    3,
-    4,
+    # 1,
+    # 2,
+    # 3,
+    # 4,
 ]
 
 setup_dict = {

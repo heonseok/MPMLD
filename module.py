@@ -357,6 +357,7 @@ class FCNDecoderB(nn.Module):
     def forward(self, x):
         return self.main(x)
 
+
 class FCNEncoderC(nn.Module):
     def __init__(self, input_dim, latent_dim):
         super().__init__()
@@ -392,7 +393,43 @@ class FCNDecoderC(nn.Module):
         return self.main(x)
 
 
-class VAEFCNEncoder(nn.Module):
+class FCNEncoderD(nn.Module):
+    def __init__(self, input_dim, latent_dim):
+        super().__init__()
+
+        self.main = nn.Sequential(
+            nn.Linear(input_dim, 2 * latent_dim, bias=True),
+            nn.BatchNorm1d(2 * latent_dim),
+            nn.ReLU(True),
+            nn.Linear(2 * latent_dim, latent_dim, bias=True),
+            # nn.ReLU(True),
+        )
+
+        init_layers(self._modules)
+
+    def forward(self, x):
+        return self.main(x)
+
+
+class FCNDecoderD(nn.Module):
+    def __init__(self, input_dim, latent_dim):
+        super().__init__()
+
+        self.main = nn.Sequential(
+            nn.Linear(latent_dim, 2 * latent_dim, bias=True),
+            nn.BatchNorm1d(2 * latent_dim),
+            nn.ReLU(True),
+            nn.Linear(2 * latent_dim, input_dim, bias=True),
+            nn.Sigmoid(),
+            # nn.ReLU(True),
+        )
+
+        init_layers(self._modules)
+
+    def forward(self, x):
+        return self.main(x)
+
+class VAEFCNEncoderC(nn.Module):
     def __init__(self, input_dim, latent_dim):
         super().__init__()
 
@@ -401,6 +438,28 @@ class VAEFCNEncoder(nn.Module):
 
         self.main = nn.Sequential(
             nn.Linear(input_dim, 2 * latent_dim, bias=True),
+            nn.ReLU(),
+            # nn.ReLU(True),
+            # nn.Linear(input_dim, latent_dim, bias=True),
+            # nn.ReLU(True),
+        )
+
+        init_layers(self._modules)
+
+    def forward(self, x):
+        x = self.main(x)
+        return self.mu(x), self.logvar(x)
+
+class VAEFCNEncoderD(nn.Module):
+    def __init__(self, input_dim, latent_dim):
+        super().__init__()
+
+        self.mu = nn.Linear(2 * latent_dim, latent_dim)
+        self.logvar = nn.Linear(2 * latent_dim, latent_dim)
+
+        self.main = nn.Sequential(
+            nn.Linear(input_dim, 2 * latent_dim, bias=True),
+            nn.BatchNorm1d(2*latent_dim),
             nn.ReLU(),
             # nn.ReLU(True),
             # nn.Linear(input_dim, latent_dim, bias=True),

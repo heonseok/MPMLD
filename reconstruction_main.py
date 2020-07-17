@@ -7,7 +7,7 @@ from torch.utils.data import Subset
 from data import load_dataset
 from utils import str2bool
 from reconstruction_AE import ReconstructorAE
-# from reconstruction_VAE import ReconstructorVAE
+from reconstruction_VAE import ReconstructorVAE
 from torch.utils.data import ConcatDataset
 import sys
 
@@ -29,18 +29,19 @@ parser.add_argument('--early_stop_observation_period', type=int, default=20)
 parser.add_argument('--repeat_idx', type=int, default=0)
 parser.add_argument('--gpu_id', type=int, default=3)
 
+parser.add_argument('--beta', type=float, default=0.0001)
+
 parser.add_argument('--z_dim', type=int, default=64)
 parser.add_argument('--disentanglement_type', type=str, default='type5',
                     choices=['base', 'type1', 'type2', 'type3', 'type4', 'type5'])
 
 parser.add_argument('--train_reconstructor', type=str2bool, default='1')
 parser.add_argument('--reconstruct_datasets', type=str2bool, default='1')
-parser.add_argument('--analyze_recons', type=str2bool, default='0')
 
 parser.add_argument('--ref_ratio', type=float, default=0.1)
-parser.add_argument('--class_weight', type=float, default=0.1)
-parser.add_argument('--membership_weight', type=float, default=0.1)
-parser.add_argument('--architecture', type=str, default='C')
+parser.add_argument('--class_weight', type=float, default=1000)
+parser.add_argument('--membership_weight', type=float, default=10000)
+parser.add_argument('--architecture', type=str, default='D')
 parser.add_argument('--print_training', type=str2bool, default='True')
 
 args = parser.parse_args()
@@ -55,6 +56,9 @@ if not os.path.exists(args.output_path):
 args.data_path = os.path.join(args.base_path, 'data', args.dataset)
 if not os.path.exists(args.data_path):
     os.makedirs(args.data_path)
+
+if args.reconstruction_model == 'VAE':
+    args.reconstruction_model += str(args.beta)
 
 if args.disentanglement_type == 'base':
     args.reconstruction_name = os.path.join(
@@ -107,10 +111,10 @@ ref_dataset = subset4
 for _ in range(int(1 / args.ref_ratio) - 1):
     ref_dataset = ConcatDataset((ref_dataset, subset4))
 
-if args.reconstruction_model == 'AE':
+if 'VAE' in args.reconstruction_model:
+    reconstructor = ReconstructorVAE(args)
+elif 'AE' in args.reconstruction_model:
     reconstructor = ReconstructorAE(args)
-# elif args.reconstruction_model == 'VAE':
-#     reconstructor = ReconstructorVAE(args)
 
 if args.train_reconstructor:
     # if args.disentanglement_type in ['base', 'type1', 'type2']:
@@ -120,9 +124,4 @@ if args.train_reconstructor:
 
 if args.reconstruct_datasets:
     reconstructor.reconstruct(class_datasets)
-    # reconstructor.reconstruct(class_datasets, 'full_z')
-    # reconstructor.reconstruct(class_datasets, 'content_z')
-    # reconstructor.reconstruct(class_datasets, 'style_z')
 
-if args.analyze_recons:
-    reconstructor.analyze_recons()
