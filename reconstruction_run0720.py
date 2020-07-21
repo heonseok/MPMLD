@@ -72,7 +72,8 @@ membership_weight_list = [
 ]
 
 beta_list = [
-    0.0001,
+    0.00001,
+    # 0.0001,
     # 0.001,
     # 0.01,
     # 0.1,
@@ -93,7 +94,7 @@ setup_dict = {
 
     'epochs': 500,
     'early_stop': '1',
-    'early_stop_observation_period': 20,
+    'early_stop_observation_period': 40,
     'gpu_id': 3,
     'print_training': False,
 }

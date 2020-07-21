@@ -213,17 +213,28 @@ class ReconstructorVAE(object):
             recon_loss = self.train_AE(inputs)
 
             # ---- Class classifiers ---- #
-            correct_class_from_full += self.train_class_classifier_with_full(inputs, targets)
-            correct_class_from_content += self.train_class_classifier_with_content(inputs, targets)
-            correct_class_from_style += self.train_class_classifier_with_style(inputs, targets)
+            correct_class_from_full_, class_loss_full = self.train_class_classifier_with_full(inputs, targets)
+            correct_class_from_content_, class_loss_content = self.train_class_classifier_with_content(inputs, targets)
+            correct_class_from_style_, class_loss_style = self.train_class_classifier_with_style(inputs, targets)
 
             # ---- Membership classifiers ---- #
-            correct_membership_from_full += self.train_membership_classifier_with_full(inputs, targets, inputs_ref,
-                                                                                       targets_ref)
-            correct_membership_from_content += self.train_membership_classifier_with_content(inputs, targets,
+            correct_membership_from_full_, membership_loss_full = self.train_membership_classifier_with_full(inputs, targets, inputs_ref,
+                                                                                      targets_ref)
+            correct_membership_from_content_, membership_loss_content = self.train_membership_classifier_with_content(inputs, targets,
                                                                                              inputs_ref, targets_ref)
-            correct_membership_from_style += self.train_membership_classifier_with_style(inputs, targets, inputs_ref,
+            correct_membership_from_style_, membership_loss_style = self.train_membership_classifier_with_style(inputs, targets, inputs_ref,
                                                                                          targets_ref)
+
+            correct_class_from_full += correct_class_from_full_
+            correct_class_from_content += correct_class_from_content_
+            correct_class_from_style += correct_class_from_style_
+            correct_membership_from_full += correct_membership_from_full_
+            correct_membership_from_content += correct_membership_from_content_
+            correct_membership_from_style += correct_membership_from_style_
+
+            # print('Losses) Train: {:.4f}, ClassFull: {:.4f}, ClassContent: {:.4f}, ClassStyle: {:.4f}, MemFull: {:.4f}, MemContent: {:.4f}, MemStyle: {:.4f},'.format(
+            #     recon_loss.item(), class_loss_full, class_loss_content, class_loss_style, membership_loss_full, membership_loss_content, membership_loss_style,
+            # ))
 
             # ---- Disentanglement (Encoder & Classifiers) ---- #
             if self.disentanglement_type == 'type1':
@@ -284,7 +295,7 @@ class ReconstructorVAE(object):
         self.optimizer_class_full.step()
 
         _, pred_class_from_full = pred.max(1)
-        return pred_class_from_full.eq(targets).sum().item()
+        return pred_class_from_full.eq(targets).sum().item(), class_loss_full.item()
 
     def train_class_classifier_with_content(self, inputs, targets):
         self.optimizer_class_content.zero_grad()
@@ -296,7 +307,7 @@ class ReconstructorVAE(object):
         self.optimizer_class_content.step()
 
         _, pred_class_from_content = pred.max(1)
-        return pred_class_from_content.eq(targets).sum().item()
+        return pred_class_from_content.eq(targets).sum().item(), class_loss_content.item()
 
     def train_class_classifier_with_style(self, inputs, targets):
         self.optimizer_class_style.zero_grad()
@@ -308,7 +319,7 @@ class ReconstructorVAE(object):
         self.optimizer_class_style.step()
 
         _, pred_class_from_style = pred.max(1)
-        return pred_class_from_style.eq(targets).sum().item()
+        return pred_class_from_style.eq(targets).sum().item(), class_loss_style.item()
 
     def train_membership_classifier_with_full(self, inputs, targets, inputs_ref, targets_ref):
         self.optimizer_membership_full.zero_grad()
@@ -329,7 +340,7 @@ class ReconstructorVAE(object):
         pred_concat = np.concatenate((pred, pred_ref))
         inout_concat = np.concatenate((np.ones_like(pred), np.zeros_like(pred_ref)))
 
-        return np.sum(inout_concat == np.round(pred_concat))
+        return np.sum(inout_concat == np.round(pred_concat)), membership_loss.item()
 
     def train_membership_classifier_with_content(self, inputs, targets, inputs_ref, targets_ref):
         self.optimizer_membership_content.zero_grad()
@@ -352,7 +363,7 @@ class ReconstructorVAE(object):
         pred_concat = np.concatenate((pred, pred_ref))
         inout_concat = np.concatenate((np.ones_like(pred), np.zeros_like(pred_ref)))
 
-        return np.sum(inout_concat == np.round(pred_concat))
+        return np.sum(inout_concat == np.round(pred_concat)), membership_loss.item()
         # return metrics.accuracy_score(inout_concat, np.round(pred_concat))
 
     def train_membership_classifier_with_style(self, inputs, targets, inputs_ref, targets_ref):
@@ -376,7 +387,7 @@ class ReconstructorVAE(object):
         pred_concat = np.concatenate((pred, pred_ref))
         inout_concat = np.concatenate((np.ones_like(pred), np.zeros_like(pred_ref)))
 
-        return np.sum(inout_concat == np.round(pred_concat))
+        return np.sum(inout_concat == np.round(pred_concat)), membership_loss.item()
 
     def disentangle_type1(self, inputs, targets):
         self.optimizer_enc.zero_grad()
@@ -586,6 +597,28 @@ class ReconstructorVAE(object):
                         mu_content, mu_style = self.split_content_style(mu)
                         logvar_content, logvar_style = self.split_content_style(logvar)
 
+                        # print('mu_content')
+                        # print(mu_content)
+                        # print('mu_style')
+                        # print(mu_style)
+                        # print('std_content')
+                        # # print('logvar_content')
+                        # std_content = torch.exp(0.5*logvar_content)
+                        # print(std_content)
+                        # print('std_style')
+                        # # print('logvar_style')
+                        # std_style = torch.exp(0.5*logvar_style)
+                        # print(std_style)
+                        #
+                        # print('Content')
+                        # print('mu', torch.min(torch.abs(mu_content)), torch.max(torch.abs(mu_content)))
+                        # print('std', torch.min(torch.abs(std_content)), torch.max(torch.abs(std_content)))
+                        #
+                        # print('Style')
+                        # print('mu', torch.min(torch.abs(mu_style)), torch.max(torch.abs(mu_style)))
+                        # print('std', torch.min(torch.abs(std_style)), torch.max(torch.abs(std_style)))
+                        # sys.exit(1)
+
                         if reconstruction_type == 'base_z':
                             z[:, self.content_idx] = mu_content
                             z[:, self.style_idx] = mu_style
@@ -640,15 +673,29 @@ class ReconstructorVAE(object):
     def reparameterize(self, mu, logvar):
         std = torch.exp(0.5 * logvar)
         eps = torch.randn_like(std)
+
+        # print(mu)
+        # print(std)
+        # print(std * eps)
+        # sys.exit(1)
+        # # print('Mu: ')
+
         return mu + std * eps
 
     def get_loss_function(self):
         def loss_function(recon_x, x, mu, logvar):
-            BCE = F.binary_cross_entropy(recon_x, x, reduction='sum')
-            # BCE = F.binary_cross_entropy(recon_x, x)
+            # BCE = F.binary_cross_entropy(recon_x, x, reduction='sum')
+            BCE = F.binary_cross_entropy(recon_x, x, reduction='none').mean(dim=0).sum()
+            MSE = F.mse_loss(recon_x, x, reduction='none').mean(dim=0).sum()
+            # print(BCE.shape)
+            # print(recon_x.shape)
 
             KLD = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp()).mean(dim=0).sum()
-            return BCE + self.beta * KLD
+            # print('BCE: {:.4f}, KLD: {:.4f}'.format(BCE.item(), KLD.item()))
+            # print('BCE: {:.4f}, KLD: {:.4f}, MSE: {:.4f}'.format(BCE.item(), KLD.item(), MSE.item()))
+
+            # return BCE + self.beta * KLD
+            return MSE + self.beta * KLD
 
         return loss_function
 

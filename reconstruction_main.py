@@ -32,15 +32,15 @@ parser.add_argument('--gpu_id', type=int, default=3)
 parser.add_argument('--beta', type=float, default=0.0001)
 
 parser.add_argument('--z_dim', type=int, default=64)
-parser.add_argument('--disentanglement_type', type=str, default='type5',
+parser.add_argument('--disentanglement_type', type=str, default='base',
                     choices=['base', 'type1', 'type2', 'type3', 'type4', 'type5'])
 
 parser.add_argument('--train_reconstructor', type=str2bool, default='1')
 parser.add_argument('--reconstruct_datasets', type=str2bool, default='1')
 
 parser.add_argument('--ref_ratio', type=float, default=0.1)
-parser.add_argument('--class_weight', type=float, default=1000)
-parser.add_argument('--membership_weight', type=float, default=10000)
+parser.add_argument('--class_weight', type=float, default=0.1)
+parser.add_argument('--membership_weight', type=float, default=1.0)
 parser.add_argument('--architecture', type=str, default='D')
 parser.add_argument('--print_training', type=str2bool, default='True')
 

@@ -25,7 +25,7 @@ parser.add_argument('--early_stop_observation_period', type=int, default=40)
 parser.add_argument('--repeat_idx', type=int, default=0)
 parser.add_argument('--gpu_id', type=int, default=3)
 parser.add_argument('--attack_type', type=str, default='black', choices=['black', 'white'])
-parser.add_argument('--recon_type', type=str, default='full_z', choices=['full_z', 'content_z', 'style_z'])
+parser.add_argument('--recon_type', type=str, default='full_z', choices=['base_z', 'content_z', 'style_z', 'full_z'])
 
 parser.add_argument('--target_classifier', type=str,
                     default='AE_z64_setsize2000_lr0.1_ref0.1_arcA_type5_cw1.0_mw1.0_FCNClassifierA')

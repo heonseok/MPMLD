@@ -11,7 +11,7 @@ dataset_list = [
 ]
 
 target_classifier_list = [
-    'original_setsize2000_FCNClassifierA',
+    # 'original_setsize2000_FCNClassifierA',
 
     # 'AE_z64_setsize2000_lr0.001_ref0.1_arcC_type5_cw0.01_mw0.01_FCNClassifierA',
     # 'AE_z64_setsize2000_lr0.001_ref0.1_arcC_type5_cw0.01_mw0.1_FCNClassifierA',
@@ -23,20 +23,36 @@ target_classifier_list = [
     # 'AE_z64_setsize2000_lr0.001_ref0.1_arcC_type5_cw1.0_mw0.1_FCNClassifierA',
     # 'AE_z64_setsize2000_lr0.001_ref0.1_arcC_type5_cw1.0_mw1.0_FCNClassifierA',
 
+    # 'VAE0.0001_z64_setsize2000_lr0.001_ref0.1_arcD_type5_cw0.01_mw1.0_FCNClassifierA',
+    # 'VAE0.0001_z64_setsize2000_lr0.001_ref0.1_arcD_type5_cw0.1_mw1.0_FCNClassifierA',
+    # 'VAE0.0001_z64_setsize2000_lr0.001_ref0.1_arcD_type5_cw1.0_mw1.0_FCNClassifierA',
+    # 'VAE0.001_z64_setsize2000_lr0.001_ref0.1_arcD_type5_cw0.01_mw1.0_FCNClassifierA',
+    # 'VAE0.001_z64_setsize2000_lr0.001_ref0.1_arcD_type5_cw0.1_mw1.0_FCNClassifierA',
+    # 'VAE0.001_z64_setsize2000_lr0.001_ref0.1_arcD_type5_cw1.0_mw1.0_FCNClassifierA',
+
+    # 'VAE0.0001_z64_setsize1000_lr0.001_ref0.1_arcD_type5_cw0.1_mw1.0_FCNClassifierA',
+    # 'VAE0.001_z64_setsize1000_lr0.001_ref0.1_arcD_type5_cw0.1_mw1.0_FCNClassifierA',
+
+    # 'VAE0.0001_z64_setsize2000_lr0.001_ref0.1_arcD_type5_cw0.01_mw1.0_FCNClassifierA',
+    # 'VAE0.0001_z64_setsize2000_lr0.001_ref0.1_arcD_type5_cw0.1_mw1.0_FCNClassifierA',
+    # 'VAE0.0001_z64_setsize2000_lr0.001_ref0.1_arcD_type5_cw1.0_mw1.0_FCNClassifierA',
+
+    'VAE0.0001_z64_setsize2000_lr0.001_ref0.1_arcD_base_FCNClassifierA',
 ]
 
 recon_type_list = [
-    'full_z',
+    'base_z',
     'content_z',
     'style_z',
+    'full_z',
 ]
 
 repeat_idx_list = [
     0,
-    1,
-    2,
-    3,
-    4,
+    # 1,
+    # 2,
+    # 3,
+    # 4,
 ]
 
 setup_dict = {
