@@ -12,9 +12,9 @@ from torch.utils.data import ConcatDataset
 import sys
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--dataset', type=str, default='location',
-                    choices=['MNIST', 'Fashion-MNIST', 'CIFAR-10', 'adult', 'location'])
-parser.add_argument('--setsize', type=int, default=2000)
+parser.add_argument('--dataset', type=str, default='SVHN',
+                    choices=['MNIST', 'Fashion-MNIST', 'CIFAR-10', 'adult', 'location', 'SVHN'])
+parser.add_argument('--setsize', type=int, default=10000)
 parser.add_argument('--lr', type=float, default=0.001)
 parser.add_argument('--base_path', type=str, default='/mnt/disk1/heonseok/MPMLD')
 parser.add_argument('--resume', type=str2bool, default='0')
@@ -30,17 +30,18 @@ parser.add_argument('--repeat_idx', type=int, default=0)
 parser.add_argument('--gpu_id', type=int, default=3)
 
 parser.add_argument('--beta', type=float, default=0.000001)
+# parser.add_argument('--beta', type=float, default=1)
 
 parser.add_argument('--z_dim', type=int, default=64)
 parser.add_argument('--disentanglement_type', type=str, default='base',
                     choices=['base', 'type1', 'type2', 'type3', 'type4', 'type5'])
 
-parser.add_argument('--train_reconstructor', type=str2bool, default='0')
+parser.add_argument('--train_reconstructor', type=str2bool, default='1')
 parser.add_argument('--reconstruct_datasets', type=str2bool, default='1')
 
 parser.add_argument('--ref_ratio', type=float, default=0.1)
 parser.add_argument('--class_weight', type=float, default=0.1)
-parser.add_argument('--membership_weight', type=float, default=1.0)
+parser.add_argument('--membership_weight', type=float, default=0.1)
 parser.add_argument('--architecture', type=str, default='D')
 parser.add_argument('--print_training', type=str2bool, default='True')
 
@@ -49,7 +50,7 @@ args = parser.parse_args()
 torch.cuda.set_device(args.gpu_id)
 
 # -- Directory -- #
-args.output_path = os.path.join(args.base_path, 'output', args.dataset)
+args.output_path = os.path.join(args.base_path, 'output0724', args.dataset)
 if not os.path.exists(args.output_path):
     os.makedirs(args.output_path)
 
@@ -86,6 +87,9 @@ if args.dataset in ['adult', 'location']:
         args.class_num = 2
     elif args.dataset == 'location':
         args.class_num = 30
+
+if args.dataset in ['MNIST', 'SVHN']:
+    args.class_num = 10
 
 if args.setsize * 2.4 > len(merged_dataset):
     print('Setsize * 2.4 > len(concatset); Terminate program')
@@ -130,4 +134,3 @@ class_datasets = {
 }
 if args.reconstruct_datasets:
     reconstructor.reconstruct(class_datasets)
-

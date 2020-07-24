@@ -30,7 +30,7 @@ class Classifier(object):
         # Model
         print('==> Building {}'.format(self.classification_path))
 
-        if args.dataset in ['CIFAR-10']:
+        if args.dataset in ['CIFAR-10', 'SVHN']:
             if 'VGG' in args.classification_model:
                 print('VGG(\'' + args.classification_model + '\')')
                 net = eval('VGG(\'' + args.classification_model + '\')')
@@ -237,7 +237,7 @@ class Classifier(object):
                 prediction_scores_batch = torch.softmax(logits_, dim=1).cpu().detach().numpy()
                 labels_batch = targets.cpu().detach().numpy()
 
-                x1, x2, x3 = self.net.extract_features(inputs)
+                # x1, x2, x3 = self.net.extract_features(inputs)
                 # print(x1.shape)
                 # print(x2.shape)
                 # print(x3.shape)

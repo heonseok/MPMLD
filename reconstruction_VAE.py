@@ -9,6 +9,7 @@ import os
 import data
 from torch.optim.lr_scheduler import StepLR
 from torch.nn import functional as F
+import torchvision.utils as vutils
 
 
 class ReconstructorVAE(object):
@@ -30,14 +31,14 @@ class ReconstructorVAE(object):
 
         if args.dataset in ['MNIST', 'Fashion-MNIST']:
             self.num_channels = 1
-        else:
+        elif args.dataset in ['CIFAR-10', 'SVHN']:
             self.num_channels = 3
 
         self.image_size = 64
 
         self.acc_dict = {}
 
-        self.recon_weight = 100.
+        self.recon_weight = 1.
         self.class_weight = args.class_weight
         self.membership_weight = args.membership_weight
 
@@ -48,11 +49,20 @@ class ReconstructorVAE(object):
         if not os.path.exists(self.reconstruction_path):
             os.makedirs(self.reconstruction_path)
 
-        if args.dataset in ['MNIST', 'Fashion-MNIST', 'CIFAR-10']:
-            self.encoder = module.AEConvEncoder(self.z_dim, self.num_channels)
-            self.decoder = module.AEConvDecoder(self.z_dim, self.num_channels)
-            self.class_classifier_with_content = module.ClassDiscriminator(self.disc_input_dim, 10)
-            self.class_classifier_with_style = module.ClassDiscriminator(self.disc_input_dim, 10)
+        if args.dataset in ['MNIST', 'Fashion-MNIST', 'CIFAR-10', 'SVHN']:
+            self.encoder = module.VAEConvEncoder(self.z_dim, self.num_channels)
+            self.decoder = module.VAEConvDecoder(self.z_dim, self.num_channels)
+
+            self.class_classifier_with_full = module.ClassDiscriminator(self.z_dim, args.class_num)
+            self.class_classifier_with_content = module.ClassDiscriminator(self.disc_input_dim, args.class_num)
+            self.class_classifier_with_style = module.ClassDiscriminator(self.disc_input_dim, args.class_num)
+
+            self.membership_classifier_with_full = module.MembershipDiscriminator(self.z_dim, 1)
+            self.membership_classifier_with_content = module.MembershipDiscriminator(self.disc_input_dim, 1)
+            self.membership_classifier_with_style = module.MembershipDiscriminator(self.disc_input_dim, 1)
+            # self.recon_loss = nn.MSELoss()
+            self.recon_loss = self.get_loss_function()
+
         elif args.dataset in ['adult', 'location']:
             if args.architecture == 'A':
                 self.encoder = module.FCNEncoderA(args.encoder_input_dim, self.z_dim)
@@ -65,7 +75,8 @@ class ReconstructorVAE(object):
                 self.membership_classifier_with_full = module.MembershipDiscriminator(self.z_dim, 1)
                 self.membership_classifier_with_content = module.MembershipDiscriminator(self.disc_input_dim, 1)
                 self.membership_classifier_with_style = module.MembershipDiscriminator(self.disc_input_dim, 1)
-                self.recon_loss = nn.MSELoss()
+                # self.recon_loss = nn.MSELoss()
+                self.recon_loss = self.get_loss_function()
             elif args.architecture == 'B':
                 self.encoder = module.FCNEncoderB(args.encoder_input_dim, self.z_dim)
                 self.decoder = module.FCNDecoderB(args.encoder_input_dim, self.z_dim)
@@ -231,12 +242,17 @@ class ReconstructorVAE(object):
             correct_class_from_style_, class_loss_style = self.train_class_classifier_with_style(inputs, targets)
 
             # ---- Membership classifiers ---- #
-            correct_membership_from_full_, membership_loss_full = self.train_membership_classifier_with_full(inputs, targets, inputs_ref,
-                                                                                      targets_ref)
-            correct_membership_from_content_, membership_loss_content = self.train_membership_classifier_with_content(inputs, targets,
-                                                                                             inputs_ref, targets_ref)
-            correct_membership_from_style_, membership_loss_style = self.train_membership_classifier_with_style(inputs, targets, inputs_ref,
-                                                                                         targets_ref)
+            correct_membership_from_full_, membership_loss_full = self.train_membership_classifier_with_full(inputs,
+                                                                                                             targets,
+                                                                                                             inputs_ref,
+                                                                                                             targets_ref)
+            correct_membership_from_content_, membership_loss_content = self.train_membership_classifier_with_content(
+                inputs, targets,
+                inputs_ref, targets_ref)
+            correct_membership_from_style_, membership_loss_style = self.train_membership_classifier_with_style(inputs,
+                                                                                                                targets,
+                                                                                                                inputs_ref,
+                                                                                                                targets_ref)
 
             correct_class_from_full += correct_class_from_full_
             correct_class_from_content += correct_class_from_content_
@@ -245,9 +261,9 @@ class ReconstructorVAE(object):
             correct_membership_from_content += correct_membership_from_content_
             correct_membership_from_style += correct_membership_from_style_
 
-            # print('Losses) Train: {:.4f}, ClassFull: {:.4f}, ClassContent: {:.4f}, ClassStyle: {:.4f}, MemFull: {:.4f}, MemContent: {:.4f}, MemStyle: {:.4f},'.format(
-            #     recon_loss.item(), class_loss_full, class_loss_content, class_loss_style, membership_loss_full, membership_loss_content, membership_loss_style,
-            # ))
+            print('Losses) Train: {:.4f}, ClassFull: {:.4f}, ClassContent: {:.4f}, ClassStyle: {:.4f}, MemFull: {:.4f}, MemContent: {:.4f}, MemStyle: {:.4f},'.format(
+                recon_loss.item(), class_loss_full, class_loss_content, class_loss_style, membership_loss_full, membership_loss_content, membership_loss_style,
+            ))
 
             # ---- Disentanglement (Encoder & Classifiers) ---- #
             if self.disentanglement_type == 'type1':
@@ -591,7 +607,8 @@ class ReconstructorVAE(object):
 
         mse_list = []
 
-        for reconstruction_type in ['base_z', 'content_z', 'style_z', 'full_z', 'zero_content', 'zero_style', 'uniform_style', 'normal_style']:
+        for reconstruction_type in ['base_z', 'content_z', 'style_z', 'full_z', 'zero_content', 'zero_style',
+                                    'uniform_style', 'normal_style']:
             recon_datasets_dict = {}
             print(reconstruction_type)
             for dataset_type, dataset in dataset_dict.items():
@@ -688,6 +705,11 @@ class ReconstructorVAE(object):
                             raws = inputs.cpu()
                             recons = recons_batch
                             labels = labels_batch
+
+                            # todo : save recons as imgs
+                            print(reconstruction_type, dataset_type)
+                            if dataset_type == 'train':
+                                vutils.save_image(recons, os.path.join(self.reconstruction_path, '{}_{}.png'.format(dataset_type, reconstruction_type)), nrow=10)
 
                         else:
                             raws = torch.cat((raws, inputs.cpu()), axis=0)

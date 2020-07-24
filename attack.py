@@ -33,7 +33,7 @@ class Attacker(object):
         if self.attack_type == 'black':
             if args.dataset == 'adult':
                 net = MIAttacker(4)
-            elif args.dataset in ['MNIST', 'Fashion-MNIST', 'CIFAR-10']:
+            elif args.dataset in ['MNIST', 'Fashion-MNIST', 'CIFAR-10', 'SVHN']:
                 net = MIAttacker(20)
             elif args.dataset == 'location':
                 net = MIAttacker(60)

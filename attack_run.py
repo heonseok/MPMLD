@@ -4,10 +4,11 @@ import datetime
 
 dataset_list = [
     # 'adult',
-    'location',
+    # 'location',
     # 'MNIST',
     # 'Fashion-MNIST',
     # 'CIFAR-10',
+    'SVHN',
 ]
 
 target_classifier_list = [
@@ -98,11 +99,18 @@ target_classifier_list = [
 
     # 'VAE1e-05_z256_setsize1000_lr0.001_ref1.0_arcE_type5_cw1.0_mw0.0_FCNClassifierA',  # recon weight 100
     # 'VAE1e-05_z256_setsize1000_lr0.001_ref1.0_arcE_type5_cw1.0_mw0.01_FCNClassifierA',  # recon weight 100
-    'VAE1e-05_z256_setsize1000_lr0.001_ref1.0_arcE_type5_cw1.0_mw0.1_FCNClassifierA',  # recon weight 100
+    # 'VAE1e-05_z256_setsize1000_lr0.001_ref1.0_arcE_type5_cw1.0_mw0.1_FCNClassifierA',  # recon weight 100
+
+    # 0724
+    # 'VAE1e-06_z64_setsize10000_lr0.001_ref0.1_arcE_base_ResNet18A'
+    # 'VAE1e-06_z64_setsize10000_lr0.001_ref1.0_arcE_type5_cw1.0_mw1.0_ResNet18A'
+    # 'VAE1e-06_z64_setsize10000_lr0.001_ref1.0_arcE_type5_cw1.0_mw10.0_ResNet18A'
+    # 'VAE1e-06_z64_setsize10000_lr0.001_ref0.1_arcE_type5_cw1.0_mw10.0_ResNet18A'
+    'VAE1e-06_z64_setsize10000_lr0.001_ref0.1_arcE_type5_cw1.0_mw1.0_ResNet18A'
 ]
 
 recon_type_list = [
-    'base_z',
+    # 'base_z',
     # 'content_z',
     # 'style_z',
     # 'full_z',

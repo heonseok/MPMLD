@@ -11,15 +11,15 @@ import utils
 import sys
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--dataset', type=str, default='location',
-                    choices=['MNIST', 'Fashion-MNIST', 'CIFAR-10', 'CIFAR-100', 'adult', 'location', ])
+parser.add_argument('--dataset', type=str, default='SVHN',
+                    choices=['MNIST', 'Fashion-MNIST', 'CIFAR-10', 'CIFAR-100', 'adult', 'location', 'SVHN'])
 parser.add_argument('--lr', type=float, default=0.0001)
 parser.add_argument('--base_path', type=str, default='/mnt/disk1/heonseok/MPMLD')
 parser.add_argument('--resume', type=str2bool, default='0')
 parser.add_argument('--train_batch_size', type=int, default=100)
 parser.add_argument('--valid_batch_size', type=int, default=100)
 parser.add_argument('--test_batch_size', type=int, default=100)
-parser.add_argument('--classification_model', type=str, default='FCNClassifier',
+parser.add_argument('--classification_model', type=str, default='VGG19',
                     choices=['FCNClassifier', 'ConvClassifier', 'VGG19', 'ResNet18', 'ResNet50', 'ResNet101',
                              'DenseNet121'])
 parser.add_argument('--epochs', type=int, default=500)
@@ -28,8 +28,8 @@ parser.add_argument('--early_stop_observation_period', type=int, default=20)
 parser.add_argument('--repeat_idx', type=int, default=0)
 parser.add_argument('--gpu_id', type=int, default=3)
 
-# parser.add_argument('--target_data', type=str, default='original_setsize2000')
-parser.add_argument('--target_data', type=str, default='AE_z64_setsize2000_lr0.001_ref0.1_arcC_type5_cw0.1_mw0.1')
+parser.add_argument('--target_data', type=str, default='original_setsize2000')
+# parser.add_argument('--target_data', type=str, default='AE_z64_setsize2000_lr0.001_ref0.1_arcC_type5_cw0.1_mw0.1')
 # parser.add_argument('--recon_type', type=str, default='full_z')
 parser.add_argument('--recon_type', type=str, default='content_z')
 # parser.add_argument('--recon_type', type=str, default='style_z')
@@ -46,7 +46,7 @@ args = parser.parse_args()
 torch.cuda.set_device(args.gpu_id)
 
 # -- Directory -- #
-args.output_path = os.path.join(args.base_path, 'output', args.dataset)
+args.output_path = os.path.join(args.base_path, 'output0724', args.dataset)
 if not os.path.exists(args.output_path):
     os.makedirs(args.output_path)
 

@@ -2,18 +2,19 @@ import os
 
 dataset_list = [
     # 'adult',
-    'location',
+    # 'location',
     # 'MNIST',
     # 'Fashion-MNIST',
     # 'CIFAR-10',
     # 'CIFAR-100',
+    'SVHN',
 ]
 
 classification_model_list = [
-    'FCNClassifier',
+    # 'FCNClassifier',
     # 'ConvClassifier',
     # 'VGG19',
-    # 'ResNet18',
+    'ResNet18',
     # 'ResNet50',
     # 'ResNet101',
     # 'DenseNet121',
@@ -174,11 +175,20 @@ target_data_list = [
 
     # 'VAE1e-05_z256_setsize1000_lr0.001_ref1.0_arcE_type5_cw1.0_mw0.0',  # recon weight 100
     # 'VAE1e-05_z256_setsize1000_lr0.001_ref1.0_arcE_type5_cw1.0_mw0.01',  # recon weight 100
-    'VAE1e-05_z256_setsize1000_lr0.001_ref1.0_arcE_type5_cw1.0_mw0.1',  # recon weight 100
+    # 'VAE1e-05_z256_setsize1000_lr0.001_ref1.0_arcE_type5_cw1.0_mw0.1',  # recon weight 100
+
+    # 0724
+    # 'VAE1e-06_z64_setsize10000_lr0.001_ref0.1_arcE_base',
+    # 'VAE1e-06_z64_setsize10000_lr0.001_ref1.0_arcE_type5_cw1.0_mw1.0',
+    # 'VAE1e-06_z64_setsize10000_lr0.001_ref1.0_arcE_type5_cw1.0_mw10.0',
+    # 'VAE1e-06_z64_setsize10000_lr0.001_ref0.1_arcE_type5_cw1.0_mw10.0',
+    # 'VAE1e-06_z64_setsize10000_lr0.001_ref0.1_arcE_type5_cw1.0_mw1.0',
+
+    'VAE1e-06_z64_setsize10000_lr0.001_ref0.1_arcE_type5_cw0.1_mw0.1',
 ]
 
 recon_type_list = [
-    'base_z',
+    # 'base_z',
     # 'content_z',
     # 'style_z',
     # 'full_z',

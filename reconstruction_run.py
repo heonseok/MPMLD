@@ -4,19 +4,20 @@ import datetime
 
 dataset_list = [
     # 'adult'
-    'location',
+    # 'location',
     # 'MNIST',
     # 'Fashion-MNIST',
     # 'CIFAR-10',
+    'SVHN',
 ]
 
 setsize_list = [
     # 100,
     # 1000,
     # 500,
-    1000,
+    # 1000,
     # 2000,
-    # 10000,
+    10000,
     # 20000,
 ]
 
@@ -27,10 +28,10 @@ reconstruction_model_list = [
 
 z_dim_list = [
     # '16',
-    # '64',
+    '64',
     # '128',
     # '223',
-    '256',
+    # '256',
 ]
 
 disentanglement_type_list = [
@@ -43,10 +44,10 @@ disentanglement_type_list = [
 ]
 
 ref_ratio_list = [
-    # 0.1,
+    0.1,
     # 0.2,
     # 0.5,
-    1.0,
+    # 1.0,
 ]
 
 architecture_list = [
@@ -67,14 +68,15 @@ class_weight_list = [
     # 0,
     # 0.001,
     # 0.005,
-    # 0.01,
+    0.01,
     # 0.011,
     # 0.02,
     # 0.03,
     # 0.04,
     # 0.05,
     # 0.1,
-    1,
+    # 0.5,
+    # 1,
     # 2,
     # 10,
     # 100,
@@ -82,8 +84,9 @@ class_weight_list = [
 
 membership_weight_list = [
     # 0,
-    # 0.01,
-    0.1,
+    0.01,
+    # 0.1,
+    # 0.5,
     # 1,
     # 2,
     # 5,
@@ -93,8 +96,8 @@ membership_weight_list = [
 ]
 
 beta_list = [
-    # 0.000001,
-    0.00001,
+    0.000001,
+    # 0.00001,
     # 0.0001,
     # 0.001,
     # 0.01,

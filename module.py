@@ -591,6 +591,7 @@ class VAEFCNEncoderE(nn.Module):
         # x = self.main(x)
         return self.mu(x), self.logvar(x)
 
+
 class FCNDecoderE(nn.Module):
     def __init__(self, input_dim, latent_dim):
         super().__init__()
@@ -610,7 +611,6 @@ class FCNDecoderE(nn.Module):
         return self.main(x)
 
 
-
 class VAEFCNDecoder(nn.Module):
     def __init__(self, input_dim, latent_dim):
         super().__init__()
@@ -626,105 +626,167 @@ class VAEFCNDecoder(nn.Module):
         return self.main(x)
 
 
+# class VAEConvEncoder(nn.Module):
+#     def __init__(self, latent_dim, num_channels):
+#         super().__init__()
+#
+#         self.mu = nn.Linear(64 * 7 * 7, latent_dim)
+#         self.logvar = nn.Linear(64 * 7 * 7, latent_dim)
+#
+#         self.main = nn.Sequential(
+#             nn.Conv2d(num_channels, 32, 4, 1, 2),  # B,  32, 28, 28
+#             nn.ReLU(True),
+#             nn.Conv2d(32, 32, 4, 2, 1),  # B,  32, 14, 14
+#             nn.ReLU(True),
+#             nn.Conv2d(32, 64, 4, 2, 1),  # B,  64,  7, 7
+#             nn.ReLU(True),
+#             Flatten3D(),
+#         )
+#
+#         init_layers(self._modules)
+#
+#     def forward(self, x):
+#
+#         print(x.shape)
+#
+#         x = self.main(x)
+#         print(x.shape)
+#         return self.mu(x), self.logvar(x)
+#
+#
+# class VAEConvDecoder(nn.Module):
+#     def __init__(self, latent_dim, num_channels):
+#         super().__init__()
+#         self.upsample = nn.Linear(latent_dim, 64 * 7 * 7)
+#         self.main = nn.Sequential(
+#             nn.ConvTranspose2d(64, 32, 4, 2, 1),  # B,  64,  14,  14
+#             nn.ReLU(True),
+#             nn.ConvTranspose2d(32, 32, 4, 2, 1, 1),  # B,  32, 28, 28
+#             nn.ReLU(True),
+#             nn.ConvTranspose2d(32, 1, 4, 1, 2),  # B, 1, 28, 28
+#             nn.Sigmoid(),
+#         )
+#
+#         init_layers(self._modules)
+#
+#     def forward(self, x):
+#         return self.main(self.upsample(x).relu().view(-1, 64, 7, 7))
+#         # return self.main(x)
+
 class VAEConvEncoder(nn.Module):
     def __init__(self, latent_dim, num_channels):
         super().__init__()
 
-        self.mu = nn.Linear(64 * 7 * 7, latent_dim)
-        self.logvar = nn.Linear(64 * 7 * 7, latent_dim)
+        self.mu = nn.Linear(2304, latent_dim)
+        self.logvar = nn.Linear(2304, latent_dim)
+        # self.mu = nn.Linear(64 * 7 * 7, latent_dim)
+        # self.logvar = nn.Linear(64 * 7 * 7, latent_dim)
 
         self.main = nn.Sequential(
-            nn.Conv2d(num_channels, 32, 4, 1, 2),  # B,  32, 28, 28
-            nn.ReLU(True),
-            nn.Conv2d(32, 32, 4, 2, 1),  # B,  32, 14, 14
-            nn.ReLU(True),
-            nn.Conv2d(32, 64, 4, 2, 1),  # B,  64,  7, 7
-            nn.ReLU(True),
+            nn.Conv2d(num_channels, 32, kernel_size=3, stride=1),
+            nn.ReLU(),
+            nn.Conv2d(32, 64, kernel_size=3, stride=2),
+            nn.ReLU(),
+            nn.Conv2d(64, 128, kernel_size=3, stride=2),
+            nn.ReLU(),
+            nn.Conv2d(128, 256, kernel_size=2, stride=2),
+            nn.ReLU(),
             Flatten3D(),
         )
 
         init_layers(self._modules)
 
     def forward(self, x):
+        # print(x.shape)
+
         x = self.main(x)
+        # print(x.shape)
         return self.mu(x), self.logvar(x)
+
+
+class UnFlatten(nn.Module):
+    def forward(self, input, size=64): # latent dim : 64
+        return input.view(input.size(0), size, 1, 1)
 
 
 class VAEConvDecoder(nn.Module):
     def __init__(self, latent_dim, num_channels):
         super().__init__()
-        self.upsample = nn.Linear(latent_dim, 64 * 7 * 7)
+        # self.upsample = nn.Linear(latent_dim, 64 * 7 * 7)
         self.main = nn.Sequential(
-            nn.ConvTranspose2d(64, 32, 4, 2, 1),  # B,  64,  14,  14
-            nn.ReLU(True),
-            nn.ConvTranspose2d(32, 32, 4, 2, 1, 1),  # B,  32, 28, 28
-            nn.ReLU(True),
-            nn.ConvTranspose2d(32, 1, 4, 1, 2),  # B, 1, 28, 28
-            nn.Sigmoid(),
+            UnFlatten(),
+            nn.ConvTranspose2d(latent_dim, 1024, kernel_size=4, stride=1),
+            nn.ReLU(),
+            nn.ConvTranspose2d(1024, 512, kernel_size=5, stride=1),
+            nn.ReLU(),
+            nn.ConvTranspose2d(512, 256, kernel_size=4, stride=2, padding=1),
+            nn.ReLU(),
+            nn.ConvTranspose2d(256, num_channels, kernel_size=4, stride=2, padding=1),
+            # nn.sigmoid()
         )
 
         init_layers(self._modules)
 
     def forward(self, x):
-        return self.main(self.upsample(x).relu().view(-1, 64, 7, 7))
-        # return self.main(x)
-
-
-class ConvEncoderVAE(nn.Module):
-    def __init__(self, latent_dim, num_channels):
-        super().__init__()
-
-        self.fc1 = nn.Linear(256, latent_dim, bias=True)
-        self.fc2 = nn.Linear(256, latent_dim, bias=True)
-
-        self.main = nn.Sequential(
-            nn.Conv2d(num_channels, 32, 3, 2, 1),
-            nn.ReLU(True),
-            nn.Conv2d(32, 32, 3, 2, 1),
-            nn.ReLU(True),
-            nn.Conv2d(32, 64, 3, 2, 1),
-            nn.ReLU(True),
-            nn.Conv2d(64, 128, 3, 2, 1),
-            nn.ReLU(True),
-            nn.Conv2d(128, 256, 3, 2, 1),
-            nn.ReLU(True),
-            nn.Conv2d(256, 256, 3, 2, 1),
-            nn.ReLU(True),
-            Flatten3D(),
-            # nn.Linear(256, latent_dim, bias=True),
-            # nn.ReLU(True),
-        )
-
-        init_layers(self._modules)
-
-    def forward(self, x):
-        x = self.main(x)
-        return self.fc1(x), self.fc2(x)
-
-
-class ConvDecoderVAE(nn.Module):
-    def __init__(self, latent_dim, num_channels):
-        super().__init__()
-
-        self.main = nn.Sequential(
-            Unsqueeze3D(),
-            nn.Conv2d(latent_dim, 256, 1, 2),
-            nn.ReLU(True),
-            nn.ConvTranspose2d(256, 256, 3, 2, 1),
-            nn.ReLU(True),
-            nn.ConvTranspose2d(256, 128, 3, 2),
-            nn.ReLU(True),
-            nn.ConvTranspose2d(128, 128, 3, 2),
-            nn.ReLU(True),
-            nn.ConvTranspose2d(128, 64, 3, 2),
-            nn.ReLU(True),
-            nn.ConvTranspose2d(64, 64, 3, 2),
-            nn.ReLU(True),
-            nn.ConvTranspose2d(64, num_channels, 2, 1),
-            nn.Sigmoid(),
-        )
-
-        init_layers(self._modules)
-
-    def forward(self, x):
+        # return self.main(self.upsample(x).relu().view(-1, 64, 7, 7))
         return self.main(x)
+
+
+# class convencodervae(nn.module):
+#     def __init__(self, latent_dim, num_channels):
+#         super().__init__()
+#
+#         self.fc1 = nn.linear(256, latent_dim, bias=true)
+#         self.fc2 = nn.linear(256, latent_dim, bias=true)
+#
+#         self.main = nn.sequential(
+#             nn.conv2d(num_channels, 32, 3, 2, 1),
+#             nn.relu(true),
+#             nn.conv2d(32, 32, 3, 2, 1),
+#             nn.relu(true),
+#             nn.conv2d(32, 64, 3, 2, 1),
+#             nn.relu(true),
+#             nn.conv2d(64, 128, 3, 2, 1),
+#             nn.relu(true),
+#             nn.conv2d(128, 256, 3, 2, 1),
+#             nn.relu(true),
+#             nn.conv2d(256, 256, 3, 2, 1),
+#             nn.relu(true),
+#             flatten3D(),
+#             # nn.Linear(256, latent_dim, bias=True),
+#             # nn.ReLU(True),
+#         )
+#
+#         init_layers(self._modules)
+#
+#     def forward(self, x):
+#         x = self.main(x)
+#         return self.fc1(x), self.fc2(x)
+
+
+# class ConvDecoderVAE(nn.Module):
+#     def __init__(self, latent_dim, num_channels):
+#         super().__init__()
+#
+#         self.main = nn.Sequential(
+#             Unsqueeze3D(),
+#             nn.Conv2d(latent_dim, 256, 1, 2),
+#             nn.ReLU(True),
+#             nn.ConvTranspose2d(256, 256, 3, 2, 1),
+#             nn.ReLU(True),
+#             nn.ConvTranspose2d(256, 128, 3, 2),
+#             nn.ReLU(True),
+#             nn.ConvTranspose2d(128, 128, 3, 2),
+#             nn.ReLU(True),
+#             nn.ConvTranspose2d(128, 64, 3, 2),
+#             nn.ReLU(True),
+#             nn.ConvTranspose2d(64, 64, 3, 2),
+#             nn.ReLU(True),
+#             nn.ConvTranspose2d(64, num_channels, 2, 1),
+#             nn.Sigmoid(),
+#         )
+#
+#         init_layers(self._modules)
+#
+#     def forward(self, x):
+#         return self.main(x)
