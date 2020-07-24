@@ -39,19 +39,64 @@ class MIAttacker(nn.Module):
         super().__init__()
 
         self.net = nn.Sequential(
-            nn.Linear(input_dim, 128),
-            nn.BatchNorm1d(128),
-            nn.LeakyReLU(0.2),
-            nn.Linear(128, 32),
-            nn.BatchNorm1d(32),
-            nn.LeakyReLU(0.2),
-            nn.Linear(32, 1),
+            # nn.Linear(input_dim, 128),
+            # nn.BatchNorm1d(128),
+            # nn.LeakyReLU(0.2),
+            nn.Linear(input_dim, int(input_dim / 2)),
+            nn.BatchNorm1d(int(input_dim / 2)),
+            # nn.LeakyReLU(0.2),
+            nn.ReLU(),
+            nn.Linear(int(input_dim / 2), 1),
             nn.Sigmoid(),
         )
         init_layers(self._modules)
 
     def forward(self, x):
         return self.net(x)
+
+
+# class MIAttacker(nn.Module):
+#     def __init__(self, input_dim):
+#         super().__init__()
+#
+#         self.net = nn.Sequential(
+#             # nn.Linear(input_dim, 128),
+#             # nn.BatchNorm1d(128),
+#             # nn.LeakyReLU(0.2),
+#             nn.Linear(input_dim, int(input_dim / 2)),
+#             nn.BatchNorm1d(int(input_dim / 2)),
+#             # nn.LeakyReLU(0.2),
+#             nn.ReLU(),
+#             nn.Linear(int(input_dim / 2), 8),
+#             nn.BatchNorm1d(8),
+#             nn.ReLU(),
+#             nn.Linear(8, 1),
+#             nn.Sigmoid(),
+#         )
+#         init_layers(self._modules)
+#
+#     def forward(self, x):
+#         return self.net(x)
+
+
+# class MIAttacker(nn.Module):
+#     def __init__(self, input_dim):
+#         super().__init__()
+#
+#         self.net = nn.Sequential(
+#             nn.Linear(input_dim, 128),
+#             # nn.BatchNorm1d(128),
+#             nn.LeakyReLU(0.2),
+#             nn.Linear(128, 32),
+#             # nn.BatchNorm1d(32),
+#             nn.LeakyReLU(0.2),
+#             nn.Linear(32, 1),
+#             nn.Sigmoid(),
+#         )
+#         init_layers(self._modules)
+#
+#     def forward(self, x):
+#         return self.net(x)
 
 
 class ClassDiscriminator(nn.Module):
@@ -101,25 +146,73 @@ class FCNClassifierA(nn.Module):
     def __init__(self, input_dim, output_dim):
         super().__init__()
 
-        self.net = nn.Sequential(
-            # nn.Linear(input_dim, 1024),
-            # nn.LeakyReLU(0.2),
-            # nn.Linear(1024, 512),
-            # nn.LeakyReLU(0.2),
+        self.net1 = nn.Sequential(
             nn.Linear(input_dim, 256),
-            # nn.ReLU(),
             nn.LeakyReLU(0.2),
+        )
+
+        self.net2 = nn.Sequential(
             nn.Linear(256, 128),
-            # nn.ReLU(),
             nn.LeakyReLU(0.2),
+        )
+
+        self.net3 = nn.Sequential(
             nn.Linear(128, output_dim),
-            # nn.Softmax(dim=1),
         )
         init_layers(self._modules)
 
     def forward(self, x):
-        return self.net(x)
+        x1 = self.net1(x)
+        x2 = self.net2(x1)
+        x3 = self.net3(x2)
+        return x3
 
+    def extract_features(self, x):
+        x1 = self.net1(x)
+        x2 = self.net2(x1)
+        x3 = self.net3(x2)
+        return x1, x2, x3
+
+
+# class FCNClassifierA(nn.Module):
+#     def __init__(self, input_dim, output_dim):
+#         super().__init__()
+#
+#         self.net = nn.Sequential(
+#             nn.Linear(input_dim, 256),
+#             nn.LeakyReLU(0.2),
+#             nn.Linear(256, 128),
+#             nn.LeakyReLU(0.2),
+#             nn.Linear(128, output_dim),
+#         )
+#         init_layers(self._modules)
+#
+#     def forward(self, x):
+#         return self.net(x)
+
+
+# class FCNClassifierA(nn.Module):
+#     def __init__(self, input_dim, output_dim):
+#         super().__init__()
+#
+#         self.net = nn.Sequential(
+#             # nn.Linear(input_dim, 1024),
+#             # nn.LeakyReLU(0.2),
+#             # nn.Linear(1024, 512),
+#             # nn.LeakyReLU(0.2),
+#             nn.Linear(input_dim, 256),
+#             # nn.ReLU(),
+#             nn.LeakyReLU(0.2),
+#             nn.Linear(256, 128),
+#             # nn.ReLU(),
+#             nn.LeakyReLU(0.2),
+#             nn.Linear(128, output_dim),
+#             # nn.Softmax(dim=1),
+#         )
+#         init_layers(self._modules)
+#
+#     def forward(self, x):
+#         return self.net(x)
 
 class FCNClassifierB(nn.Module):
     def __init__(self, input_dim, output_dim):
@@ -133,6 +226,7 @@ class FCNClassifierB(nn.Module):
             nn.BatchNorm1d(128),
             nn.LeakyReLU(0.2),
             nn.Linear(128, output_dim),
+            nn.Softmax(dim=1),
         )
         init_layers(self._modules)
 
@@ -420,7 +514,7 @@ class FCNDecoderD(nn.Module):
             nn.BatchNorm1d(2 * latent_dim),
             nn.ReLU(True),
             nn.Linear(2 * latent_dim, input_dim, bias=True),
-            nn.Sigmoid(),
+            # nn.Sigmoid(),
             # nn.ReLU(True),
         )
 
@@ -428,6 +522,7 @@ class FCNDecoderD(nn.Module):
 
     def forward(self, x):
         return self.main(x)
+
 
 class VAEFCNEncoderC(nn.Module):
     def __init__(self, input_dim, latent_dim):
@@ -450,6 +545,7 @@ class VAEFCNEncoderC(nn.Module):
         x = self.main(x)
         return self.mu(x), self.logvar(x)
 
+
 class VAEFCNEncoderD(nn.Module):
     def __init__(self, input_dim, latent_dim):
         super().__init__()
@@ -459,7 +555,7 @@ class VAEFCNEncoderD(nn.Module):
 
         self.main = nn.Sequential(
             nn.Linear(input_dim, 2 * latent_dim, bias=True),
-            nn.BatchNorm1d(2*latent_dim),
+            nn.BatchNorm1d(2 * latent_dim),
             nn.ReLU(),
             # nn.ReLU(True),
             # nn.Linear(input_dim, latent_dim, bias=True),
@@ -471,6 +567,48 @@ class VAEFCNEncoderD(nn.Module):
     def forward(self, x):
         x = self.main(x)
         return self.mu(x), self.logvar(x)
+
+
+class VAEFCNEncoderE(nn.Module):
+    def __init__(self, input_dim, latent_dim):
+        super().__init__()
+
+        self.mu = nn.Linear(input_dim, latent_dim)
+        self.logvar = nn.Linear(input_dim, latent_dim)
+
+        # self.main = nn.Sequential(
+        #     nn.Linear(input_dim, 2 * latent_dim, bias=True),
+        #     nn.BatchNorm1d(2 * latent_dim),
+        #     nn.ReLU(),
+        #     # nn.ReLU(True),
+        #     # nn.Linear(input_dim, latent_dim, bias=True),
+        #     # nn.ReLU(True),
+        # )
+
+        init_layers(self._modules)
+
+    def forward(self, x):
+        # x = self.main(x)
+        return self.mu(x), self.logvar(x)
+
+class FCNDecoderE(nn.Module):
+    def __init__(self, input_dim, latent_dim):
+        super().__init__()
+
+        self.main = nn.Sequential(
+            # nn.Linear(latent_dim, 2 * latent_dim, bias=True),
+            # nn.BatchNorm1d(2 * latent_dim),
+            # nn.ReLU(True),
+            nn.Linear(latent_dim, input_dim, bias=True),
+            # nn.Sigmoid(),
+            # nn.ReLU(True),
+        )
+
+        init_layers(self._modules)
+
+    def forward(self, x):
+        return self.main(x)
+
 
 
 class VAEFCNDecoder(nn.Module):

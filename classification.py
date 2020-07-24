@@ -217,27 +217,35 @@ class Classifier(object):
             sys.exit(1)
         self.net.eval()
 
-        print(self.net)
+        # print(self.net)
 
         features_dict = {}
         for dataset_type, dataset in dataset_dict.items():
             loader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False, num_workers=2)
             # loader = torch.utils.data.DataLoader(dataset, batch_size=self.test_batch_size, shuffle=False, num_workers=2)
+            logits = []
             prediction_scores = []
             labels = []
             print('====> Extract features from {} dataset'.format(dataset_type))
             # with torch.no_grad():
             for batch_idx, (inputs, targets) in enumerate(loader):
                 inputs, targets = inputs.to(self.device), targets.to(self.device)
-                outputs = self.net(inputs)
+                logits_ = self.net(inputs)
                 # prediction_scores_batch = outputs.cpu().numpy()
                 # print(outputs[0])
-                prediction_scores_batch = torch.softmax(outputs, dim=1).cpu().detach().numpy()
+                logits_batch = logits_.cpu().detach().numpy()
+                prediction_scores_batch = torch.softmax(logits_, dim=1).cpu().detach().numpy()
                 labels_batch = targets.cpu().detach().numpy()
 
-                loss = self.criterion(outputs, targets)
+                x1, x2, x3 = self.net.extract_features(inputs)
+                # print(x1.shape)
+                # print(x2.shape)
+                # print(x3.shape)
+                # sys.exit(1)
+
+                # loss = self.criterion(outputs, targets)
                 # print(loss)
-                loss.backward()
+                # loss.backward()
 
                 # print(self.net.fc2.weight)
                 # print(self.net.fc2.weight.grad)
@@ -249,15 +257,18 @@ class Classifier(object):
                 # sys.exit(1)
 
                 if len(prediction_scores) == 0:
+                    logits = logits_batch
                     prediction_scores = prediction_scores_batch
                     labels = labels_batch
                 else:
+                    logits = np.vstack((logits, logits_batch))
                     prediction_scores = np.vstack((prediction_scores, prediction_scores_batch))
                     labels = np.concatenate((labels, labels_batch))
 
-            print(prediction_scores.shape)
-            print(labels.shape)
+            # print(prediction_scores.shape)
+            # print(labels.shape)
             features_dict[dataset_type] = {
+                'logits': logits,
                 'preds': prediction_scores,
                 'labels': labels,
             }

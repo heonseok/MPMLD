@@ -37,14 +37,79 @@ target_classifier_list = [
     # 'VAE0.0001_z64_setsize2000_lr0.001_ref0.1_arcD_type5_cw0.1_mw1.0_FCNClassifierA',
     # 'VAE0.0001_z64_setsize2000_lr0.001_ref0.1_arcD_type5_cw1.0_mw1.0_FCNClassifierA',
 
-    'VAE0.0001_z64_setsize2000_lr0.001_ref0.1_arcD_base_FCNClassifierA',
+    # 'VAE0.0001_z64_setsize2000_lr0.001_ref0.1_arcD_base_FCNClassifierA',
+    # 'VAE1e-06_z64_setsize2000_lr0.001_ref0.1_arcD_base_FCNClassifierA',
+    # 'VAE1e-06_z64_setsize2000_lr0.001_ref0.1_arcD_type5_cw0.01_mw1.0_FCNClassifierA',
+    # 'VAE1e-06_z64_setsize2000_lr0.001_ref0.1_arcD_type5_cw0.1_mw1.0_FCNClassifierA',
+    # 'VAE1e-06_z64_setsize2000_lr0.001_ref0.1_arcD_type5_cw1.0_mw1.0_FCNClassifierA',
+    # 'VAE0.001_z64_setsize2000_lr0.001_ref0.1_arcD_type5_cw1.0_mw1.0_FCNClassifierA',
+
+    # 0722
+    # 'VAE0.001_z64_setsize2000_lr0.001_ref0.1_arcD_type5_cw1.0_mw10.0_FCNClassifierA',
+    # 'VAE0.001_z64_setsize2000_lr0.001_ref0.1_arcD_base_FCNClassifierA',
+    # 'VAE0.001_z64_setsize500_lr0.001_ref0.1_arcD_base_FCNClassifierA',
+    # 'VAE0.001_z64_setsize1000_lr0.001_ref0.1_arcD_base_FCNClassifierA',
+    # 'original_setsize500_FCNClassifierA',
+    # 'original_setsize1000_FCNClassifierA',
+    # 'VAE0.001_z128_setsize1000_lr0.001_ref0.1_arcD_base_FCNClassifierA',
+    # 'VAE0.001_z128_setsize1000_lr0.001_ref0.1_arcD_type5_cw1.0_mw10.0_FCNClassifierA',
+    # 'VAE0.001_z128_setsize1000_lr0.001_ref0.1_arcD_type5_cw1.0_mw20.0_FCNClassifierA',
+    # 'VAE0.001_z128_setsize1000_lr0.001_ref0.1_arcD_type5_cw1.0_mw1.0_FCNClassifierA',
+    # 'VAE0.001_z128_setsize1000_lr0.001_ref0.1_arcD_type5_cw10.0_mw1.0_FCNClassifierA',
+
+    # 0723
+    # 'VAE0.001_z256_setsize1000_lr0.001_ref0.1_arcE_base_FCNClassifierA',
+    # 'VAE0.001_z256_setsize1000_lr0.001_ref0.1_arcE_type5_cw1.0_mw10.0_FCNClassifierA',
+    # 'VAE0.001_z256_setsize1000_lr0.001_ref0.1_arcE_type5_cw10.0_mw10.0_FCNClassifierA',
+    # 'VAE0.001_z256_setsize1000_lr0.001_ref0.1_arcE_type5_cw1.0_mw1.0_FCNClassifierA',
+    # 'VAE0.001_z256_setsize1000_lr0.001_ref0.1_arcE_type5_cw1.0_mw0.1_FCNClassifierA',
+    # 'VAE1e-05_z256_setsize1000_lr0.001_ref0.1_arcE_type5_cw1.0_mw1.0_FCNClassifierA',
+    # 'VAE1e-05_z256_setsize1000_lr0.001_ref0.1_arcE_type5_cw1.0_mw2.0_FCNClassifierA',
+    # 'VAE1e-05_z256_setsize1000_lr0.001_ref0.1_arcE_type5_cw1.0_mw5.0_FCNClassifierA',
+    # 'VAE1e-05_z256_setsize1000_lr0.001_ref0.1_arcE_type5_cw2.0_mw1.0_FCNClassifierA',
+    # 'VAE1e-05_z256_setsize1000_lr0.001_ref0.1_arcE_type5_cw1.0_mw0.0_FCNClassifierA',
+    # 'VAE1e-05_z256_setsize1000_lr0.001_ref0.1_arcE_type5_cw0.1_mw0.1_FCNClassifierA',
+    # 'VAE1e-05_z256_setsize1000_lr0.001_ref0.1_arcE_type5_cw0.01_mw0.1_FCNClassifierA',
+    # 'VAE1e-05_z256_setsize1000_lr0.001_ref0.1_arcE_type5_cw0.01_mw1.0_FCNClassifierA',
+    # 'VAE1e-05_z256_setsize1000_lr0.001_ref0.1_arcE_type5_cw0.01_mw5.0_FCNClassifierA',
+
+    # 'VAE1e-05_z256_setsize1000_lr0.001_ref1.0_arcE_type5_cw1.0_mw1.0_FCNClassifierA',
+    # 'VAE1e-05_z256_setsize1000_lr0.001_ref1.0_arcE_type5_cw0.1_mw0.1_FCNClassifierA',
+    # 'VAE1e-05_z256_setsize1000_lr0.001_ref1.0_arcE_type5_cw0.1_mw1.0_FCNClassifierA',
+    # 'VAE1e-05_z256_setsize1000_lr0.001_ref1.0_arcE_type5_cw0.1_mw10.0_FCNClassifierA',
+    # 'VAE1e-05_z256_setsize1000_lr0.001_ref1.0_arcE_type5_cw0.01_mw10.0_FCNClassifierA',
+    # 'VAE1e-05_z256_setsize1000_lr0.001_ref1.0_arcE_type5_cw0.001_mw10.0_FCNClassifierA',
+    # 'VAE1e-05_z256_setsize1000_lr0.001_ref1.0_arcE_type5_cw0.005_mw10.0_FCNClassifierA',
+    # 'VAE1e-05_z256_setsize1000_lr0.001_ref1.0_arcE_type5_cw0.0_mw10.0_FCNClassifierA', # recon weight 10
+    # 'VAE1e-05_z256_setsize1000_lr0.001_ref1.0_arcE_type5_cw1.0_mw10.0_FCNClassifierA',
+    # 'VAE1e-05_z256_setsize1000_lr0.001_ref1.0_arcE_type5_cw0.01_mw10.0_FCNClassifierA',
+    # 'VAE1e-05_z256_setsize1000_lr0.001_ref1.0_arcE_type5_cw0.1_mw10.0_FCNClassifierA',
+
+    # 'VAE1e-05_z256_setsize1000_lr0.001_ref1.0_arcE_type5_cw0.02_mw10.0_FCNClassifierA',
+    # 'VAE1e-05_z256_setsize1000_lr0.001_ref1.0_arcE_type5_cw0.03_mw10.0_FCNClassifierA',
+    # 'VAE1e-05_z256_setsize1000_lr0.001_ref1.0_arcE_type5_cw0.04_mw10.0_FCNClassifierA',
+    # 'VAE1e-05_z256_setsize1000_lr0.001_ref1.0_arcE_type5_cw0.05_mw10.0_FCNClassifierA',
+
+    # 'VAE1e-05_z256_setsize1000_lr0.001_ref1.0_arcE_type5_cw0.011_mw10.0_FCNClassifierA',
+
+    # 'VAE1e-05_z256_setsize1000_lr0.001_ref1.0_arcE_type5_cw0.1_mw10.0_FCNClassifierA',  # recon weight 100
+    # 'VAE1e-05_z256_setsize1000_lr0.001_ref1.0_arcE_type5_cw1.0_mw10.0_FCNClassifierA',  # recon weight 100
+    # 'VAE1e-05_z256_setsize1000_lr0.001_ref1.0_arcE_type5_cw0.0_mw10.0_FCNClassifierA',  # recon weight 100
+
+    # 'VAE1e-05_z256_setsize1000_lr0.001_ref1.0_arcE_type5_cw1.0_mw0.0_FCNClassifierA',  # recon weight 100
+    # 'VAE1e-05_z256_setsize1000_lr0.001_ref1.0_arcE_type5_cw1.0_mw0.01_FCNClassifierA',  # recon weight 100
+    'VAE1e-05_z256_setsize1000_lr0.001_ref1.0_arcE_type5_cw1.0_mw0.1_FCNClassifierA',  # recon weight 100
 ]
 
 recon_type_list = [
     'base_z',
-    'content_z',
-    'style_z',
-    'full_z',
+    # 'content_z',
+    # 'style_z',
+    # 'full_z',
+    'zero_content',
+    'zero_style',
+    # 'uniform_style',
+    # 'normal_style',
 ]
 
 repeat_idx_list = [

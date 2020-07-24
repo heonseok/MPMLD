@@ -169,6 +169,20 @@ def concat_datasets(in_dataset, out_dataset, start, end):
     ])
 
 
+def statistical_attack(cls_path, attack_path):
+    features = np.load(os.path.join(cls_path, 'features.npy'), allow_pickle=True).item()
+
+    print('==> Statistical attack')
+    in_entropy = entropy(features['in']['preds'], base=2, axis=1)
+    out_entropy = entropy(features['out']['preds'], base=2, axis=1)
+    acc, auroc = classify_membership(in_entropy, out_entropy)
+    np.save(os.path.join(attack_path, 'acc.npy'), acc)
+    np.save(os.path.join(attack_path, 'auroc.npy'), auroc)
+
+    print('Statistical attack accuracy : {:.2f}'.format(acc))
+    # todo: sort by confidence score
+
+
 def build_inout_features(features, attack_type):
     preds = torch.Tensor(features['preds'])
     labels = features['labels']
@@ -199,20 +213,6 @@ def build_inout_feature_sets(classification_path, attack_type):
         'test': concat_datasets(in_feature_set, out_feature_set, 0.85, 1.0),
     }
     return inout_feature_sets
-
-
-def statistical_attack(cls_path, attack_path):
-    features = np.load(os.path.join(cls_path, 'features.npy'), allow_pickle=True).item()
-
-    print('==> Statistical attack')
-    in_entropy = entropy(features['in']['preds'], base=2, axis=1)
-    out_entropy = entropy(features['out']['preds'], base=2, axis=1)
-    acc, auroc = classify_membership(in_entropy, out_entropy)
-    np.save(os.path.join(attack_path, 'acc.npy'), acc)
-    np.save(os.path.join(attack_path, 'auroc.npy'), auroc)
-
-    print('Statistical attack accuracy : {:.2f}'.format(acc))
-    # todo: sort by confidence score
 
 
 def build_reconstructed_datasets(reconstruction_path):

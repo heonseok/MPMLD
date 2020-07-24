@@ -13,7 +13,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--dataset', type=str, default='location',
                     choices=['MNIST', 'Fashion-MNIST', 'CIFAR-10', 'adult', 'location'])
 # parser.add_argument('--setsize', type=int, default=100)
-parser.add_argument('--lr', type=float, default=0.002)
+parser.add_argument('--lr', type=float, default=0.01)
 parser.add_argument('--base_path', type=str, default='/mnt/disk1/heonseok/MPMLD')
 parser.add_argument('--resume', type=str2bool, default='0')
 parser.add_argument('--train_batch_size', type=int, default=100)
@@ -25,7 +25,7 @@ parser.add_argument('--early_stop_observation_period', type=int, default=40)
 parser.add_argument('--repeat_idx', type=int, default=0)
 parser.add_argument('--gpu_id', type=int, default=3)
 parser.add_argument('--attack_type', type=str, default='black', choices=['black', 'white'])
-parser.add_argument('--recon_type', type=str, default='full_z', choices=['base_z', 'content_z', 'style_z', 'full_z'])
+parser.add_argument('--recon_type', type=str, default='full_z', )
 
 parser.add_argument('--target_classifier', type=str,
                     default='AE_z64_setsize2000_lr0.1_ref0.1_arcA_type5_cw1.0_mw1.0_FCNClassifierA')

@@ -37,7 +37,7 @@ class ReconstructorVAE(object):
 
         self.acc_dict = {}
 
-        self.recon_weight = 1.
+        self.recon_weight = 100.
         self.class_weight = args.class_weight
         self.membership_weight = args.membership_weight
 
@@ -94,6 +94,19 @@ class ReconstructorVAE(object):
             elif args.architecture == 'D':
                 self.encoder = module.VAEFCNEncoderD(args.encoder_input_dim, self.z_dim)
                 self.decoder = module.FCNDecoderD(args.encoder_input_dim, self.z_dim)
+
+                self.class_classifier_with_full = module.ClassDiscriminator(self.z_dim, args.class_num)
+                self.class_classifier_with_content = module.ClassDiscriminator(self.disc_input_dim, args.class_num)
+                self.class_classifier_with_style = module.ClassDiscriminator(self.disc_input_dim, args.class_num)
+
+                self.membership_classifier_with_full = module.MembershipDiscriminator(self.z_dim, 1)
+                self.membership_classifier_with_content = module.MembershipDiscriminator(self.disc_input_dim, 1)
+                self.membership_classifier_with_style = module.MembershipDiscriminator(self.disc_input_dim, 1)
+                self.recon_loss = self.get_loss_function()
+
+            elif args.architecture == 'E':
+                self.encoder = module.VAEFCNEncoderE(args.encoder_input_dim, self.z_dim)
+                self.decoder = module.FCNDecoderE(args.encoder_input_dim, self.z_dim)
 
                 self.class_classifier_with_full = module.ClassDiscriminator(self.z_dim, args.class_num)
                 self.class_classifier_with_content = module.ClassDiscriminator(self.disc_input_dim, args.class_num)
@@ -449,7 +462,7 @@ class ReconstructorVAE(object):
 
         loss = 0
         correct_class_from_content = 0
-        correct_class_from_style = 0
+        correct_class_from_style = 1
 
         total = 0
         with torch.no_grad():
@@ -578,7 +591,7 @@ class ReconstructorVAE(object):
 
         mse_list = []
 
-        for reconstruction_type in ['base_z', 'content_z', 'style_z', 'full_z']:
+        for reconstruction_type in ['base_z', 'content_z', 'style_z', 'full_z', 'zero_content', 'zero_style', 'uniform_style', 'normal_style']:
             recon_datasets_dict = {}
             print(reconstruction_type)
             for dataset_type, dataset in dataset_dict.items():
@@ -635,6 +648,38 @@ class ReconstructorVAE(object):
                             z[:, self.content_idx] = self.reparameterize(mu_content, logvar_content)
                             z[:, self.style_idx] = self.reparameterize(mu_style, logvar_style)
 
+                        elif reconstruction_type == 'zero_content':
+                            z[:, self.content_idx] = torch.zeros_like(mu_content).to(self.device)
+                            z[:, self.style_idx] = mu_style
+
+                        elif reconstruction_type == 'zero_style':
+                            z[:, self.content_idx] = mu_content
+                            z[:, self.style_idx] = torch.zeros_like(mu_style).to(self.device)
+
+                        elif reconstruction_type == 'uniform_style':
+                            z[:, self.content_idx] = mu_content
+                            z[:, self.style_idx] = torch.rand_like(mu_style).to(self.device)
+
+                        elif reconstruction_type == 'normal_style':
+                            z[:, self.content_idx] = mu_content
+                            z[:, self.style_idx] = torch.randn_like(mu_style).to(self.device)
+
+                        # if reconstruction_type == 'base_z':
+                        #     z[:, self.content_idx] = mu_content
+                        #     z[:, self.style_idx] = mu_style
+                        #
+                        # elif reconstruction_type == 'content_z':
+                        #     z[:, self.content_idx] = mu_content
+                        #     z[:, self.style_idx] = self.reparameterize(mu_style, logvar_style)
+                        #
+                        # elif reconstruction_type == 'style_z':
+                        #     z[:, self.content_idx] = self.reparameterize(mu_content, logvar_content)
+                        #     z[:, self.style_idx] = mu_style
+                        #
+                        # elif reconstruction_type == 'full_z':
+                        #     z[:, self.content_idx] = self.reparameterize(mu_content, logvar_content)
+                        #     z[:, self.style_idx] = self.reparameterize(mu_style, logvar_style)
+
                         recons_batch = self.decoder(z).cpu()
                         # recons_batch = torch.sigmoid(self.decoder(z)).cpu()
                         labels_batch = targets
@@ -685,11 +730,13 @@ class ReconstructorVAE(object):
     def get_loss_function(self):
         def loss_function(recon_x, x, mu, logvar):
             # BCE = F.binary_cross_entropy(recon_x, x, reduction='sum')
-            BCE = F.binary_cross_entropy(recon_x, x, reduction='none').mean(dim=0).sum()
+            # BCE = F.binary_cross_entropy(recon_x, x, reduction='none').mean(dim=0).sum()
             MSE = F.mse_loss(recon_x, x, reduction='none').mean(dim=0).sum()
             # print(BCE.shape)
             # print(recon_x.shape)
 
+            # zero mean
+            # KLD = -0.5 * torch.sum(1 + logvar - logvar.exp()).mean(dim=0).sum()
             KLD = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp()).mean(dim=0).sum()
             # print('BCE: {:.4f}, KLD: {:.4f}'.format(BCE.item(), KLD.item()))
             # print('BCE: {:.4f}, KLD: {:.4f}, MSE: {:.4f}'.format(BCE.item(), KLD.item(), MSE.item()))

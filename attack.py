@@ -37,6 +37,7 @@ class Attacker(object):
                 net = MIAttacker(20)
             elif args.dataset == 'location':
                 net = MIAttacker(60)
+        # elif self.attack_type ==
 
         self.start_epoch = 0
         self.best_valid_acc = 0
@@ -129,9 +130,9 @@ class Attacker(object):
         acc = metrics.accuracy_score(labels, np.round(predicted))
 
         if type == 'valid':
-            print('Epoch: {:>3}, Train Acc: {:.2f}, Valid Acc: {:.2f}'.format(epoch, self.train_acc, acc))
+            # print('Epoch: {:>3}, Train Acc: {:.2f}, Valid Acc: {:.2f}'.format(epoch, self.train_acc, acc))
             if acc > self.best_valid_acc:
-                print('Saving..')
+                # print('Saving..')
                 state = {
                     'net': self.net.state_dict(),
                     'best_valid_acc': acc,
@@ -145,10 +146,10 @@ class Attacker(object):
                 self.early_stop_count = 0
             else:
                 self.early_stop_count += 1
-                print('Early stop count: {}'.format(self.early_stop_count))
+                # print('Early stop count: {}'.format(self.early_stop_count))
 
             if self.early_stop_count == self.early_stop_observation_period:
-                print('Early stop count == {}; Terminate training'.format(self.early_stop_observation_period))
+                # print('Early stop count == {}; Terminate training'.format(self.early_stop_observation_period))
                 self.train_flag = False
 
         elif type == 'test':

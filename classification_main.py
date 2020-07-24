@@ -12,7 +12,7 @@ import sys
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--dataset', type=str, default='location',
-                    choices=['MNIST', 'Fashion-MNIST', 'CIFAR-10', 'CIFAR-100', 'adult', 'location'])
+                    choices=['MNIST', 'Fashion-MNIST', 'CIFAR-10', 'CIFAR-100', 'adult', 'location', ])
 parser.add_argument('--lr', type=float, default=0.0001)
 parser.add_argument('--base_path', type=str, default='/mnt/disk1/heonseok/MPMLD')
 parser.add_argument('--resume', type=str2bool, default='0')
@@ -78,12 +78,6 @@ class_datasets = {
     'test': subset2,
 }
 
-# inout_datasets should be transformed to inout_feature_sets for training attacker
-inout_datasets = {
-    'in': subset0,
-    'out': subset3,
-}
-
 if 'original' in args.target_data:
     args.classification_name = os.path.join(
         '{}_{}{}'.format(args.target_data, args.classification_model, args.classifier_type),
@@ -127,6 +121,16 @@ if args.test_classifier:
     classifier.test(class_datasets['test'])
 
 if args.extract_classifier_features:
+    # inout_datasets should be transformed to inout_feature_sets for training attacker
+    inout_datasets = {
+        'in': subset0,
+        'out': subset3,
+    }
+
+    if 'original' not in args.target_data:
+        inout_datasets['in'] = recon_datasets['train']
+        inout_datasets['out'] = recon_datasets['out']
+
     for dataset_type, dataset in inout_datasets.items():
         print('Inout {:<3} dataset: {}'.format(dataset_type, len(dataset)))
     print()
