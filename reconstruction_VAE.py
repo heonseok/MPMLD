@@ -10,6 +10,7 @@ import data
 from torch.optim.lr_scheduler import StepLR
 from torch.nn import functional as F
 import torchvision.utils as vutils
+from torch.utils.data import Subset
 
 
 class ReconstructorVAE(object):
@@ -69,7 +70,7 @@ class ReconstructorVAE(object):
         self.discriminator_lr = args.lr
         for disc_type in self.discs:
             self.optimizer[disc_type] = optim.Adam(self.discs[disc_type].parameters(), lr=self.discriminator_lr,
-                                                  betas=(0.5, 0.999))
+                                                   betas=(0.5, 0.999))
 
         self.weights = {
             'recon': args.recon_weight,
@@ -90,6 +91,9 @@ class ReconstructorVAE(object):
             self.discs[disc_type] = self.discs[disc_type].to(self.device)
 
         self.acc_dict = {}
+
+        self.disentangle = (self.weights['class_cz'] + self.weights['class_mz']
+                            + self.weights['membership_cz'] + self.weights['membership_mz'] > 0)
 
         self.start_epoch = 0
         self.best_valid_loss = float("inf")
@@ -193,8 +197,7 @@ class ReconstructorVAE(object):
             #         membership_loss_content, membership_loss_style,
             #     ))
 
-            if self.weights['class_cz'] + self.weights['class_mz'] + self.weights['membership_cz'] + self.weights[
-                'membership_mz'] > 0:
+            if self.disentangle:
                 self.disentangle_z(inputs, targets)
 
             recon_train_loss += recon_loss.item()
@@ -435,15 +438,15 @@ class ReconstructorVAE(object):
     def train(self, train_set, valid_set=None, ref_set=None):
         print('==> Start training {}'.format(self.reconstruction_path))
         self.train_flag = True
-
-        train_ref_set = data.DoubleDataset(train_set, ref_set)
-        train_ref_loader = torch.utils.data.DataLoader(train_ref_set, batch_size=self.train_batch_size, shuffle=True,
-                                                       num_workers=2)
-
         if self.early_stop:
             valid_loader = torch.utils.data.DataLoader(valid_set, batch_size=self.train_batch_size, shuffle=True,
                                                        num_workers=2)
         for epoch in range(self.start_epoch, self.start_epoch + self.epochs):
+            permutated_idx = np.random.permutation(ref_set.__len__())
+            ref_set = Subset(ref_set, permutated_idx)
+            train_ref_set = data.DoubleDataset(train_set, ref_set)
+            train_ref_loader = torch.utils.data.DataLoader(train_ref_set, batch_size=self.train_batch_size,
+                                                           shuffle=True, num_workers=2)
             if self.train_flag:
                 self.train_epoch(train_ref_loader, epoch)
                 if self.use_scheduler:
