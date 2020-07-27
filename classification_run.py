@@ -20,11 +20,6 @@ classification_model_list = [
     # 'DenseNet121',
 ]
 
-classifier_type_list = [
-    'A',
-    # 'B',
-]
-
 target_data_list = [
     # 'original_setsize2000',
 
@@ -184,18 +179,16 @@ target_data_list = [
     # 'VAE1e-06_z64_setsize10000_lr0.001_ref0.1_arcE_type5_cw1.0_mw10.0',
     # 'VAE1e-06_z64_setsize10000_lr0.001_ref0.1_arcE_type5_cw1.0_mw1.0',
 
-    'VAE1e-06_z64_setsize10000_lr0.001_ref0.1_arcE_type5_cw0.1_mw0.1',
+    # 'VAE1e-06_z64_setsize10000_lr0.001_ref0.1_arcE_type5_cw0.1_mw0.1',
+
+    # 0727
+    'VAE1e-06_z64_setsize10000_lr0.001_ref1.0_rw100.0_cc0.0_cm1.0_mc1.0_mm0.0',
 ]
 
 recon_type_list = [
-    # 'base_z',
-    # 'content_z',
-    # 'style_z',
-    # 'full_z',
-    'zero_content',
-    'zero_style',
-    # 'uniform_style',
-    # 'normal_style',
+    # 'cb_mb',
+    'cz_mb',
+    'cb_mz',
 ]
 
 repeat_idx_list = [
@@ -207,8 +200,8 @@ repeat_idx_list = [
 ]
 
 setup_dict = {
-    'train_classifier': '1',
-    'test_classifier': '1',
+    'train_classifier': '0',
+    'test_classifier': '0',
     'extract_classifier_features': '1',
 
     'epochs': 500,
@@ -220,34 +213,32 @@ setup_dict = {
 
 for dataset in dataset_list:
     for classification_model in classification_model_list:
-        for classifier_type in classifier_type_list:
-            for repeat_idx in repeat_idx_list:
-                for target_data in target_data_list:
-                    args_list = []
-                    target_setup_dict = setup_dict
-                    target_setup_dict['dataset'] = dataset
-                    target_setup_dict['classification_model'] = classification_model
-                    target_setup_dict['target_data'] = target_data
-                    target_setup_dict['classifier_type'] = classifier_type
-                    target_setup_dict['repeat_idx'] = str(repeat_idx)
+        for repeat_idx in repeat_idx_list:
+            for target_data in target_data_list:
+                args_list = []
+                target_setup_dict = setup_dict
+                target_setup_dict['dataset'] = dataset
+                target_setup_dict['classification_model'] = classification_model
+                target_setup_dict['target_data'] = target_data
+                target_setup_dict['repeat_idx'] = str(repeat_idx)
 
-                    args_list.append('python classification_main.py')
+                args_list.append('python classification_main.py')
 
-                    if 'original' in target_data:
-                        for k, v in target_setup_dict.items():
-                            args_list.append('--{} {}'.format(k, v))
+                if 'original' in target_data:
+                    for k, v in target_setup_dict.items():
+                        args_list.append('--{} {}'.format(k, v))
 
-                        model = ' '.join(args_list)
-                        print(model)
-                        os.system(model)
-                        continue
+                    model = ' '.join(args_list)
+                    print(model)
+                    os.system(model)
+                    continue
 
-                    for recon_type in recon_type_list:
-                        # todo : fix duplication
-                        target_setup_dict['recon_type'] = recon_type
-                        for k, v in target_setup_dict.items():
-                            args_list.append('--{} {}'.format(k, v))
+                for recon_type in recon_type_list:
+                    # todo : fix duplication
+                    target_setup_dict['recon_type'] = recon_type
+                    for k, v in target_setup_dict.items():
+                        args_list.append('--{} {}'.format(k, v))
 
-                        model = ' '.join(args_list)
-                        print(model)
-                        os.system(model)
+                    model = ' '.join(args_list)
+                    print(model)
+                    os.system(model)

@@ -138,14 +138,10 @@ class ReconstructorVAE(object):
         self.start_epoch = checkpoint['epoch']
 
     def train_epoch(self, train_ref_loader, epoch):
-        self.nets['encoder'].train()
-        self.nets['decoder'].train()
-        self.discs['class_fz'].train()
-        self.discs['class_cz'].train()
-        self.discs['class_mz'].train()
-        self.discs['membership_fz'].train()
-        self.discs['membership_cz'].train()
-        self.discs['membership_mz'].train()
+        for net_type in self.nets:
+           self.nets[net_type].train()
+        for disc_type in self.discs:
+            self.discs[disc_type].train()
 
         recon_train_loss = 0
         correct_class_from_full = 0
@@ -462,7 +458,7 @@ class ReconstructorVAE(object):
         try:
             self.load()
         except FileNotFoundError:
-            print('There is no pre-trained model; First, train the disentangler.')
+            print('There is no pre-trained model; First, train a reconstructor.')
             sys.exit(1)
         self.nets['encoder'].eval()
         self.nets['decoder'].eval()
@@ -578,7 +574,7 @@ class ReconstructorVAE(object):
             torch.save(recon_datasets_dict,
                        os.path.join(self.reconstruction_path, 'recon_{}.pt'.format(reconstruction_type)))
 
-        print(mse_list)
+        # print(mse_list)
         np.save(os.path.join(self.reconstruction_path, 'mse.npy'), mse_list)
 
     def reparameterize(self, mu, logvar):

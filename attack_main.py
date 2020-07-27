@@ -13,6 +13,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--dataset', type=str, default='SVHN',
                     choices=['MNIST', 'Fashion-MNIST', 'CIFAR-10', 'adult', 'location', 'SVHN'])
 # parser.add_argument('--setsize', type=int, default=100)
+parser.add_argument('--output_dir', type=str, default='output0727')
 parser.add_argument('--lr', type=float, default=0.01)
 parser.add_argument('--base_path', type=str, default='/mnt/disk1/heonseok/MPMLD')
 parser.add_argument('--resume', type=str2bool, default='0')
@@ -44,7 +45,7 @@ args = parser.parse_args()
 
 torch.cuda.set_device(args.gpu_id)
 
-args.output_path = os.path.join(args.base_path, 'output0724', args.dataset)
+args.output_path = os.path.join(args.base_path, args.output_dir, args.dataset)
 if not os.path.exists(args.output_path):
     os.makedirs(args.output_path)
 

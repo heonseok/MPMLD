@@ -70,7 +70,10 @@ weight_list = [
 
     # ref 1.0
     # [100, 0, 1, 1, 0],
-    [100, 0, 10, 1, 0],
+    # [100, 0, 10, 1, 0],
+
+    # ref 1.0 + permuted ref
+    [100, 0, 1, 1, 0],
 ]
 
 beta_list = [
@@ -92,7 +95,7 @@ repeat_idx_list = [
 ]
 
 setup_dict = {
-    'train_reconstructor': '1',
+    'train_reconstructor': '0',
     'reconstruct_datasets': '1',
 
     'epochs': 500,

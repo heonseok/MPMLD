@@ -106,18 +106,16 @@ target_classifier_list = [
     # 'VAE1e-06_z64_setsize10000_lr0.001_ref1.0_arcE_type5_cw1.0_mw1.0_ResNet18A'
     # 'VAE1e-06_z64_setsize10000_lr0.001_ref1.0_arcE_type5_cw1.0_mw10.0_ResNet18A'
     # 'VAE1e-06_z64_setsize10000_lr0.001_ref0.1_arcE_type5_cw1.0_mw10.0_ResNet18A'
-    'VAE1e-06_z64_setsize10000_lr0.001_ref0.1_arcE_type5_cw1.0_mw1.0_ResNet18A'
+    # 'VAE1e-06_z64_setsize10000_lr0.001_ref0.1_arcE_type5_cw1.0_mw1.0_ResNet18A'
+
+    # 0727
+    'VAE1e-06_z64_setsize10000_lr0.001_ref1.0_rw100.0_cc0.0_cm1.0_mc1.0_mm0.0_ResNet18',
 ]
 
 recon_type_list = [
-    # 'base_z',
-    # 'content_z',
-    # 'style_z',
-    # 'full_z',
-    'zero_content',
-    'zero_style',
-    # 'uniform_style',
-    # 'normal_style',
+    # 'cb_mb',
+    'cz_mb',
+    'cb_mz',
 ]
 
 repeat_idx_list = [
@@ -138,7 +136,7 @@ setup_dict = {
     'epochs': 500,
     'early_stop': '1',
     'early_stop_observation_period': 20,
-    'gpu_id': 3,
+    'gpu_id': 0,
 }
 
 if not os.path.exists('log'):
