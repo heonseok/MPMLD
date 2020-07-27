@@ -13,7 +13,7 @@ import sys
 parser = argparse.ArgumentParser()
 parser.add_argument('--dataset', type=str, default='SVHN',
                     choices=['MNIST', 'Fashion-MNIST', 'CIFAR-10', 'CIFAR-100', 'adult', 'location', 'SVHN'])
-parser.add_argument('--lr', type=float, default=0.0001)
+parser.add_argument('--lr', type=float, defaul=0.0001)
 parser.add_argument('--base_path', type=str, default='/mnt/disk1/heonseok/MPMLD')
 parser.add_argument('--resume', type=str2bool, default='0')
 parser.add_argument('--train_batch_size', type=int, default=100)

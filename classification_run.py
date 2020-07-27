@@ -214,7 +214,7 @@ setup_dict = {
     'epochs': 500,
     'early_stop': '1',
     'early_stop_observation_period': 20,
-    'gpu_id': 3,
+    'gpu_id': 0,
     'print_training': False,
 }
 

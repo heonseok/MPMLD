@@ -34,28 +34,11 @@ z_dim_list = [
     # '256',
 ]
 
-disentanglement_type_list = [
-    # 'base',
-    # 'type1',
-    # 'type2',
-    # 'type3',
-    # 'type4',
-    'type5',
-]
-
 ref_ratio_list = [
-    0.1,
+    # 0.1,
     # 0.2,
     # 0.5,
-    # 1.0,
-]
-
-architecture_list = [
-    # 'A',
-    # 'B',
-    # 'C',
-    # 'D',
-    'E',
+    1.0,
 ]
 
 lr_list = [
@@ -64,35 +47,29 @@ lr_list = [
     # 0.1,
 ]
 
-class_weight_list = [
-    # 0,
-    # 0.001,
-    # 0.005,
-    0.01,
-    # 0.011,
-    # 0.02,
-    # 0.03,
-    # 0.04,
-    # 0.05,
-    # 0.1,
-    # 0.5,
-    # 1,
-    # 2,
-    # 10,
-    # 100,
-]
+# recon, class_cz(+), class_mz(-), membership_cz(-), membership_mz(+)
+weight_list = [
+    # [100, 0, 1, 1, 0]
+    # [100, 0, 1, 10, 0],
 
-membership_weight_list = [
-    # 0,
-    0.01,
-    # 0.1,
-    # 0.5,
-    # 1,
-    # 2,
-    # 5,
-    # 10,
-    # 20,
-    # 100,
+    # [100, 0, 10, 1, 0],
+    # [100, 0, 10, 10, 0],
+    # [10, 0, 1, 1, 0],
+    # [10, 0, 10, 1, 0],
+    # [10, 0, 1, 10, 0],
+    # [10, 0, 10, 10, 0],
+
+    # [10, 0, 0.1, 0.1, 0],
+    # [10, 0, 0.1, 1, 0],
+    # [100, 0, 0.1, 1, 0],
+    # [50, 0, 0.1, 1, 0],
+    # [50, 0, 1, 1, 0],
+    # [1, 0, 0.01, 0.01, 0],
+    # [1, 0, 0.1, 0.1, 0],
+    # [1, 0, 0.01, 0.1, 0],
+
+    # ref 1.0
+    [100, 0, 1, 1, 0],
 ]
 
 beta_list = [
@@ -120,7 +97,7 @@ setup_dict = {
     'epochs': 500,
     'early_stop': '1',
     'early_stop_observation_period': 20,
-    'gpu_id': 3,
+    'gpu_id': 0,
     'print_training': False,
 }
 
@@ -133,36 +110,34 @@ for dataset in dataset_list:
     for reconstruction_model in reconstruction_model_list:
         for beta in beta_list:
             for z_dim in z_dim_list:
-                for architecture in architecture_list:
-                    for disentanglement_type in disentanglement_type_list:
-                        for setsize in setsize_list:
-                            for lr in lr_list:
-                                for ref_ratio in ref_ratio_list:
-                                    for class_weight in class_weight_list:
-                                        for membership_weight in membership_weight_list:
-                                            for repeat_idx in repeat_idx_list:
-                                                args_list = []
-                                                target_setup_dict = setup_dict
-                                                target_setup_dict['dataset'] = dataset
-                                                target_setup_dict['reconstruction_model'] = reconstruction_model
-                                                target_setup_dict['z_dim'] = z_dim
-                                                target_setup_dict['architecture'] = architecture
-                                                target_setup_dict['disentanglement_type'] = disentanglement_type
-                                                target_setup_dict['setsize'] = setsize
-                                                target_setup_dict['repeat_idx'] = str(repeat_idx)
-                                                target_setup_dict['lr'] = str(lr)
-                                                target_setup_dict['ref_ratio'] = str(ref_ratio)
-                                                target_setup_dict['class_weight'] = str(class_weight)
-                                                target_setup_dict['membership_weight'] = str(membership_weight)
-                                                target_setup_dict['beta'] = str(beta)
-                                                args_list.append('python reconstruction_main.py')
-                                                for k, v in target_setup_dict.items():
-                                                    args_list.append('--{} {}'.format(k, v))
+                for setsize in setsize_list:
+                    for lr in lr_list:
+                        for ref_ratio in ref_ratio_list:
+                            for weight in weight_list:
+                                for repeat_idx in repeat_idx_list:
+                                    args_list = []
+                                    target_setup_dict = setup_dict
+                                    target_setup_dict['dataset'] = dataset
+                                    target_setup_dict['reconstruction_model'] = reconstruction_model
+                                    target_setup_dict['z_dim'] = z_dim
+                                    target_setup_dict['setsize'] = setsize
+                                    target_setup_dict['repeat_idx'] = str(repeat_idx)
+                                    target_setup_dict['lr'] = str(lr)
+                                    target_setup_dict['ref_ratio'] = str(ref_ratio)
+                                    target_setup_dict['beta'] = str(beta)
+                                    target_setup_dict['recon_weight'] = str(weight[0])
+                                    target_setup_dict['class_cz_weight'] = str(weight[1])
+                                    target_setup_dict['class_mz_weight'] = str(weight[2])
+                                    target_setup_dict['membership_cz_weight'] = str(weight[3])
+                                    target_setup_dict['membership_mz_weight'] = str(weight[4])
+                                    args_list.append('python reconstruction_main.py')
+                                    for k, v in target_setup_dict.items():
+                                        args_list.append('--{} {}'.format(k, v))
 
-                                                model = ' '.join(args_list)
-                                                print(model)
-                                                f.write(model + '\n')
-                                                os.system(model)
+                                    model = ' '.join(args_list)
+                                    print(model)
+                                    f.write(model + '\n')
+                                    os.system(model)
 
 f.write('\n')
 f.close()
