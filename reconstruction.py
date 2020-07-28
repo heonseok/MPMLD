@@ -10,10 +10,10 @@ import data
 from torch.optim.lr_scheduler import StepLR
 from torch.nn import functional as F
 import torchvision.utils as vutils
-from torch.utils.data import Subset
+from torch.utils.data import Subset, DataLoader
 
 
-class ReconstructorVAE(object):
+class Reconstructor(object):
     def __init__(self, args):
         self.reconstruction_model = args.reconstruction_model
         self.reconstruction_path = args.reconstruction_path
@@ -97,7 +97,7 @@ class ReconstructorVAE(object):
 
         self.start_epoch = 0
         self.best_valid_loss = float("inf")
-        self.train_loss = 0
+        # self.train_loss = 0
         self.early_stop_count = 0
 
         self.class_acc_full = 0
@@ -127,19 +127,24 @@ class ReconstructorVAE(object):
     def load(self):
         print('====> Loading checkpoint {}'.format(self.reconstruction_path))
         checkpoint = torch.load(os.path.join(self.reconstruction_path, 'ckpt.pth'))
-        self.nets['encoder'].load_state_dict(checkpoint['encoder'])
-        self.nets['decoder'].load_state_dict(checkpoint['decoder'])
-        self.discs['class_fz'].load_state_dict(checkpoint['class_classifier_with_full'])
-        self.discs['class_cz'].load_state_dict(checkpoint['class_classifier_with_content'])
-        self.discs['class_mz'].load_state_dict(checkpoint['class_classifier_with_style'])
-        self.discs['membership_fz'].load_state_dict(checkpoint['membership_classifier_with_full'])
-        self.discs['membership_cz'].load_state_dict(checkpoint['membership_classifier_with_content'])
-        self.discs['membership_mz'].load_state_dict(checkpoint['membership_classifier_with_style'])
+        for net_type in self.nets:
+            self.nets[net_type].load_state_dict(checkpoint[net_type])
+        for disc_type in self.discs:
+            self.discs[disc_type].load_state_dict(checkpoint[disc_type])
         self.start_epoch = checkpoint['epoch']
+
+        # self.nets['encoder'].load_state_dict(checkpoint['encoder'])
+        # self.nets['decoder'].load_state_dict(checkpoint['decoder'])
+        # self.discs['class_fz'].load_state_dict(checkpoint['class_classifier_with_full'])
+        # self.discs['class_cz'].load_state_dict(checkpoint['class_classifier_with_content'])
+        # self.discs['class_mz'].load_state_dict(checkpoint['class_classifier_with_style'])
+        # self.discs['membership_fz'].load_state_dict(checkpoint['membership_classifier_with_full'])
+        # self.discs['membership_cz'].load_state_dict(checkpoint['membership_classifier_with_content'])
+        # self.discs['membership_mz'].load_state_dict(checkpoint['membership_classifier_with_style'])
 
     def train_epoch(self, train_ref_loader, epoch):
         for net_type in self.nets:
-           self.nets[net_type].train()
+            self.nets[net_type].train()
         for disc_type in self.discs:
             self.discs[disc_type].train()
 
@@ -153,6 +158,17 @@ class ReconstructorVAE(object):
         correct_membership_from_style = 0
         total = 0
 
+        losses = {
+            'MSE': 0,
+            'KLD': 0,
+            'class_fz': 0,
+            'class_cz': 0,
+            'class_mz': 0,
+            'membership_fz': 0,
+            'membership_cz': 0,
+            'membership_mz': 0,
+        }
+
         for batch_idx, (inputs, targets, inputs_ref, targets_ref) in enumerate(train_ref_loader):
             inputs, targets = inputs.to(self.device), targets.to(self.device)
             inputs_ref, targets_ref = inputs_ref.to(self.device), targets_ref.to(self.device)
@@ -160,25 +176,34 @@ class ReconstructorVAE(object):
             total += targets.size(0)
 
             # ---- Reconstruction (Encoder & Decoder) ---- #
-            recon_loss = self.train_AE(inputs)
+            recon_loss, MSE, KLD = self.train_reconstructor(inputs)
+            losses['MSE'] += MSE
+            losses['KLD'] += KLD
 
-            # ---- Class classifiers ---- #
-            correct_class_from_full_, class_loss_full = self.train_class_classifier_with_full(inputs, targets)
-            correct_class_from_content_, class_loss_content = self.train_class_classifier_with_content(inputs, targets)
-            correct_class_from_style_, class_loss_style = self.train_class_classifier_with_style(inputs, targets)
+            # ---- Class discriminators ---- #
+            correct_class_from_full_, loss_class_fz = self.train_class_classifier_with_full(inputs, targets)
+            correct_class_from_content_, loss_class_cz = self.train_class_classifier_with_content(inputs, targets)
+            correct_class_from_style_, loss_class_mz = self.train_class_classifier_with_style(inputs, targets)
 
-            # ---- Membership classifiers ---- #
-            correct_membership_from_full_, membership_loss_full = self.train_membership_classifier_with_full(inputs,
+            losses['class_fz'] += loss_class_fz
+            losses['class_cz'] += loss_class_cz
+            losses['class_mz'] += loss_class_mz
+
+            # ---- Membership discriminators ---- #
+            correct_membership_from_full_, loss_membership_fz = self.train_membership_classifier_with_full(inputs,
+                                                                                                           targets,
+                                                                                                           inputs_ref,
+                                                                                                           targets_ref)
+            correct_membership_from_content_, loss_membership_cz = self.train_membership_classifier_with_content(
+                inputs, targets,
+                inputs_ref, targets_ref)
+            correct_membership_from_style_, loss_membership_mz = self.train_membership_classifier_with_style(inputs,
                                                                                                              targets,
                                                                                                              inputs_ref,
                                                                                                              targets_ref)
-            correct_membership_from_content_, membership_loss_content = self.train_membership_classifier_with_content(
-                inputs, targets,
-                inputs_ref, targets_ref)
-            correct_membership_from_style_, membership_loss_style = self.train_membership_classifier_with_style(inputs,
-                                                                                                                targets,
-                                                                                                                inputs_ref,
-                                                                                                                targets_ref)
+            losses['membership_fz'] += loss_membership_fz
+            losses['membership_cz'] += loss_membership_cz
+            losses['membership_mz'] += loss_membership_mz
 
             correct_class_from_full += correct_class_from_full_
             correct_class_from_content += correct_class_from_content_
@@ -187,18 +212,12 @@ class ReconstructorVAE(object):
             correct_membership_from_content += correct_membership_from_content_
             correct_membership_from_style += correct_membership_from_style_
 
-            # print(
-            #     'Losses) Train: {:.4f}, ClassFull: {:.4f}, ClassContent: {:.4f}, ClassStyle: {:.4f}, MemFull: {:.4f}, MemContent: {:.4f}, MemStyle: {:.4f},'.format(
-            #         recon_loss.item(), class_loss_full, class_loss_content, class_loss_style, membership_loss_full,
-            #         membership_loss_content, membership_loss_style,
-            #     ))
-
             if self.disentangle:
                 self.disentangle_z(inputs, targets)
 
-            recon_train_loss += recon_loss.item()
+            recon_train_loss += recon_loss
 
-        self.train_loss = recon_train_loss
+        # self.train_loss = recon_train_loss
 
         self.class_acc_full = correct_class_from_full / total
         self.class_acc_content = correct_class_from_content / total
@@ -210,21 +229,30 @@ class ReconstructorVAE(object):
 
         if self.print_training:
             print(
-                'Epoch: {:>3}, Train Loss: {:.4f}, Class Acc Full : {:.4f}, Class Acc Content : {:.4f}, Class Acc Style : {:.4f}, Membership Acc Full : {:.4f}, Membership Acc Content : {:.4f}, Membership Acc Style : {:.4f}'.format(
-                    epoch, self.train_loss, self.class_acc_full, self.class_acc_content, self.class_acc_style,
+                '\nEpoch: {:>3}, Acc) Class (fz, cz, mz) : {:.4f}, {:.4f}, {:.4f}, Membership (fz, cz, mz) : {:.4f}, {:.4f}, {:.4f}'.format(
+                    epoch, self.class_acc_full, self.class_acc_content, self.class_acc_style,
                     self.membership_acc_full, self.membership_acc_content, self.membership_acc_style, ))
 
-    def train_AE(self, inputs):
+            for loss_type in losses:
+                losses[loss_type] = losses[loss_type] / (batch_idx + 1)
+            print(
+                'Losses) MSE: {:.2f}, KLD: {:.2f}, Class (fz, cz, mz): {:.2f}, {:.2f}, {:.2f}, Membership (fz, cz, mz): {:.2f}, {:.2f}, {:.2f},'.format(
+                    losses['MSE'], losses['KLD'], losses['class_fz'], losses['class_cz'], losses['class_mz'],
+                    losses['membership_fz'], losses['membership_cz'], losses['membership_mz'],
+                ))
+
+    def train_reconstructor(self, inputs):
         self.optimizer['encoder'].zero_grad()
         self.optimizer['decoder'].zero_grad()
         mu, logvar = self.nets['encoder'](inputs)
         z = self.reparameterize(mu, logvar)
         recons = self.nets['decoder'](z)
-        recon_loss = self.weights['recon'] * self.recon_loss(recons, inputs, mu, logvar)
+        recon_loss, MSE, KLD = self.recon_loss(recons, inputs, mu, logvar)
+        recon_loss = self.weights['recon'] * recon_loss
         recon_loss.backward()
         self.optimizer['encoder'].step()
         self.optimizer['decoder'].step()
-        return recon_loss
+        return recon_loss.item(), MSE.item(), KLD.item()
 
     def train_class_classifier_with_full(self, inputs, targets):
         self.optimizer['class_fz'].zero_grad()
@@ -356,10 +384,10 @@ class ReconstructorVAE(object):
         self.optimizer['encoder'].step()
 
     def inference(self, loader, epoch, type='valid'):
-        self.nets['encoder'].eval()
-        self.nets['decoder'].eval()
-        self.discs['class_cz'].eval()
-        self.discs['class_mz'].eval()
+        for net_type in self.nets:
+            self.nets[net_type].eval()
+        for disc_type in self.discs:
+            self.discs[disc_type].eval()
 
         loss = 0
         correct_class_from_content = 0
@@ -374,7 +402,7 @@ class ReconstructorVAE(object):
                 z = self.reparameterize(mu, logvar)
 
                 recons = self.nets['decoder'](z)
-                recon_loss = self.recon_loss(recons, inputs, mu, logvar)
+                recon_loss, MSE, KLD = self.recon_loss(recons, inputs, mu, logvar)
                 loss += recon_loss.item()
 
                 total += targets.size(0)
@@ -389,21 +417,17 @@ class ReconstructorVAE(object):
 
         if type == 'valid':
             if loss < self.best_valid_loss:
-                if self.print_training:
-                    print('Saving..')
                 state = {
-                    'encoder': self.nets['encoder'].state_dict(),
-                    'decoder': self.nets['decoder'].state_dict(),
-                    'class_classifier_with_full': self.discs['class_fz'].state_dict(),
-                    'class_classifier_with_content': self.discs['class_cz'].state_dict(),
-                    'class_classifier_with_style': self.discs['class_mz'].state_dict(),
-                    'membership_classifier_with_full': self.discs['membership_fz'].state_dict(),
-                    'membership_classifier_with_content': self.discs['membership_cz'].state_dict(),
-                    'membership_classifier_with_style': self.discs['membership_mz'].state_dict(),
                     'best_valid_loss': loss,
                     # 'train_loss': self.train_loss,
                     'epoch': epoch,
                 }
+
+                for net_type in self.nets:
+                    state[net_type] = self.nets[net_type].state_dict()
+                for disc_type in self.discs:
+                    state[disc_type] = self.discs[disc_type].state_dict()
+
                 torch.save(state, os.path.join(self.reconstruction_path, 'ckpt.pth'))
                 self.best_valid_loss = loss
                 self.early_stop_count = 0
@@ -435,14 +459,12 @@ class ReconstructorVAE(object):
         print('==> Start training {}'.format(self.reconstruction_path))
         self.train_flag = True
         if self.early_stop:
-            valid_loader = torch.utils.data.DataLoader(valid_set, batch_size=self.train_batch_size, shuffle=True,
-                                                       num_workers=2)
+            valid_loader = DataLoader(valid_set, batch_size=self.train_batch_size, shuffle=True, num_workers=2)
         for epoch in range(self.start_epoch, self.start_epoch + self.epochs):
             permutated_idx = np.random.permutation(ref_set.__len__())
             ref_set = Subset(ref_set, permutated_idx)
             train_ref_set = data.DoubleDataset(train_set, ref_set)
-            train_ref_loader = torch.utils.data.DataLoader(train_ref_set, batch_size=self.train_batch_size,
-                                                           shuffle=True, num_workers=2)
+            train_ref_loader = DataLoader(train_ref_set, batch_size=self.train_batch_size, shuffle=True, num_workers=2)
             if self.train_flag:
                 self.train_epoch(train_ref_loader, epoch)
                 if self.use_scheduler:
@@ -475,8 +497,7 @@ class ReconstructorVAE(object):
             recon_datasets_dict = {}
             print(reconstruction_type)
             for dataset_type, dataset in dataset_dict.items():
-                loader = torch.utils.data.DataLoader(dataset, batch_size=self.test_batch_size, shuffle=False,
-                                                     num_workers=2)
+                loader = DataLoader(dataset, batch_size=self.test_batch_size, shuffle=False, num_workers=2)
                 raws = []
                 recons = []
                 labels = []
@@ -574,7 +595,6 @@ class ReconstructorVAE(object):
             torch.save(recon_datasets_dict,
                        os.path.join(self.reconstruction_path, 'recon_{}.pt'.format(reconstruction_type)))
 
-        # print(mse_list)
         np.save(os.path.join(self.reconstruction_path, 'mse.npy'), mse_list)
 
     def reparameterize(self, mu, logvar):
@@ -597,12 +617,7 @@ class ReconstructorVAE(object):
         def loss_function(recon_x, x, mu, logvar):
             # BCE = F.binary_cross_entropy(recon_x, x, reduction='none').mean(dim=0).sum()
             MSE = F.mse_loss(recon_x, x, reduction='none').mean(dim=0).sum()
-
-            # zero mean
             KLD = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp()).mean(dim=0).sum()
-            # print('BCE: {:.4f}, KLD: {:.4f}'.format(BCE.item(), KLD.item()))
-            # print('BCE: {:.4f}, KLD: {:.4f}, MSE: {:.4f}'.format(BCE.item(), KLD.item(), MSE.item()))
-            # return BCE + self.beta * KLD
-            return MSE + self.beta * KLD
+            return MSE + self.beta * KLD, MSE, KLD
 
         return loss_function

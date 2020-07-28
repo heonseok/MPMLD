@@ -78,20 +78,12 @@ class_datasets = {
 if 'original' in args.target_data:
     args.classification_name = os.path.join('{}_{}'.format(args.target_data, args.classification_model),
                                             'repeat{}'.format(args.repeat_idx))
-    # print(args.classification_name)
-    # sys.exit(1)
 else:
     args.classification_name = os.path.join('{}_{}'.format(args.target_data, args.classification_model),
                                             args.recon_type, 'repeat{}'.format(args.repeat_idx))
-    # print(args.classification_name)
 
-    args.reconstruction_path = os.path.join(args.output_path, 'reconstructor',
-                                            args.target_data,
-                                            'repeat{}'.format(args.repeat_idx),
-                                            'recon_{}.pt'.format(args.recon_type),
-                                            )
-    # print(args.reconstruction_path)
-    # sys.exit(1)
+    args.reconstruction_path = os.path.join(args.output_path, 'reconstructor', args.target_data,
+                                            'repeat{}'.format(args.repeat_idx), 'recon_{}.pt'.format(args.recon_type))
     try:
         recon_datasets = utils.build_reconstructed_datasets(args.reconstruction_path)
         class_datasets['train'] = recon_datasets['train']

@@ -6,7 +6,7 @@ from torch.utils.data import Subset
 
 from data import load_dataset
 from utils import str2bool
-from reconstruction import ReconstructorVAE
+from reconstruction import Reconstructor
 from torch.utils.data import ConcatDataset
 import datetime
 import shutil
@@ -119,7 +119,7 @@ ref_dataset = subset4
 for _ in range(int(1 / args.ref_ratio) - 1):
     ref_dataset = ConcatDataset((ref_dataset, subset4))
 
-reconstructor = ReconstructorVAE(args)
+reconstructor = Reconstructor(args)
 
 if args.train_reconstructor:
     reconstructor.train(class_datasets['train'], class_datasets['valid'], ref_dataset)

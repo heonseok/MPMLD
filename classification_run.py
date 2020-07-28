@@ -21,7 +21,7 @@ classification_model_list = [
 ]
 
 target_data_list = [
-    # 'original_setsize2000',
+    # 'original_setsize10000',
 
     # 'AE_z64_setsize2000_lr0.001_ref0.1_arcA_type5_cw0.01_mw1.0',
     # 'AE_z64_setsize2000_lr0.01_ref0.1_arcA_type5_cw0.01_mw1.0',
@@ -182,11 +182,23 @@ target_data_list = [
     # 'VAE1e-06_z64_setsize10000_lr0.001_ref0.1_arcE_type5_cw0.1_mw0.1',
 
     # 0727
-    'VAE1e-06_z64_setsize10000_lr0.001_ref1.0_rw100.0_cc0.0_cm1.0_mc1.0_mm0.0',
+    # 'VAE1e-06_z64_setsize10000_lr0.001_ref1.0_rw100.0_cc0.0_cm1.0_mc1.0_mm0.0',
+    # 'VAE1e-06_z64_setsize10000_lr0.001_ref1.0_rw100.0_cc0.0_cm10.0_mc1.0_mm0.0',
+    # 'VAE1e-06_z64_setsize10000_lr0.001_ref1.0_rw100.0_cc0.0_cm1.0_mc10.0_mm0.0',
+    # 'VAE1e-06_z64_setsize10000_lr0.001_ref1.0_rw100.0_cc0.0_cm10.0_mc10.0_mm0.0',
+
+    # 0728
+    # 'original_setsize10000',
+
+    'VAE1e-06_z64_setsize10000_lr0.001_ref1.0_rw1.0_cc0.0_cm1.0_mc1.0_mm0.0',
+    'VAE1e-06_z64_setsize10000_lr0.001_ref1.0_rw1.0_cc0.0_cm10.0_mc1.0_mm0.0',
+    'VAE1e-06_z64_setsize10000_lr0.001_ref1.0_rw1.0_cc0.0_cm1.0_mc10.0_mm0.0',
+    'VAE1e-06_z64_setsize10000_lr0.001_ref1.0_rw1.0_cc0.0_cm10.0_mc10.0_mm0.0',
+    'VAE1e-06_z64_setsize10000_lr0.001_ref1.0_rw1.0_cc1.0_cm1.0_mc1.0_mm1.0',
 ]
 
 recon_type_list = [
-    # 'cb_mb',
+    'cb_mb',
     'cz_mb',
     'cb_mz',
 ]
@@ -200,8 +212,8 @@ repeat_idx_list = [
 ]
 
 setup_dict = {
-    'train_classifier': '0',
-    'test_classifier': '0',
+    'train_classifier': '1',
+    'test_classifier': '1',
     'extract_classifier_features': '1',
 
     'epochs': 500,
@@ -209,6 +221,8 @@ setup_dict = {
     'early_stop_observation_period': 20,
     'gpu_id': 0,
     'print_training': False,
+
+    'output_dir': 'output0727',
 }
 
 for dataset in dataset_list:

@@ -109,11 +109,16 @@ target_classifier_list = [
     # 'VAE1e-06_z64_setsize10000_lr0.001_ref0.1_arcE_type5_cw1.0_mw1.0_ResNet18A'
 
     # 0727
-    'VAE1e-06_z64_setsize10000_lr0.001_ref1.0_rw100.0_cc0.0_cm1.0_mc1.0_mm0.0_ResNet18',
+    # 'original_setsize10000_ResNet18',
+    # 'VAE1e-06_z64_setsize10000_lr0.001_ref1.0_rw100.0_cc0.0_cm1.0_mc1.0_mm0.0_ResNet18',
+    # 'VAE1e-06_z64_setsize10000_lr0.001_ref1.0_rw100.0_cc0.0_cm10.0_mc1.0_mm0.0_ResNet18',
+    # 'VAE1e-06_z64_setsize10000_lr0.001_ref1.0_rw100.0_cc0.0_cm1.0_mc10.0_mm0.0_ResNet18',
+    # 'VAE1e-06_z64_setsize10000_lr0.001_ref1.0_rw100.0_cc0.0_cm10.0_mc10.0_mm0.0_ResNet18',
+    'VAE1e-06_z64_setsize10000_lr0.001_ref1.0_rw100.0_cc1.0_cm1.0_mc1.0_mm1.0_ResNet18',
 ]
 
 recon_type_list = [
-    # 'cb_mb',
+    'cb_mb',
     'cz_mb',
     'cb_mz',
 ]
@@ -137,6 +142,8 @@ setup_dict = {
     'early_stop': '1',
     'early_stop_observation_period': 20,
     'gpu_id': 0,
+
+    'output_dir': 'output0727',
 }
 
 if not os.path.exists('log'):
