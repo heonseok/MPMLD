@@ -80,8 +80,8 @@ class Reconstructor(object):
             'membership_mz': args.membership_mz_weight,
         }
 
-        self.scheduler_enc = StepLR(self.optimizer['encoder'], step_size=100, gamma=0.1)
-        self.scheduler_dec = StepLR(self.optimizer['decoder'], step_size=100, gamma=0.1)
+        self.scheduler_enc = StepLR(self.optimizer['encoder'], step_size=50, gamma=0.1)
+        self.scheduler_dec = StepLR(self.optimizer['decoder'], step_size=50, gamma=0.1)
 
         # to device
         self.device = torch.device("cuda:{}".format(args.gpu_id))
@@ -89,8 +89,6 @@ class Reconstructor(object):
             self.nets[net_type] = self.nets[net_type].to(self.device)
         for disc_type in self.discs:
             self.discs[disc_type] = self.discs[disc_type].to(self.device)
-
-        self.acc_dict = {}
 
         self.disentangle = (self.weights['class_cz'] + self.weights['class_mz']
                             + self.weights['membership_cz'] + self.weights['membership_mz'] > 0)
@@ -100,16 +98,10 @@ class Reconstructor(object):
         # self.train_loss = 0
         self.early_stop_count = 0
 
-        self.class_acc_full = 0
-        self.class_acc_content = 0
-        self.class_acc_style = 0
-
-        self.membership_acc_full = 0
-        self.membership_acc_content = 0
-        self.membership_acc_style = 0
-
-        # print(self.nets['encoder'])
-        # print(self.nets['decoder'])
+        self.acc_dict = {
+            'class_fz': 0, 'class_cz': 0, 'class_mz': 0,
+            'membership_fz': 0, 'membership_cz': 0, 'membership_mz': 0,
+        }
 
         if 'cuda' in str(self.device):
             cudnn.benchmark = True
@@ -133,40 +125,24 @@ class Reconstructor(object):
             self.discs[disc_type].load_state_dict(checkpoint[disc_type])
         self.start_epoch = checkpoint['epoch']
 
-        # self.nets['encoder'].load_state_dict(checkpoint['encoder'])
-        # self.nets['decoder'].load_state_dict(checkpoint['decoder'])
-        # self.discs['class_fz'].load_state_dict(checkpoint['class_classifier_with_full'])
-        # self.discs['class_cz'].load_state_dict(checkpoint['class_classifier_with_content'])
-        # self.discs['class_mz'].load_state_dict(checkpoint['class_classifier_with_style'])
-        # self.discs['membership_fz'].load_state_dict(checkpoint['membership_classifier_with_full'])
-        # self.discs['membership_cz'].load_state_dict(checkpoint['membership_classifier_with_content'])
-        # self.discs['membership_mz'].load_state_dict(checkpoint['membership_classifier_with_style'])
-
     def train_epoch(self, train_ref_loader, epoch):
         for net_type in self.nets:
             self.nets[net_type].train()
         for disc_type in self.discs:
             self.discs[disc_type].train()
 
-        recon_train_loss = 0
-        correct_class_from_full = 0
-        correct_class_from_content = 0
-        correct_class_from_style = 0
-
-        correct_membership_from_full = 0
-        correct_membership_from_content = 0
-        correct_membership_from_style = 0
         total = 0
 
         losses = {
-            'MSE': 0,
-            'KLD': 0,
-            'class_fz': 0,
-            'class_cz': 0,
-            'class_mz': 0,
-            'membership_fz': 0,
-            'membership_cz': 0,
-            'membership_mz': 0,
+            'MSE': 0., 'KLD': 0.,
+            'class_fz': 0., 'class_cz': 0., 'class_mz': 0.,
+            'membership_fz': 0., 'membership_cz': 0., 'membership_mz': 0.,
+        }
+
+        corrects = {
+            'MSE': 0., 'KLD': 0.,
+            'class_fz': 0., 'class_cz': 0., 'class_mz': 0.,
+            'membership_fz': 0., 'membership_cz': 0., 'membership_mz': 0.,
         }
 
         for batch_idx, (inputs, targets, inputs_ref, targets_ref) in enumerate(train_ref_loader):
@@ -181,65 +157,55 @@ class Reconstructor(object):
             losses['KLD'] += KLD
 
             # ---- Class discriminators ---- #
-            correct_class_from_full_, loss_class_fz = self.train_class_classifier_with_full(inputs, targets)
-            correct_class_from_content_, loss_class_cz = self.train_class_classifier_with_content(inputs, targets)
-            correct_class_from_style_, loss_class_mz = self.train_class_classifier_with_style(inputs, targets)
+            correct_class_fz, loss_class_fz = self.train_disc_class_fz(inputs, targets)
+            correct_class_cz, loss_class_cz = self.train_disc_class_cz(inputs, targets)
+            correct_class_mz, loss_class_mz = self.train_disc_class_mz(inputs, targets)
 
+            corrects['class_fz'] += correct_class_fz
+            corrects['class_cz'] += correct_class_cz
+            corrects['class_mz'] += correct_class_mz
             losses['class_fz'] += loss_class_fz
             losses['class_cz'] += loss_class_cz
             losses['class_mz'] += loss_class_mz
 
             # ---- Membership discriminators ---- #
-            correct_membership_from_full_, loss_membership_fz = self.train_membership_classifier_with_full(inputs,
-                                                                                                           targets,
-                                                                                                           inputs_ref,
-                                                                                                           targets_ref)
-            correct_membership_from_content_, loss_membership_cz = self.train_membership_classifier_with_content(
-                inputs, targets,
-                inputs_ref, targets_ref)
-            correct_membership_from_style_, loss_membership_mz = self.train_membership_classifier_with_style(inputs,
-                                                                                                             targets,
-                                                                                                             inputs_ref,
-                                                                                                             targets_ref)
+            correct_membership_fz, loss_membership_fz = self.train_disc_membership_fz(inputs, targets,
+                                                                                      inputs_ref, targets_ref)
+            correct_membership_cz, loss_membership_cz = self.train_disc_membership_cz(inputs, targets,
+                                                                                      inputs_ref, targets_ref)
+            correct_membership_mz, loss_membership_mz = self.train_disc_membership_mz(inputs, targets,
+                                                                                      inputs_ref, targets_ref)
+            corrects['membership_fz'] += correct_membership_fz
+            corrects['membership_cz'] += correct_membership_cz
+            corrects['membership_mz'] += correct_membership_mz
             losses['membership_fz'] += loss_membership_fz
             losses['membership_cz'] += loss_membership_cz
             losses['membership_mz'] += loss_membership_mz
 
-            correct_class_from_full += correct_class_from_full_
-            correct_class_from_content += correct_class_from_content_
-            correct_class_from_style += correct_class_from_style_
-            correct_membership_from_full += correct_membership_from_full_
-            correct_membership_from_content += correct_membership_from_content_
-            correct_membership_from_style += correct_membership_from_style_
-
             if self.disentangle:
                 self.disentangle_z(inputs, targets)
 
-            recon_train_loss += recon_loss
+        # todo : loop
+        self.acc_dict['class_fz'] = corrects['class_fz'] / total
+        self.acc_dict['class_cz'] = corrects['class_cz'] / total
+        self.acc_dict['class_mz'] = corrects['class_mz'] / total
 
-        # self.train_loss = recon_train_loss
-
-        self.class_acc_full = correct_class_from_full / total
-        self.class_acc_content = correct_class_from_content / total
-        self.class_acc_style = correct_class_from_style / total
-
-        self.membership_acc_full = correct_membership_from_full / (2 * total)
-        self.membership_acc_content = correct_membership_from_content / (2 * total)
-        self.membership_acc_style = correct_membership_from_style / (2 * total)
+        self.acc_dict['membership_fz'] = corrects['membership_fz'] / (2 * total)
+        self.acc_dict['membership_cz'] = corrects['membership_cz'] / (2 * total)
+        self.acc_dict['membership_mz'] = corrects['membership_mz'] / (2 * total)
 
         if self.print_training:
             print(
                 '\nEpoch: {:>3}, Acc) Class (fz, cz, mz) : {:.4f}, {:.4f}, {:.4f}, Membership (fz, cz, mz) : {:.4f}, {:.4f}, {:.4f}'.format(
-                    epoch, self.class_acc_full, self.class_acc_content, self.class_acc_style,
-                    self.membership_acc_full, self.membership_acc_content, self.membership_acc_style, ))
+                    epoch, self.acc_dict['class_fz'], self.acc_dict['class_cz'], self.acc_dict['class_mz'],
+                    self.acc_dict['membership_fz'], self.acc_dict['membership_cz'], self.acc_dict['membership_mz'], ))
 
             for loss_type in losses:
                 losses[loss_type] = losses[loss_type] / (batch_idx + 1)
             print(
                 'Losses) MSE: {:.2f}, KLD: {:.2f}, Class (fz, cz, mz): {:.2f}, {:.2f}, {:.2f}, Membership (fz, cz, mz): {:.2f}, {:.2f}, {:.2f},'.format(
                     losses['MSE'], losses['KLD'], losses['class_fz'], losses['class_cz'], losses['class_mz'],
-                    losses['membership_fz'], losses['membership_cz'], losses['membership_mz'],
-                ))
+                    losses['membership_fz'], losses['membership_cz'], losses['membership_mz'], ))
 
     def train_reconstructor(self, inputs):
         self.optimizer['encoder'].zero_grad()
@@ -254,7 +220,7 @@ class Reconstructor(object):
         self.optimizer['decoder'].step()
         return recon_loss.item(), MSE.item(), KLD.item()
 
-    def train_class_classifier_with_full(self, inputs, targets):
+    def train_disc_class_fz(self, inputs, targets):
         self.optimizer['class_fz'].zero_grad()
         z = self.inference_z(inputs)
         pred = self.discs['class_fz'](z)
@@ -265,7 +231,7 @@ class Reconstructor(object):
         _, pred_class_from_full = pred.max(1)
         return pred_class_from_full.eq(targets).sum().item(), class_loss_full.item()
 
-    def train_class_classifier_with_content(self, inputs, targets):
+    def train_disc_class_cz(self, inputs, targets):
         self.optimizer['class_cz'].zero_grad()
         z = self.inference_z(inputs)
         content_z, _ = self.split_class_membership(z)
@@ -277,7 +243,7 @@ class Reconstructor(object):
         _, pred_class_from_content = pred.max(1)
         return pred_class_from_content.eq(targets).sum().item(), class_loss_content.item()
 
-    def train_class_classifier_with_style(self, inputs, targets):
+    def train_disc_class_mz(self, inputs, targets):
         self.optimizer['class_mz'].zero_grad()
         z = self.inference_z(inputs)
         _, style_z = self.split_class_membership(z)
@@ -289,7 +255,7 @@ class Reconstructor(object):
         _, pred_class_from_style = pred.max(1)
         return pred_class_from_style.eq(targets).sum().item(), class_loss_style.item()
 
-    def train_membership_classifier_with_full(self, inputs, targets, inputs_ref, targets_ref):
+    def train_disc_membership_fz(self, inputs, targets, inputs_ref, targets_ref):
         self.optimizer['membership_fz'].zero_grad()
         z = self.inference_z(inputs)
         pred = self.discs['membership_fz'](z)
@@ -310,7 +276,7 @@ class Reconstructor(object):
 
         return np.sum(inout_concat == np.round(pred_concat)), membership_loss.item()
 
-    def train_membership_classifier_with_content(self, inputs, targets, inputs_ref, targets_ref):
+    def train_disc_membership_cz(self, inputs, targets, inputs_ref, targets_ref):
         self.optimizer['membership_cz'].zero_grad()
         z = self.inference_z(inputs)
         content_z, _ = self.split_class_membership(z)
@@ -332,9 +298,8 @@ class Reconstructor(object):
         inout_concat = np.concatenate((np.ones_like(pred), np.zeros_like(pred_ref)))
 
         return np.sum(inout_concat == np.round(pred_concat)), membership_loss.item()
-        # return metrics.accuracy_score(inout_concat, np.round(pred_concat))
 
-    def train_membership_classifier_with_style(self, inputs, targets, inputs_ref, targets_ref):
+    def train_disc_membership_mz(self, inputs, targets, inputs_ref, targets_ref):
         self.optimizer['membership_mz'].zero_grad()
         z = self.inference_z(inputs)
         _, style_z = self.split_class_membership(z)
@@ -419,7 +384,6 @@ class Reconstructor(object):
             if loss < self.best_valid_loss:
                 state = {
                     'best_valid_loss': loss,
-                    # 'train_loss': self.train_loss,
                     'epoch': epoch,
                 }
 
@@ -432,17 +396,8 @@ class Reconstructor(object):
                 self.best_valid_loss = loss
                 self.early_stop_count = 0
 
-                # Save acc
-                self.acc_dict = {
-                    'class_acc_full': self.class_acc_full,
-                    'class_acc_content': self.class_acc_content,
-                    'class_acc_style': self.class_acc_style,
-                    'membership_acc_full': self.membership_acc_full,
-                    'membership_acc_content': self.membership_acc_content,
-                    'membership_acc_style': self.membership_acc_style,
-                }
-
                 np.save(os.path.join(self.reconstruction_path, 'acc.npy'), self.acc_dict)
+                vutils.save_image(recons, os.path.join(self.reconstruction_path, '{}.png'.format(epoch)), nrow=10)
 
             else:
                 self.early_stop_count += 1
@@ -588,7 +543,6 @@ class Reconstructor(object):
                     'labels': labels,
                 }
 
-                # print(reconstruction_type, dataset_type, F.mse_loss(recons, raws))
                 mse_list.append(F.mse_loss(recons, raws).item())
 
             # todo : refactor dict to CustomDataset
@@ -615,9 +569,8 @@ class Reconstructor(object):
 
     def get_loss_function(self):
         def loss_function(recon_x, x, mu, logvar):
-            # BCE = F.binary_cross_entropy(recon_x, x, reduction='none').mean(dim=0).sum()
-            MSE = F.mse_loss(recon_x, x, reduction='none').mean(dim=0).sum()
-            KLD = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp()).mean(dim=0).sum()
+            MSE = F.mse_loss(recon_x, x, reduction='sum')
+            KLD = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp()).sum()
             return MSE + self.beta * KLD, MSE, KLD
 
         return loss_function
