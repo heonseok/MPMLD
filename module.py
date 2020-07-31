@@ -245,12 +245,16 @@ class VAEConvEncoder(nn.Module):
 
         self.main = nn.Sequential(
             nn.Conv2d(num_channels, 32, kernel_size=3, stride=1),
+            # nn.BatchNorm2d(32),
             nn.ReLU(),
             nn.Conv2d(32, 64, kernel_size=3, stride=2),
+            # nn.BatchNorm2d(64),
             nn.ReLU(),
             nn.Conv2d(64, 128, kernel_size=3, stride=2),
+            # nn.BatchNorm2d(128),
             nn.ReLU(),
             nn.Conv2d(128, 256, kernel_size=2, stride=2),
+            # nn.BatchNorm2d(256),
             nn.ReLU(),
             Flatten3D(),
         )
@@ -274,10 +278,13 @@ class VAEConvDecoder(nn.Module):
         self.main = nn.Sequential(
             UnFlatten(),
             nn.ConvTranspose2d(latent_dim, 1024, kernel_size=4, stride=1),
+            # nn.BatchNorm2d(1024),
             nn.ReLU(),
             nn.ConvTranspose2d(1024, 512, kernel_size=5, stride=1),
+            # nn.BatchNorm2d(512),
             nn.ReLU(),
             nn.ConvTranspose2d(512, 256, kernel_size=4, stride=2, padding=1),
+            # nn.BatchNorm2d(256),
             nn.ReLU(),
             nn.ConvTranspose2d(256, num_channels, kernel_size=4, stride=2, padding=1),
             # nn.sigmoid()

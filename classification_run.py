@@ -190,17 +190,26 @@ target_data_list = [
     # 0728
     # 'original_setsize10000',
 
-    'VAE1e-06_z64_setsize10000_lr0.001_ref1.0_rw1.0_cc0.0_cm1.0_mc1.0_mm0.0',
-    'VAE1e-06_z64_setsize10000_lr0.001_ref1.0_rw1.0_cc0.0_cm10.0_mc1.0_mm0.0',
-    'VAE1e-06_z64_setsize10000_lr0.001_ref1.0_rw1.0_cc0.0_cm1.0_mc10.0_mm0.0',
-    'VAE1e-06_z64_setsize10000_lr0.001_ref1.0_rw1.0_cc0.0_cm10.0_mc10.0_mm0.0',
-    'VAE1e-06_z64_setsize10000_lr0.001_ref1.0_rw1.0_cc1.0_cm1.0_mc1.0_mm1.0',
+    # 'VAE1e-06_z64_setsize10000_lr0.001_ref1.0_rw1.0_cc0.0_cm1.0_mc1.0_mm0.0',
+    # 'VAE1e-06_z64_setsize10000_lr0.001_ref1.0_rw1.0_cc0.0_cm10.0_mc1.0_mm0.0',
+    # 'VAE1e-06_z64_setsize10000_lr0.001_ref1.0_rw1.0_cc0.0_cm1.0_mc10.0_mm0.0',
+    # 'VAE1e-06_z64_setsize10000_lr0.001_ref1.0_rw1.0_cc0.0_cm10.0_mc10.0_mm0.0',
+    # 'VAE1e-06_z64_setsize10000_lr0.001_ref1.0_rw1.0_cc1.0_cm1.0_mc1.0_mm1.0',
+
+    # 0731
+    # 'VAE0.01_z64_setsize10000_lr0.001_ref1.0_rw1.0_cc0.0_cm1.0_mc1.0_mm0.0',
+    # 'VAE1e-06_z64_setsize10000_lr0.001_ref1.0_rw1.0_cc0.0_cm1.0_mc1.0_mm0.0',
+    # 'VAE1e-06_z64_setsize10000_lr0.001_ref0.1_rw1.0_cc0.0_cm1.0_mc1.0_mm0.0',
+    # 'VAE1e-06_z64_setsize5000_lr0.001_ref0.1_rw1.0_cc0.0_cm1.0_mc1.0_mm0.0',
+    'VAE1e-06_z64_setsize5000_lr0.001_ref0.1_rw1.0_cc0.0_cm1.0_mc5.0_mm0.0',
+
 ]
 
 recon_type_list = [
-    'cb_mb',
+    # 'cb_mb',
     'cz_mb',
     'cb_mz',
+    # 'cb_mn',
 ]
 
 repeat_idx_list = [
@@ -222,7 +231,7 @@ setup_dict = {
     'gpu_id': 0,
     'print_training': False,
 
-    'output_dir': 'output0727',
+    'output_dir': 'output0731_beta',
 }
 
 for dataset in dataset_list:

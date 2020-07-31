@@ -102,6 +102,7 @@ class Reconstructor(object):
             'class_fz': 0, 'class_cz': 0, 'class_mz': 0,
             'membership_fz': 0, 'membership_cz': 0, 'membership_mz': 0,
         }
+        self.best_acc_dict = {}
 
         if 'cuda' in str(self.device):
             cudnn.benchmark = True
@@ -395,8 +396,9 @@ class Reconstructor(object):
                 torch.save(state, os.path.join(self.reconstruction_path, 'ckpt.pth'))
                 self.best_valid_loss = loss
                 self.early_stop_count = 0
+                self.best_acc_dict = self.acc_dict
 
-                np.save(os.path.join(self.reconstruction_path, 'acc.npy'), self.acc_dict)
+                np.save(os.path.join(self.reconstruction_path, 'acc.npy'), self.best_acc_dict)
                 vutils.save_image(recons, os.path.join(self.reconstruction_path, '{}.png'.format(epoch)), nrow=10)
 
             else:
@@ -405,7 +407,7 @@ class Reconstructor(object):
                     print('Early stop count: {}'.format(self.early_stop_count))
 
             if self.early_stop_count == self.early_stop_observation_period:
-                print(self.acc_dict)
+                print(self.best_acc_dict)
                 if self.print_training:
                     print('Early stop count == {}; Terminate training\n'.format(self.early_stop_observation_period))
                 self.train_flag = False
@@ -443,12 +445,15 @@ class Reconstructor(object):
         mse_list = []
         recon_dict = dict()
 
-        for reconstruction_type in ['cb_mb',
-                                    # 'content_z', 'style_z', 'full_z',
-                                    'cz_mb',
-                                    'cb_mz',
-                                    # 'uniform_style', 'normal_style'
-                                    ]:
+        for reconstruction_type in [
+            'cb_mb',
+            'cb_ms',
+            'cs_mb',
+            'cs_ms',
+            'cz_mb',
+            'cb_mz',
+            'cb_mn',
+        ]:
             recon_datasets_dict = {}
             print(reconstruction_type)
             for dataset_type, dataset in dataset_dict.items():
@@ -492,15 +497,15 @@ class Reconstructor(object):
                             z[:, self.class_idx] = mu_content
                             z[:, self.membership_idx] = mu_style
 
-                        elif reconstruction_type == 'content_z':
+                        elif reconstruction_type == 'cb_ms':
                             z[:, self.class_idx] = mu_content
                             z[:, self.membership_idx] = self.reparameterize(mu_style, logvar_style)
 
-                        elif reconstruction_type == 'style_z':
+                        elif reconstruction_type == 'cs_mb':
                             z[:, self.class_idx] = self.reparameterize(mu_content, logvar_content)
                             z[:, self.membership_idx] = mu_style
 
-                        elif reconstruction_type == 'full_z':
+                        elif reconstruction_type == 'cs_ms':
                             z[:, self.class_idx] = self.reparameterize(mu_content, logvar_content)
                             z[:, self.membership_idx] = self.reparameterize(mu_style, logvar_style)
 
@@ -512,13 +517,17 @@ class Reconstructor(object):
                             z[:, self.class_idx] = mu_content
                             z[:, self.membership_idx] = torch.zeros_like(mu_style).to(self.device)
 
-                        elif reconstruction_type == 'uniform_style':
-                            z[:, self.class_idx] = mu_content
-                            z[:, self.membership_idx] = torch.rand_like(mu_style).to(self.device)
-
-                        elif reconstruction_type == 'normal_style':
+                        elif reconstruction_type == 'cb_mn':
                             z[:, self.class_idx] = mu_content
                             z[:, self.membership_idx] = torch.randn_like(mu_style).to(self.device)
+
+                        # elif reconstruction_type == 'uniform_style':
+                        #     z[:, self.class_idx] = mu_content
+                        #     z[:, self.membership_idx] = torch.rand_like(mu_style).to(self.device)
+                        #
+                        # elif reconstruction_type == 'normal_style':
+                        #     z[:, self.class_idx] = mu_content
+                        #     z[:, self.membership_idx] = torch.randn_like(mu_style).to(self.device)
 
                         recons_batch = self.nets['decoder'](z).cpu()
                         labels_batch = targets
@@ -571,6 +580,8 @@ class Reconstructor(object):
         def loss_function(recon_x, x, mu, logvar):
             MSE = F.mse_loss(recon_x, x, reduction='sum')
             KLD = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp()).sum()
+            # print(MSE)
+            # print(KLD)
             return MSE + self.beta * KLD, MSE, KLD
 
         return loss_function
