@@ -65,7 +65,8 @@ class Reconstructor(object):
         # optimizer
         self.optimizer = dict()
         for net_type in self.nets:
-            self.optimizer[net_type] = optim.Adam(self.nets[net_type].parameters(), lr=args.recon_lr, betas=(0.5, 0.999))
+            self.optimizer[net_type] = optim.Adam(self.nets[net_type].parameters(), lr=args.recon_lr,
+                                                  betas=(0.5, 0.999))
         self.discriminator_lr = args.disc_lr
         for disc_type in self.discs:
             self.optimizer[disc_type] = optim.Adam(self.discs[disc_type].parameters(), lr=self.discriminator_lr,
@@ -444,7 +445,7 @@ class Reconstructor(object):
         mse_list = []
         recon_dict = dict()
 
-        for reconstruction_type in reconstruction_type_list:
+        for recon_idx, reconstruction_type in enumerate(reconstruction_type_list):
             recon_datasets_dict = {}
             # print(reconstruction_type)
             for dataset_type, dataset in dataset_dict.items():
@@ -532,6 +533,9 @@ class Reconstructor(object):
                                 vutils.save_image(recons, os.path.join(self.reconstruction_path,
                                                                        '{}.png'.format(reconstruction_type)), nrow=10)
                                 recon_dict[reconstruction_type] = recons
+
+                                if recon_idx == 0:
+                                    vutils.save_image(raws, os.path.join(self.reconstruction_path, 'raw.png'), nrow=10)
 
                         else:
                             raws = torch.cat((raws, inputs.cpu()), axis=0)

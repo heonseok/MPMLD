@@ -102,16 +102,31 @@ weight_list = [
     # [1, 0, 1, 0.1, 0],
 
     # 0729
-    [1, 0, 1, 1, 0],
+    # [1, 0, 1, 1, 0],
 
+    # 0803
+    # [1, 0, 1, 1, 0],
+    # [1, 1, 0, 0, 1],
+    [1, 0, 0, 0, 0],
+    [1, 1, 0, 0, 0],
+    [1, 0, 1, 0, 0],
+    [1, 0, 0, 1, 0],
+    [1, 0, 0, 0, 1],
+
+    [1, 0, 1, 1, 0],
+    [1, 0, 1, 0, 1],
+    [1, 1, 0, 1, 0],
+    [1, 1, 0, 0, 1],
+
+    [1, 1, 1, 1, 1],
 ]
 
 beta_list = [
     # 0.0
-    # 0.000001,
+    0.000001,
     # 0.00001,
     # 0.0001,
-    0.001,
+    # 0.001,
     # 0.01,
     # 0.1,
     # 1.0,
@@ -129,9 +144,11 @@ setup_dict = {
     # Reconstruction
     'train_reconstructor': '1',
     'reconstruct_datasets': '1',
+    'plot_recons': '1',
+
+    'use_reconstructed_dataset': '1',
 
     # Classification
-    'use_reconstructed_dataset': '1',
     'train_classifier': '1',
     'test_classifier': '1',
     'extract_classifier_features': '1',
@@ -145,7 +162,7 @@ setup_dict = {
     'early_stop_observation_period': 20,
     'gpu_id': 3,
     'print_training': False,
-    'description': '0803baseline',
+    'description': '0803weights',
 }
 
 for dataset in dataset_list:

@@ -4,6 +4,8 @@ import argparse
 from utils import str2bool
 import datetime
 import shutil
+import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
 
 import utils
 from data import load_dataset
@@ -33,7 +35,7 @@ parser.add_argument('--early_stop_observation_period', type=int, default=20)
 parser.add_argument('--gpu_id', type=int, default=3)
 parser.add_argument('--epochs', type=int, default=500)
 parser.add_argument('--resume', type=str2bool, default='0')
-parser.add_argument('--repeat_idx', type=int, default=1)
+parser.add_argument('--repeat_idx', type=int, default=0)
 parser.add_argument('--print_training', type=str2bool, default='0')
 
 # ---- Reconstruction ---- #
@@ -43,10 +45,10 @@ parser.add_argument('--z_dim', type=int, default=64)
 parser.add_argument('--recon_lr', type=float, default=0.001)
 parser.add_argument('--disc_lr', type=float, default=0.001)
 
-parser.add_argument('--recon_weight', type=float, default='10')
+parser.add_argument('--recon_weight', type=float, default='1')
 parser.add_argument('--class_cz_weight', type=float, default='0')
-parser.add_argument('--class_mz_weight', type=float, default='0')
-parser.add_argument('--membership_cz_weight', type=float, default='0')
+parser.add_argument('--class_mz_weight', type=float, default='1')
+parser.add_argument('--membership_cz_weight', type=float, default='1')
 parser.add_argument('--membership_mz_weight', type=float, default='0')
 parser.add_argument('--ref_ratio', type=float, default=0.1)
 
@@ -62,19 +64,20 @@ parser.add_argument('--attack_lr', type=float, default=0.01)
 # ------------------------------------------------------------------------------------------------------------------- #
 # -------- Control flags -------- #
 # ---- Reconstruction ---- #
-parser.add_argument('--train_reconstructor', type=str2bool, default='1')
+parser.add_argument('--train_reconstructor', type=str2bool, default='0')
 parser.add_argument('--reconstruct_datasets', type=str2bool, default='1')
+parser.add_argument('--plot_recons', type=str2bool, default='1')
 
 # ---- Classification ---- #
 parser.add_argument('--use_reconstructed_dataset', type=str2bool, default='1')
 
-parser.add_argument('--train_classifier', type=str2bool, default='1')
-parser.add_argument('--test_classifier', type=str2bool, default='1')
-parser.add_argument('--extract_classifier_features', type=str2bool, default='1')
+parser.add_argument('--train_classifier', type=str2bool, default='0')
+parser.add_argument('--test_classifier', type=str2bool, default='0')
+parser.add_argument('--extract_classifier_features', type=str2bool, default='0')
 
 # ---- Attack ---- #
-parser.add_argument('--train_attacker', type=str2bool, default='1')
-parser.add_argument('--test_attacker', type=str2bool, default='1')
+parser.add_argument('--train_attacker', type=str2bool, default='0')
+parser.add_argument('--test_attacker', type=str2bool, default='0')
 
 # ------------------------------------------------------------------------------------------------------------------- #
 
@@ -189,19 +192,48 @@ if args.reconstruct_datasets:
         'out': subset3,
     }
     reconstructor.reconstruct(inout_datasets, reconstruction_type_list)
+    # plot --> rclone
 
+if args.plot_recons:
+    # img_path = '{}_{}_{}_{}.png'.format(args.dataset, args.description, args.reconstruction_name, args.repeat_idx)
+    img_dir = os.path.join('Figs', args.dataset, args.description)
+    if not os.path.exists(img_dir):
+        os.makedirs(img_dir)
+
+    img_list = [
+        'raw.png',
+        'cb_mb.png',
+        'cz_mb.png',
+        'cb_mz.png',
+    ]
+
+    plt.figure(1, figsize=(10, 4))
+    for img_idx, img in enumerate(img_list):
+        plt.subplot(str(1) + str(len(img_list)) + str(img_idx + 1))
+        plt.imshow(mpimg.imread(os.path.join(args.reconstruction_path, img)))
+        plt.xticks([])
+        plt.yticks([])
+
+    plt.tight_layout()
+    img_path = os.path.join(img_dir, '{}_repeat{}.png'.format(args.reconstruction_name, args.repeat_idx))
+    plt.savefig(img_path)
+
+    drive_path = os.path.join('Research/MPMLD/', img_dir)
+    os.system('rclone copy -P {} remote:{}'.format(img_path, drive_path))
+
+print()
 
 # -------- Classification and Attack -------- #
 if args.use_reconstructed_dataset:
-    for recon_type in reconstruction_type_list:
+    for img in reconstruction_type_list:
         args.classification_path = os.path.join(args.recon_output_path, 'classification', args.classification_model,
-                                                recon_type, 'repeat{}'.format(args.repeat_idx))
+                                                img, 'repeat{}'.format(args.repeat_idx))
         # print(args.classification_path)
         if args.train_classifier or args.test_classifier or args.extract_classifier_features:
             classifier = Classifier(args)
 
             try:
-                reconstructed_data_path = os.path.join(args.reconstruction_path, 'recon_{}.pt'.format(recon_type))
+                reconstructed_data_path = os.path.join(args.reconstruction_path, 'recon_{}.pt'.format(img))
                 recon_datasets = utils.build_reconstructed_datasets(reconstructed_data_path)
                 class_datasets['train'] = recon_datasets['train']
             except FileNotFoundError:
@@ -230,7 +262,7 @@ if args.use_reconstructed_dataset:
             for attack_type in attack_type_list:
                 args.attack_type = attack_type
                 args.attack_path = os.path.join(args.recon_output_path, 'attack', args.classification_model,
-                                                recon_type, attack_type, 'repeat{}'.format(args.repeat_idx))
+                                                img, attack_type, 'repeat{}'.format(args.repeat_idx))
                 if not os.path.exists(args.attack_path):
                     os.makedirs(args.attack_path)
 
@@ -244,7 +276,7 @@ if args.use_reconstructed_dataset:
                     attacker.train(inout_feature_sets['train'], inout_feature_sets['valid'])
                 if args.test_attacker:
                     attacker.test(inout_feature_sets['test'])
-
+        print()
 
 # else:
 #     args.classification_path = os.path.join(args.raw_output_path, 'classification', args.classification_model,
