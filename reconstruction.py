@@ -66,8 +66,8 @@ class Reconstructor(object):
         # optimizer
         self.optimizer = dict()
         for net_type in self.nets:
-            self.optimizer[net_type] = optim.Adam(self.nets[net_type].parameters(), lr=args.lr, betas=(0.5, 0.999))
-        self.discriminator_lr = args.lr
+            self.optimizer[net_type] = optim.Adam(self.nets[net_type].parameters(), lr=args.recon_lr, betas=(0.5, 0.999))
+        self.discriminator_lr = args.recon_lr
         for disc_type in self.discs:
             self.optimizer[disc_type] = optim.Adam(self.discs[disc_type].parameters(), lr=self.discriminator_lr,
                                                    betas=(0.5, 0.999))
