@@ -28,11 +28,11 @@ class Classifier(object):
         #     json.dump(args.__dict__, f, indent=2)
 
         # Model
-        print('==> Building {}'.format(self.classification_path))
+        # print('==> Building {}'.format(self.classification_path))
 
         if args.dataset in ['CIFAR-10', 'SVHN']:
             if 'VGG' in args.classification_model:
-                print('VGG(\'' + args.classification_model + '\')')
+                # print('VGG(\'' + args.classification_model + '\')')
                 net = eval('VGG(\'' + args.classification_model + '\')')
             else:
                 net = eval(args.classification_model + '()')
@@ -84,7 +84,7 @@ class Classifier(object):
     # -- Base operations -- #
     #########################
     def load(self):
-        print('====> Loading checkpoint {}'.format(self.classification_path))
+        # print('====> Loading checkpoint {}'.format(self.classification_path))
         checkpoint = torch.load(os.path.join(self.classification_path, 'ckpt.pth'))
         self.net.load_state_dict(checkpoint['net'])
         self.best_valid_acc = checkpoint['best_valid_acc']
@@ -189,7 +189,7 @@ class Classifier(object):
                 break
 
     def test(self, testset):
-        print('==> Test {}'.format(self.classification_path))
+        # print('==> Test {}'.format(self.classification_path))
         try:
             self.load()
         except FileNotFoundError:
@@ -209,7 +209,7 @@ class Classifier(object):
     # ---- For MIA ---- #
     #####################
     def extract_features(self, dataset_dict):
-        print('==> Extract features')
+        # print('==> Extract features')
         try:
             self.load()
         except FileNotFoundError:
@@ -226,7 +226,7 @@ class Classifier(object):
             logits = []
             prediction_scores = []
             labels = []
-            print('====> Extract features from {} dataset'.format(dataset_type))
+            # print('====> Extract features from {} dataset'.format(dataset_type))
             # with torch.no_grad():
             for batch_idx, (inputs, targets) in enumerate(loader):
                 inputs, targets = inputs.to(self.device), targets.to(self.device)

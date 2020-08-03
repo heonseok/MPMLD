@@ -22,14 +22,14 @@ class Attacker(object):
         self.early_stop_observation_period = args.early_stop_observation_period
 
         self.attack_path = args.attack_path
-        print(self.attack_path)
+        # print(self.attack_path)
         # if not os.path.exists(self.attack_path):
         #     os.makedirs(self.attack_path)
 
         self.attack_type = args.attack_type
 
         # Model
-        print('==> Building {}'.format(self.attack_path))
+        # print('==> Building {}'.format(self.attack_path))
         if self.attack_type == 'black':
             if args.dataset == 'adult':
                 net = MIAttacker(4)
@@ -67,7 +67,7 @@ class Attacker(object):
     # -- Base operations -- #
     #########################
     def load(self):
-        print('====> Loading checkpoint {}'.format(self.attack_path))
+        # print('====> Loading checkpoint {}'.format(self.attack_path))
         checkpoint = torch.load(os.path.join(self.attack_path, 'ckpt.pth'))
         self.net.load_state_dict(checkpoint['net'])
         self.best_valid_acc = checkpoint['best_valid_acc']
@@ -172,7 +172,7 @@ class Attacker(object):
                 break
 
     def test(self, testset):
-        print('==> Test {}'.format(self.attack_path))
+        # print('==> Test {}'.format(self.attack_path))
         try:
             self.load()
         except FileNotFoundError:

@@ -159,8 +159,8 @@ print()
 # ---- Combination ---- #
 reconstruction_type_list = [
     'cb_mb',  # Content: base, Membership: base
-    'cz_mb',  # Content: zero, Membership: base
     'cb_mz',  # Content: base, Membership: zero
+    'cz_mb',  # Content: zero, Membership: base
 
     # 'cb_ms',  # Content: base, Membership: sampled
     # 'cs_mb',  # Content: sampled, Membership: zero
@@ -196,7 +196,7 @@ if args.use_reconstructed_dataset:
     for recon_type in reconstruction_type_list:
         args.classification_path = os.path.join(args.recon_output_path, 'classification', args.classification_model,
                                                 recon_type, 'repeat{}'.format(args.repeat_idx))
-        print(args.classification_path)
+        # print(args.classification_path)
         if args.train_classifier or args.test_classifier or args.extract_classifier_features:
             classifier = Classifier(args)
 
@@ -221,9 +221,9 @@ if args.use_reconstructed_dataset:
                     'out': subset3,
                 }
 
-                for dataset_type, dataset in inout_datasets.items():
-                    print('Inout {:<3} dataset: {}'.format(dataset_type, len(dataset)))
-                print()
+                # for dataset_type, dataset in inout_datasets.items():
+                #     print('Inout {:<3} dataset: {}'.format(dataset_type, len(dataset)))
+                # print()
                 classifier.extract_features(inout_datasets)
 
         if args.train_attacker or args.test_attacker:
@@ -236,8 +236,8 @@ if args.use_reconstructed_dataset:
 
                 inout_feature_sets = utils.build_inout_feature_sets(args.classification_path, attack_type)
 
-                for dataset_type, dataset in inout_feature_sets.items():
-                    print('Inout {:<3} feature set: {}'.format(dataset_type, len(dataset)))
+                # for dataset_type, dataset in inout_feature_sets.items():
+                #     print('Inout {:<3} feature set: {}'.format(dataset_type, len(dataset)))
 
                 attacker = Attacker(args)
                 if args.train_attacker:

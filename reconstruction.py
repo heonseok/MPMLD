@@ -117,7 +117,7 @@ class Reconstructor(object):
     # -- Base operations -- #
     #########################
     def load(self):
-        print('====> Loading checkpoint {}'.format(self.reconstruction_path))
+        # print('====> Loading checkpoint {}'.format(self.reconstruction_path))
         checkpoint = torch.load(os.path.join(self.reconstruction_path, 'ckpt.pth'))
         for net_type in self.nets:
             self.nets[net_type].load_state_dict(checkpoint[net_type])
@@ -432,7 +432,7 @@ class Reconstructor(object):
                 break
 
     def reconstruct(self, dataset_dict, reconstruction_type_list):
-        print('==> Reconstruct datasets')
+        # print('==> Reconstruct datasets')
         try:
             self.load()
         except FileNotFoundError:
@@ -446,7 +446,7 @@ class Reconstructor(object):
 
         for reconstruction_type in reconstruction_type_list:
             recon_datasets_dict = {}
-            print(reconstruction_type)
+            # print(reconstruction_type)
             for dataset_type, dataset in dataset_dict.items():
                 loader = DataLoader(dataset, batch_size=self.test_batch_size, shuffle=False, num_workers=2)
                 raws = []
@@ -571,8 +571,6 @@ class Reconstructor(object):
         def loss_function(recon_x, x, mu, logvar):
             MSE = F.mse_loss(recon_x, x, reduction='sum')
             KLD = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp()).sum()
-            # print(MSE)
-            # print(KLD)
             return MSE + self.beta * KLD, MSE, KLD
 
         return loss_function
