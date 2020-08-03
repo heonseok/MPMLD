@@ -13,9 +13,9 @@ import shutil
 import sys
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--dataset', type=str, default='SVHN',
+parser.add_argument('--dataset', type=str, default='CIFAR-10',
                     choices=['MNIST', 'Fashion-MNIST', 'CIFAR-10', 'adult', 'location', 'SVHN'])
-parser.add_argument('--output_dir', type=str, default='output0727')
+parser.add_argument('--output_dir', type=str, default='output0803')
 parser.add_argument('--setsize', type=int, default=10000)
 parser.add_argument('--lr', type=float, default=0.001)
 parser.add_argument('--base_path', type=str, default='/mnt/disk1/heonseok/MPMLD')
@@ -29,12 +29,12 @@ parser.add_argument('--epochs', type=int, default=500)
 parser.add_argument('--early_stop', type=str2bool, default='1')
 parser.add_argument('--early_stop_observation_period', type=int, default=20)
 parser.add_argument('--repeat_idx', type=int, default=0)
-parser.add_argument('--gpu_id', type=int, default=0)
+parser.add_argument('--gpu_id', type=int, default=3)
 
 parser.add_argument('--beta', type=float, default=0.000001)
 parser.add_argument('--z_dim', type=int, default=64)
 
-parser.add_argument('--recon_weight', type=float, default='100')
+parser.add_argument('--recon_weight', type=float, default='1')
 parser.add_argument('--class_cz_weight', type=float, default='0')
 parser.add_argument('--class_mz_weight', type=float, default='1')
 parser.add_argument('--membership_cz_weight', type=float, default='1')
@@ -92,7 +92,7 @@ if args.dataset in ['adult', 'location']:
     elif args.dataset == 'location':
         args.class_num = 30
 
-if args.dataset in ['MNIST', 'SVHN']:
+if args.dataset in ['MNIST', 'SVHN', 'CIFAR-10']:
     args.class_num = 10
 
 if args.setsize * 2.4 > len(merged_dataset):
