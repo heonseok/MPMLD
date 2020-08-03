@@ -13,10 +13,13 @@ from torch.utils.data import Subset, ConcatDataset
 
 from reconstruction import Reconstructor
 from classification import Classifier
+from attack import Attacker
 
 parser = argparse.ArgumentParser()
 
-# -------- Common -------- #
+# ------------------------------------------------------------------------------------------------------------------- #
+# -------- Params -------- #
+# ---- Common ---- #
 parser.add_argument('--base_path', type=str, default='/mnt/disk1/heonseok/MPMLD')
 parser.add_argument('--dataset', type=str, default='SVHN',
                     choices=['MNIST', 'Fashion-MNIST', 'SVHN', 'CIFAR-10', 'adult', 'location', ])
@@ -30,10 +33,16 @@ parser.add_argument('--early_stop_observation_period', type=int, default=20)
 parser.add_argument('--gpu_id', type=int, default=3)
 parser.add_argument('--epochs', type=int, default=500)
 parser.add_argument('--resume', type=str2bool, default='0')
-parser.add_argument('--repeat_idx', type=int, default=0)
-parser.add_argument('--print_training', type=str2bool, default='1')
+parser.add_argument('--repeat_idx', type=int, default=1)
+parser.add_argument('--print_training', type=str2bool, default='0')
 
-# ---- MPMLD ---- #
+# ---- Reconstruction ---- #
+parser.add_argument('--reconstruction_model', type=str, default='VAE', choices=['AE', 'VAE'])
+parser.add_argument('--beta', type=float, default=0.000001)
+parser.add_argument('--z_dim', type=int, default=64)
+parser.add_argument('--recon_lr', type=float, default=0.001)
+parser.add_argument('--disc_lr', type=float, default=0.001)
+
 parser.add_argument('--recon_weight', type=float, default='10')
 parser.add_argument('--class_cz_weight', type=float, default='0')
 parser.add_argument('--class_mz_weight', type=float, default='0')
@@ -41,31 +50,33 @@ parser.add_argument('--membership_cz_weight', type=float, default='0')
 parser.add_argument('--membership_mz_weight', type=float, default='0')
 parser.add_argument('--ref_ratio', type=float, default=0.1)
 
-# -------- Reconstruction -------- #
-parser.add_argument('--reconstruction_model', type=str, default='VAE', choices=['AE', 'VAE'])
-parser.add_argument('--beta', type=float, default=0.000001)
-parser.add_argument('--z_dim', type=int, default=64)
-parser.add_argument('--recon_lr', type=float, default=0.001)
-parser.add_argument('--disc_lr', type=float, default=0.001)
-
-# ---- Control flags ---- #
-parser.add_argument('--train_reconstructor', type=str2bool, default='0')
-parser.add_argument('--reconstruct_datasets', type=str2bool, default='0')
-
-# -------- Classification -------- #
+# ---- Classification ---- #
 parser.add_argument('--classification_model', type=str, default='ResNet18',
                     choices=['FCClassifier', 'ConvClassifier', 'VGG19', 'ResNet18', 'ResNet50', 'ResNet101',
                              'DenseNet121'])
 parser.add_argument('--class_lr', type=float, default=0.0001)
 
-# ---- Control flags ---- #
+# -------- Attack -------- #
+parser.add_argument('--attack_lr', type=float, default=0.01)
+
+# ------------------------------------------------------------------------------------------------------------------- #
+# -------- Control flags -------- #
+# ---- Reconstruction ---- #
+parser.add_argument('--train_reconstructor', type=str2bool, default='1')
+parser.add_argument('--reconstruct_datasets', type=str2bool, default='1')
+
+# ---- Classification ---- #
 parser.add_argument('--use_reconstructed_dataset', type=str2bool, default='1')
 
-parser.add_argument('--train_classifier', type=str2bool, default='0')
+parser.add_argument('--train_classifier', type=str2bool, default='1')
 parser.add_argument('--test_classifier', type=str2bool, default='1')
 parser.add_argument('--extract_classifier_features', type=str2bool, default='1')
 
-# -------- Attack -------- #
+# ---- Attack ---- #
+parser.add_argument('--train_attacker', type=str2bool, default='1')
+parser.add_argument('--test_attacker', type=str2bool, default='1')
+
+# ------------------------------------------------------------------------------------------------------------------- #
 
 args = parser.parse_args()
 
@@ -105,6 +116,7 @@ for file in os.listdir(os.getcwd()):
     if file.endswith('.py'):
         shutil.copy2(file, backup_path)
 
+# ------------------------------------------------------------------------------------------------------------------- #
 # ---- Dataset ---- #
 merged_dataset = load_dataset(args.dataset, args.data_path)
 print(merged_dataset.__len__())
@@ -144,6 +156,7 @@ for dataset_type, dataset in class_datasets.items():
     print('Class {:<5} dataset: {}'.format(dataset_type, len(dataset)))
 print()
 
+# ---- Combination ---- #
 reconstruction_type_list = [
     'cb_mb',  # Content: base, Membership: base
     'cz_mb',  # Content: zero, Membership: base
@@ -155,6 +168,12 @@ reconstruction_type_list = [
     # 'cb_mn',  # Content: base, Membership: normal
 ]
 
+attack_type_list = [
+    'black',
+    # 'white',
+]
+
+# ------------------------------------------------------------------------------------------------------------------- #
 # -------- Reconstruction -------- #
 if args.train_reconstructor:
     reconstructor = Reconstructor(args)
@@ -171,13 +190,14 @@ if args.reconstruct_datasets:
     }
     reconstructor.reconstruct(inout_datasets, reconstruction_type_list)
 
-# -------- Classification -------- #
-if args.train_classifier or args.test_classifier or args.extract_classifier_features:
-    if args.use_reconstructed_dataset:
-        for recon_type in reconstruction_type_list:
-            args.classification_path = os.path.join(args.recon_output_path, 'classification', args.classification_model,
-                                                    recon_type, 'repeat{}'.format(args.repeat_idx))
-            print(args.classification_path)
+
+# -------- Classification and Attack -------- #
+if args.use_reconstructed_dataset:
+    for recon_type in reconstruction_type_list:
+        args.classification_path = os.path.join(args.recon_output_path, 'classification', args.classification_model,
+                                                recon_type, 'repeat{}'.format(args.repeat_idx))
+        print(args.classification_path)
+        if args.train_classifier or args.test_classifier or args.extract_classifier_features:
             classifier = Classifier(args)
 
             try:
@@ -206,9 +226,49 @@ if args.train_classifier or args.test_classifier or args.extract_classifier_feat
                 print()
                 classifier.extract_features(inout_datasets)
 
-    else:
-        args.classification_path = os.path.join(args.raw_output_path, 'classification', args.classification_model,
-                                                'repeat{}'.format(args.repeat_idx))
+        if args.train_attacker or args.test_attacker:
+            for attack_type in attack_type_list:
+                args.attack_type = attack_type
+                args.attack_path = os.path.join(args.recon_output_path, 'attack', args.classification_model,
+                                                recon_type, attack_type, 'repeat{}'.format(args.repeat_idx))
+                if not os.path.exists(args.attack_path):
+                    os.makedirs(args.attack_path)
 
+                inout_feature_sets = utils.build_inout_feature_sets(args.classification_path, attack_type)
+
+                for dataset_type, dataset in inout_feature_sets.items():
+                    print('Inout {:<3} feature set: {}'.format(dataset_type, len(dataset)))
+
+                attacker = Attacker(args)
+                if args.train_attacker:
+                    attacker.train(inout_feature_sets['train'], inout_feature_sets['valid'])
+                if args.test_attacker:
+                    attacker.test(inout_feature_sets['test'])
+
+
+# else:
+#     args.classification_path = os.path.join(args.raw_output_path, 'classification', args.classification_model,
+#                                             'repeat{}'.format(args.repeat_idx))
+#     print(args.classification_path)
+#     classifier = Classifier(args)
+#
+#     # todo : refactor
+#     if args.train_classifier:
+#         classifier.train(class_datasets['train'], class_datasets['valid'])
+#
+#     if args.test_classifier:
+#         classifier.test(class_datasets['test'])
+#
+#     if args.extract_classifier_features:
+#         # inout_datasets should be transformed to inout_feature_sets for training attacker
+#         inout_datasets = {
+#             'in': subset0,
+#             'out': subset3,
+#         }
+#
+#         for dataset_type, dataset in inout_datasets.items():
+#             print('Inout {:<3} dataset: {}'.format(dataset_type, len(dataset)))
+#         print()
+#         classifier.extract_features(inout_datasets)
 
 # -------- Attack -------- #
