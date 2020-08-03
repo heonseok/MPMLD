@@ -24,8 +24,8 @@ class Classifier(object):
         if not os.path.exists(self.classification_path):
             os.makedirs(self.classification_path)
 
-        with open(os.path.join(self.classification_path, 'descriptions.txt'), 'w') as f:
-            json.dump(args.__dict__, f, indent=2)
+        # with open(os.path.join(self.classification_path, 'descriptions.txt'), 'w') as f:
+        #     json.dump(args.__dict__, f, indent=2)
 
         # Model
         print('==> Building {}'.format(self.classification_path))
@@ -75,7 +75,7 @@ class Classifier(object):
         # self.criterion = nn.Cro
         self.criterion = nn.CrossEntropyLoss()
         # self.optimizer = optim.Adam(net.parameters(), lr=args.lr, betas=(0.999, 0.999))
-        self.optimizer = optim.Adam(net.parameters(), lr=args.lr, betas=(0.5, 0.999))
+        self.optimizer = optim.Adam(net.parameters(), lr=args.class_lr, betas=(0.5, 0.999))
         # self.optimizer = optim.SGD(net.parameters(), lr=args.lr, momentum=0.9)
         # self.optimizer = optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4)
         self.scheduler = optim.lr_scheduler.StepLR(self.optimizer, step_size=50, gamma=0.1)

@@ -15,7 +15,6 @@ from torch.utils.data import Subset, DataLoader
 
 class Reconstructor(object):
     def __init__(self, args):
-        self.reconstruction_model = args.reconstruction_model
         self.reconstruction_path = args.reconstruction_path
         if not os.path.exists(self.reconstruction_path):
             os.makedirs(self.reconstruction_path)
@@ -67,7 +66,7 @@ class Reconstructor(object):
         self.optimizer = dict()
         for net_type in self.nets:
             self.optimizer[net_type] = optim.Adam(self.nets[net_type].parameters(), lr=args.recon_lr, betas=(0.5, 0.999))
-        self.discriminator_lr = args.recon_lr
+        self.discriminator_lr = args.disc_lr
         for disc_type in self.discs:
             self.optimizer[disc_type] = optim.Adam(self.discs[disc_type].parameters(), lr=self.discriminator_lr,
                                                    betas=(0.5, 0.999))
@@ -432,7 +431,7 @@ class Reconstructor(object):
             else:
                 break
 
-    def reconstruct(self, dataset_dict):
+    def reconstruct(self, dataset_dict, reconstruction_type_list):
         print('==> Reconstruct datasets')
         try:
             self.load()
@@ -445,15 +444,7 @@ class Reconstructor(object):
         mse_list = []
         recon_dict = dict()
 
-        for reconstruction_type in [
-            'cb_mb',
-            'cb_ms',
-            'cs_mb',
-            'cs_ms',
-            'cz_mb',
-            'cb_mz',
-            'cb_mn',
-        ]:
+        for reconstruction_type in reconstruction_type_list:
             recon_datasets_dict = {}
             print(reconstruction_type)
             for dataset_type, dataset in dataset_dict.items():

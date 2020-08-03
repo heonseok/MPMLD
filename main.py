@@ -1,25 +1,27 @@
 import os
+import sys
 import argparse
-
-import torch
-from torch.utils.data import Subset
-
-from data import load_dataset
 from utils import str2bool
-from reconstruction import Reconstructor
-from torch.utils.data import ConcatDataset
 import datetime
 import shutil
-import sys
+
+import utils
+from data import load_dataset
+
+import torch
+from torch.utils.data import Subset, ConcatDataset
+
+from reconstruction import Reconstructor
+from classification import Classifier
 
 parser = argparse.ArgumentParser()
 
 # -------- Common -------- #
 parser.add_argument('--base_path', type=str, default='/mnt/disk1/heonseok/MPMLD')
-parser.add_argument('--dataset', type=str, default='CIFAR-10',
+parser.add_argument('--dataset', type=str, default='SVHN',
                     choices=['MNIST', 'Fashion-MNIST', 'SVHN', 'CIFAR-10', 'adult', 'location', ])
-parser.add_argument('--output_dir', type=str, default='output0803')
-parser.add_argument('--setsize', type=int, default=20000)
+parser.add_argument('--description', type=str, default='0803baseline')
+parser.add_argument('--setsize', type=int, default=10000)
 parser.add_argument('--train_batch_size', type=int, default=100)
 parser.add_argument('--valid_batch_size', type=int, default=100)
 parser.add_argument('--test_batch_size', type=int, default=100)
@@ -27,30 +29,41 @@ parser.add_argument('--early_stop', type=str2bool, default='1')
 parser.add_argument('--early_stop_observation_period', type=int, default=20)
 parser.add_argument('--gpu_id', type=int, default=3)
 parser.add_argument('--epochs', type=int, default=500)
+parser.add_argument('--resume', type=str2bool, default='0')
+parser.add_argument('--repeat_idx', type=int, default=0)
+parser.add_argument('--print_training', type=str2bool, default='1')
 
 # ---- MPMLD ---- #
-parser.add_argument('--recon_weight', type=float, default='1')
+parser.add_argument('--recon_weight', type=float, default='10')
 parser.add_argument('--class_cz_weight', type=float, default='0')
-parser.add_argument('--class_mz_weight', type=float, default='1')
-parser.add_argument('--membership_cz_weight', type=float, default='1')
+parser.add_argument('--class_mz_weight', type=float, default='0')
+parser.add_argument('--membership_cz_weight', type=float, default='0')
 parser.add_argument('--membership_mz_weight', type=float, default='0')
 parser.add_argument('--ref_ratio', type=float, default=0.1)
 
 # -------- Reconstruction -------- #
-parser.add_argument('--recon_lr', type=float, default=0.001)
 parser.add_argument('--reconstruction_model', type=str, default='VAE', choices=['AE', 'VAE'])
-parser.add_argument('--repeat_idx', type=int, default=0)
-parser.add_argument('--resume', type=str2bool, default='0')
-
 parser.add_argument('--beta', type=float, default=0.000001)
 parser.add_argument('--z_dim', type=int, default=64)
+parser.add_argument('--recon_lr', type=float, default=0.001)
+parser.add_argument('--disc_lr', type=float, default=0.001)
 
-parser.add_argument('--train_reconstructor', type=str2bool, default='1')
-parser.add_argument('--reconstruct_datasets', type=str2bool, default='1')
-parser.add_argument('--print_training', type=str2bool, default='1')
+# ---- Control flags ---- #
+parser.add_argument('--train_reconstructor', type=str2bool, default='0')
+parser.add_argument('--reconstruct_datasets', type=str2bool, default='0')
 
 # -------- Classification -------- #
+parser.add_argument('--classification_model', type=str, default='ResNet18',
+                    choices=['FCClassifier', 'ConvClassifier', 'VGG19', 'ResNet18', 'ResNet50', 'ResNet101',
+                             'DenseNet121'])
+parser.add_argument('--class_lr', type=float, default=0.0001)
 
+# ---- Control flags ---- #
+parser.add_argument('--use_reconstructed_dataset', type=str2bool, default='1')
+
+parser.add_argument('--train_classifier', type=str2bool, default='0')
+parser.add_argument('--test_classifier', type=str2bool, default='1')
+parser.add_argument('--extract_classifier_features', type=str2bool, default='1')
 
 # -------- Attack -------- #
 
@@ -59,14 +72,6 @@ args = parser.parse_args()
 torch.cuda.set_device(args.gpu_id)
 
 # ---- Directory ---- #
-args.output_path = os.path.join(args.base_path, args.output_dir, args.dataset)
-if not os.path.exists(args.output_path):
-    os.makedirs(args.output_path)
-
-args.data_path = os.path.join(args.base_path, 'data', args.dataset)
-if not os.path.exists(args.data_path):
-    os.makedirs(args.data_path)
-
 if args.reconstruction_model == 'VAE':
     args.reconstruction_model += str(args.beta)
 
@@ -76,8 +81,22 @@ args.reconstruction_name = os.path.join(
                                                                   args.class_cz_weight, args.class_mz_weight,
                                                                   args.membership_cz_weight, args.membership_mz_weight,
                                                                   ))
-print(args.reconstruction_name)
 
+args.recon_output_path = os.path.join(args.base_path, args.dataset, args.description, args.reconstruction_name)
+args.raw_output_path = os.path.join(args.base_path, args.dataset, 'raw_setsize{}'.format(args.setsize))
+
+if not os.path.exists(args.recon_output_path):
+    os.makedirs(args.recon_output_path)
+
+args.data_path = os.path.join(args.base_path, 'data', args.dataset)
+if not os.path.exists(args.data_path):
+    os.makedirs(args.data_path)
+
+args.model_path = os.path
+args.reconstruction_path = os.path.join(args.recon_output_path, 'reconstruction/repeat{}'.format(args.repeat_idx))
+print(args.reconstruction_path)
+
+# ---- Backup codes ---- #
 date = str(datetime.datetime.now())[:-16]
 time = str(datetime.datetime.now())[-15:-7]
 backup_path = os.path.join('backup', date, time + ' ' + args.reconstruction_name)
@@ -86,11 +105,13 @@ for file in os.listdir(os.getcwd()):
     if file.endswith('.py'):
         shutil.copy2(file, backup_path)
 
-args.reconstruction_path = os.path.join(args.output_path, args.reconstruction_name,
-                                        'reconstruction/repeat{}'.format(args.repeat_idx))
-
+# ---- Dataset ---- #
 merged_dataset = load_dataset(args.dataset, args.data_path)
 print(merged_dataset.__len__())
+
+if args.setsize * 2.4 > len(merged_dataset):
+    print('Setsize * 2.4 > len(merged_dataset); Terminate program')
+    sys.exit(1)
 
 if args.dataset in ['adult', 'location']:
     args.encoder_input_dim = merged_dataset.__getitem__(0)[0].numpy().shape[0]
@@ -101,10 +122,6 @@ if args.dataset in ['adult', 'location']:
 
 elif args.dataset in ['MNIST', 'SVHN', 'CIFAR-10']:
     args.class_num = 10
-
-if args.setsize * 2.4 > len(merged_dataset):
-    print('Setsize * 2.4 > len(concatset); Terminate program')
-    sys.exit(1)
 
 # Recon: Train, Class: Train, Attack: In(Train/Test)
 subset0 = Subset(merged_dataset, range(0, args.setsize))
@@ -127,6 +144,17 @@ for dataset_type, dataset in class_datasets.items():
     print('Class {:<5} dataset: {}'.format(dataset_type, len(dataset)))
 print()
 
+reconstruction_type_list = [
+    'cb_mb',  # Content: base, Membership: base
+    'cz_mb',  # Content: zero, Membership: base
+    'cb_mz',  # Content: base, Membership: zero
+
+    # 'cb_ms',  # Content: base, Membership: sampled
+    # 'cs_mb',  # Content: sampled, Membership: zero
+    # 'cs_ms',  # Content: sampled, Membership: sampled
+    # 'cb_mn',  # Content: base, Membership: normal
+]
+
 # -------- Reconstruction -------- #
 if args.train_reconstructor:
     reconstructor = Reconstructor(args)
@@ -141,8 +169,46 @@ if args.reconstruct_datasets:
         'train': subset0,  # todo : rename train --> in (?)
         'out': subset3,
     }
-    reconstructor.reconstruct(inout_datasets)
+    reconstructor.reconstruct(inout_datasets, reconstruction_type_list)
 
 # -------- Classification -------- #
+if args.train_classifier or args.test_classifier or args.extract_classifier_features:
+    if args.use_reconstructed_dataset:
+        for recon_type in reconstruction_type_list:
+            args.classification_path = os.path.join(args.recon_output_path, 'classification', args.classification_model,
+                                                    recon_type, 'repeat{}'.format(args.repeat_idx))
+            print(args.classification_path)
+            classifier = Classifier(args)
+
+            try:
+                reconstructed_data_path = os.path.join(args.reconstruction_path, 'recon_{}.pt'.format(recon_type))
+                recon_datasets = utils.build_reconstructed_datasets(reconstructed_data_path)
+                class_datasets['train'] = recon_datasets['train']
+            except FileNotFoundError:
+                print('There is no reconstructed data: ', args.reconstruction_path)
+                sys.exit(1)
+
+            if args.train_classifier:
+                classifier.train(class_datasets['train'], class_datasets['valid'])
+
+            if args.test_classifier:
+                classifier.test(class_datasets['test'])
+
+            if args.extract_classifier_features:
+                # inout_datasets should be transformed to inout_feature_sets for training attacker
+                inout_datasets = {
+                    'in': subset0,
+                    'out': subset3,
+                }
+
+                for dataset_type, dataset in inout_datasets.items():
+                    print('Inout {:<3} dataset: {}'.format(dataset_type, len(dataset)))
+                print()
+                classifier.extract_features(inout_datasets)
+
+    else:
+        args.classification_path = os.path.join(args.raw_output_path, 'classification', args.classification_model,
+                                                'repeat{}'.format(args.repeat_idx))
+
 
 # -------- Attack -------- #
