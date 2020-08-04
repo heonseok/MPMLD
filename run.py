@@ -114,7 +114,7 @@ weight_list = [
     [1, 0, 0, 0, 1],
 
     [1, 0, 1, 1, 0],
-    [1, 0, 1, 0, 1],
+    [1, 0, 1, 0, 1],  # running
     [1, 1, 0, 1, 0],
     [1, 1, 0, 0, 1],
 
@@ -133,11 +133,11 @@ beta_list = [
 ]
 
 repeat_idx_list = [
-    0,
-    # 1,
-    # 2,
-    # 3,
-    # 4,
+    # 0,
+    1,
+    2,
+    3,
+    4,
 ]
 
 setup_dict = {
@@ -196,4 +196,3 @@ for dataset in dataset_list:
                                 print(model)
                                 print()
                                 os.system(model)
-

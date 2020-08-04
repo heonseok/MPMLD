@@ -19,7 +19,7 @@ from attack import Attacker
 
 parser = argparse.ArgumentParser()
 
-# ------------------------------------------------------------------------------------------------------------------- #
+# -------------------------------------------------------------------------------------------------------------------- #
 # -------- Params -------- #
 # ---- Common ---- #
 parser.add_argument('--base_path', type=str, default='/mnt/disk1/heonseok/MPMLD')
@@ -61,7 +61,7 @@ parser.add_argument('--class_lr', type=float, default=0.0001)
 # -------- Attack -------- #
 parser.add_argument('--attack_lr', type=float, default=0.01)
 
-# ------------------------------------------------------------------------------------------------------------------- #
+# -------------------------------------------------------------------------------------------------------------------- #
 # -------- Control flags -------- #
 # ---- Reconstruction ---- #
 parser.add_argument('--train_reconstructor', type=str2bool, default='0')
@@ -79,7 +79,7 @@ parser.add_argument('--extract_classifier_features', type=str2bool, default='0')
 parser.add_argument('--train_attacker', type=str2bool, default='0')
 parser.add_argument('--test_attacker', type=str2bool, default='0')
 
-# ------------------------------------------------------------------------------------------------------------------- #
+# -------------------------------------------------------------------------------------------------------------------- #
 
 args = parser.parse_args()
 
@@ -119,7 +119,7 @@ for file in os.listdir(os.getcwd()):
     if file.endswith('.py'):
         shutil.copy2(file, backup_path)
 
-# ------------------------------------------------------------------------------------------------------------------- #
+# -------------------------------------------------------------------------------------------------------------------- #
 # ---- Dataset ---- #
 merged_dataset = load_dataset(args.dataset, args.data_path)
 print(merged_dataset.__len__())
@@ -176,7 +176,7 @@ attack_type_list = [
     # 'white',
 ]
 
-# ------------------------------------------------------------------------------------------------------------------- #
+# -------------------------------------------------------------------------------------------------------------------- #
 # -------- Reconstruction -------- #
 if args.train_reconstructor:
     reconstructor = Reconstructor(args)
@@ -223,7 +223,7 @@ if args.plot_recons:
 
 print()
 
-# -------- Classification and Attack -------- #
+# -------- Classification & Attack -------- #
 if args.use_reconstructed_dataset:
     for img in reconstruction_type_list:
         args.classification_path = os.path.join(args.recon_output_path, 'classification', args.classification_model,
@@ -303,4 +303,3 @@ if args.use_reconstructed_dataset:
 #         print()
 #         classifier.extract_features(inout_datasets)
 
-# -------- Attack -------- #
