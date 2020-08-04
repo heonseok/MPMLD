@@ -42,10 +42,12 @@ def collate_disentanglement_result(dataset, description, model):
     for repeat_idx in range(REPEAT):
         repeat_path = os.path.join(model_path, 'repeat{}'.format(repeat_idx), 'acc.npy')
         acc_dict = np.load(repeat_path, allow_pickle=True).item()
-        df = df.append(acc_dict, ignore_index=True)
-    df = df[['class_fz', 'class_cz', 'class_mz', 'membership_fz', 'membership_cz', 'membership_mz']]
-    df = df.rename(columns={'membership_fz': 'mem_fz', 'membership_cz': 'mem_cz', 'membership_mz': 'mem_mz'})
-    sns.boxplot(data=df)
+        for disc_type in ['class', 'membership']:
+            for z_type in ['fz', 'cz', 'mz']:
+                df = df.append({'disc_type': disc_type, 'z_type': z_type, 'acc': acc_dict[disc_type + '_' + z_type]},
+                               ignore_index=True)
+
+    sns.boxplot(x='disc_type', y='acc', hue='z_type', data=df)
     plt.ylim(0., 1.)
     plt.tight_layout()
 
@@ -140,7 +142,7 @@ def main():
     for model in model_list:
         print(model)
         # collate_reconstructions(dataset, description, model, recon_type_list)
-        # collate_disentanglement_result(dataset, description, model)
+        collate_disentanglement_result(dataset, description, model)
         # collate_classification_result(dataset, description, model, recon_type_list)
         # collate_attack_result(dataset, description, model, recon_type_list)
 
