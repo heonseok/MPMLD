@@ -25,7 +25,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--base_path', type=str, default='/mnt/disk1/heonseok/MPMLD')
 parser.add_argument('--dataset', type=str, default='SVHN',
                     choices=['MNIST', 'Fashion-MNIST', 'SVHN', 'CIFAR-10', 'adult', 'location', ])
-parser.add_argument('--description', type=str, default='0803baseline')
+parser.add_argument('--description', type=str, default='0804stylez')
 parser.add_argument('--setsize', type=int, default=10000)
 parser.add_argument('--train_batch_size', type=int, default=100)
 parser.add_argument('--valid_batch_size', type=int, default=100)
@@ -64,7 +64,7 @@ parser.add_argument('--attack_lr', type=float, default=0.01)
 # -------------------------------------------------------------------------------------------------------------------- #
 # -------- Control flags -------- #
 # ---- Reconstruction ---- #
-parser.add_argument('--train_reconstructor', type=str2bool, default='0')
+parser.add_argument('--train_reconstructor', type=str2bool, default='1')
 parser.add_argument('--reconstruct_datasets', type=str2bool, default='1')
 parser.add_argument('--plot_recons', type=str2bool, default='1')
 
@@ -203,14 +203,14 @@ if args.plot_recons:
     img_list = [
         'raw.png',
         'cb_mb.png',
-        'cz_mb.png',
         'cb_mz.png',
+        'cz_mb.png',
     ]
 
     plt.figure(1, figsize=(10, 4))
-    for img_idx, img in enumerate(img_list):
+    for img_idx, recon_type in enumerate(img_list):
         plt.subplot(str(1) + str(len(img_list)) + str(img_idx + 1))
-        plt.imshow(mpimg.imread(os.path.join(args.reconstruction_path, img)))
+        plt.imshow(mpimg.imread(os.path.join(args.reconstruction_path, recon_type)))
         plt.xticks([])
         plt.yticks([])
 
@@ -225,15 +225,15 @@ print()
 
 # -------- Classification & Attack -------- #
 if args.use_reconstructed_dataset:
-    for img in reconstruction_type_list:
+    for recon_type in reconstruction_type_list:
         args.classification_path = os.path.join(args.recon_output_path, 'classification', args.classification_model,
-                                                img, 'repeat{}'.format(args.repeat_idx))
+                                                recon_type, 'repeat{}'.format(args.repeat_idx))
         # print(args.classification_path)
         if args.train_classifier or args.test_classifier or args.extract_classifier_features:
             classifier = Classifier(args)
 
             try:
-                reconstructed_data_path = os.path.join(args.reconstruction_path, 'recon_{}.pt'.format(img))
+                reconstructed_data_path = os.path.join(args.reconstruction_path, 'recon_{}.pt'.format(recon_type))
                 recon_datasets = utils.build_reconstructed_datasets(reconstructed_data_path)
                 class_datasets['train'] = recon_datasets['train']
             except FileNotFoundError:
@@ -262,7 +262,7 @@ if args.use_reconstructed_dataset:
             for attack_type in attack_type_list:
                 args.attack_type = attack_type
                 args.attack_path = os.path.join(args.recon_output_path, 'attack', args.classification_model,
-                                                img, attack_type, 'repeat{}'.format(args.repeat_idx))
+                                                recon_type, attack_type, 'repeat{}'.format(args.repeat_idx))
                 if not os.path.exists(args.attack_path):
                     os.makedirs(args.attack_path)
 

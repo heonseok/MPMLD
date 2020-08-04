@@ -129,22 +129,27 @@ def main():
         'cz_mb',
     ]
     model_list = [
-        'VAE1e-06_z64_setsize10000_lr0.001_ref0.1_rw1.0_cc0.0_cm0.0_mc0.0_mm0.0',
+        # 'VAE1e-06_z64_setsize10000_lr0.001_ref0.1_rw1.0_cc0.0_cm0.0_mc0.0_mm0.0',
+        #
+        # 'VAE1e-06_z64_setsize10000_lr0.001_ref0.1_rw1.0_cc1.0_cm0.0_mc0.0_mm0.0',
+        # 'VAE1e-06_z64_setsize10000_lr0.001_ref0.1_rw1.0_cc0.0_cm1.0_mc0.0_mm0.0',
+        # 'VAE1e-06_z64_setsize10000_lr0.001_ref0.1_rw1.0_cc0.0_cm0.0_mc1.0_mm0.0',
+        # 'VAE1e-06_z64_setsize10000_lr0.001_ref0.1_rw1.0_cc0.0_cm0.0_mc0.0_mm1.0',
+        #
+        # 'VAE1e-06_z64_setsize10000_lr0.001_ref0.1_rw1.0_cc0.0_cm1.0_mc1.0_mm0.0',
+        # 'VAE1e-06_z64_setsize10000_lr0.001_ref0.1_rw1.0_cc0.0_cm1.0_mc0.0_mm1.0',
+        # 'VAE1e-06_z64_setsize10000_lr0.001_ref0.1_rw1.0_cc1.0_cm0.0_mc1.0_mm0.0',
+        # 'VAE1e-06_z64_setsize10000_lr0.001_ref0.1_rw1.0_cc1.0_cm0.0_mc0.0_mm1.0',
 
-        'VAE1e-06_z64_setsize10000_lr0.001_ref0.1_rw1.0_cc1.0_cm0.0_mc0.0_mm0.0',
-        'VAE1e-06_z64_setsize10000_lr0.001_ref0.1_rw1.0_cc0.0_cm1.0_mc0.0_mm0.0',
-        'VAE1e-06_z64_setsize10000_lr0.001_ref0.1_rw1.0_cc0.0_cm0.0_mc1.0_mm0.0',
-        'VAE1e-06_z64_setsize10000_lr0.001_ref0.1_rw1.0_cc0.0_cm0.0_mc0.0_mm1.0',
-
-        'VAE1e-06_z64_setsize10000_lr0.001_ref0.1_rw1.0_cc0.0_cm1.0_mc1.0_mm0.0',
+        'VAE1e-06_z64_setsize10000_lr0.001_ref0.1_rw1.0_cc1.0_cm1.0_mc1.0_mm1.0',
     ]
 
     for model in model_list:
         print(model)
-        # collate_reconstructions(dataset, description, model, recon_type_list)
+        collate_reconstructions(dataset, description, model, recon_type_list)
         collate_disentanglement_result(dataset, description, model)
-        # collate_classification_result(dataset, description, model, recon_type_list)
-        # collate_attack_result(dataset, description, model, recon_type_list)
+        collate_classification_result(dataset, description, model, recon_type_list)
+        collate_attack_result(dataset, description, model, recon_type_list)
 
 
 if __name__ == '__main__':
