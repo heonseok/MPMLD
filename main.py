@@ -14,6 +14,7 @@ import torch
 from torch.utils.data import Subset, ConcatDataset
 
 from reconstruction import Reconstructor
+# from reconstruction_stylez import Reconstructor
 from classification import Classifier
 from attack import Attacker
 
@@ -26,7 +27,7 @@ parser.add_argument('--base_path', type=str, default='/mnt/disk1/heonseok/MPMLD'
 parser.add_argument('--dataset', type=str, default='SVHN',
                     choices=['MNIST', 'Fashion-MNIST', 'SVHN', 'CIFAR-10', 'adult', 'location', ])
 parser.add_argument('--description', type=str, default='0804stylez')
-parser.add_argument('--setsize', type=int, default=10000)
+parser.add_argument('--setsize', type=int, default=5000)
 parser.add_argument('--train_batch_size', type=int, default=100)
 parser.add_argument('--valid_batch_size', type=int, default=100)
 parser.add_argument('--test_batch_size', type=int, default=100)
@@ -53,7 +54,7 @@ parser.add_argument('--membership_mz_weight', type=float, default='0')
 parser.add_argument('--ref_ratio', type=float, default=0.1)
 
 # ---- Classification ---- #
-parser.add_argument('--classification_model', type=str, default='ResNet18',
+parser.add_argument('--classification_model', type=str, default='DenseNet121',
                     choices=['FCClassifier', 'ConvClassifier', 'VGG19', 'ResNet18', 'ResNet50', 'ResNet101',
                              'DenseNet121'])
 parser.add_argument('--class_lr', type=float, default=0.0001)
@@ -71,13 +72,13 @@ parser.add_argument('--plot_recons', type=str2bool, default='1')
 # ---- Classification ---- #
 parser.add_argument('--use_reconstructed_dataset', type=str2bool, default='1')
 
-parser.add_argument('--train_classifier', type=str2bool, default='0')
-parser.add_argument('--test_classifier', type=str2bool, default='0')
-parser.add_argument('--extract_classifier_features', type=str2bool, default='0')
+parser.add_argument('--train_classifier', type=str2bool, default='1')
+parser.add_argument('--test_classifier', type=str2bool, default='1')
+parser.add_argument('--extract_classifier_features', type=str2bool, default='1')
 
 # ---- Attack ---- #
-parser.add_argument('--train_attacker', type=str2bool, default='0')
-parser.add_argument('--test_attacker', type=str2bool, default='0')
+parser.add_argument('--train_attacker', type=str2bool, default='1')
+parser.add_argument('--test_attacker', type=str2bool, default='1')
 
 # -------------------------------------------------------------------------------------------------------------------- #
 
@@ -161,6 +162,13 @@ print()
 
 # ---- Combination ---- #
 reconstruction_type_list = [
+    # 'cb_mb_sb',  # Content: base, Membership: base, Style: base
+    # 'cb_mb_sz',  # Content: base, Membership: base, Style: zero
+    # 'cb_mz_sb',  # Content: base, Membership: zero, Style: base
+    # 'cb_mz_sz',  # Content: base, Membership: zero, Style: zero
+    # 'cz_mb_sb',  # Content: zero, Membership: base, Style: base
+    # 'cz_mb_sz',  # Content: zero, Membership: base, Style: zero
+
     'cb_mb',  # Content: base, Membership: base
     'cb_mz',  # Content: base, Membership: zero
     'cz_mb',  # Content: zero, Membership: base
@@ -205,6 +213,13 @@ if args.plot_recons:
         'cb_mb.png',
         'cb_mz.png',
         'cz_mb.png',
+
+        # 'cb_mb_sb.png',
+        # 'cb_mb_sz.png',
+        # 'cb_mz_sb.png',
+        # 'cb_mz_sz.png',
+        # 'cz_mb_sb.png',
+        # 'cz_mb_sz.png',
     ]
 
     plt.figure(1, figsize=(10, 4))

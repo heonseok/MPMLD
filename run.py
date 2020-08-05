@@ -12,9 +12,9 @@ dataset_list = [
 setsize_list = [
     # 100,
     # 500,
-    1000,
-    2000,
-    4000,
+    # 1000,
+    # 2000,
+    # 4000,
     5000,
     # 5000,
     # 10000,
@@ -23,16 +23,17 @@ setsize_list = [
 
 z_dim_list = [
     # '16',
+    # '32',
     '64',
     # '128',
     # '256',
 ]
 
 ref_ratio_list = [
-    0.1,
+    # 0.1,
     # 0.2,
     # 0.5,
-    # 1.0,
+    1.0,
 ]
 
 recon_lr_list = [
@@ -44,19 +45,31 @@ recon_lr_list = [
 # recon, class_cz(+), class_mz(-), membership_cz(-), membership_mz(+)
 weight_list = [
     # 0803
-    [1, 0, 0, 0, 0],
+    # [1, 0, 0, 0, 0],
 
     # [1, 1, 0, 0, 0],
     # [1, 0, 1, 0, 0],
     # [1, 0, 0, 1, 0],
     # [1, 0, 0, 0, 1],
-    #
+
     # [1, 0, 1, 1, 0],
+    # [1, 2, 2, 1, 0],
+    # [1, 1, 1, 1, 1],
+    # [1, 1, 1, 0, 0],
     # [1, 0, 1, 0, 1],
     # [1, 1, 0, 1, 0],
     # [1, 1, 0, 0, 1],
-    #
+
     # [1, 1, 1, 1, 1],
+
+    # [1, 0, 1, 2, 0],
+    # [1, 0, 2, 1, 0],
+    # [1, 0, 2, 2, 0],
+
+    # [1, 0, 1, 0.1, 0],
+
+    # [1, 2, 0, 0, 2],
+    [1, 0, 0, 0, 2],
 ]
 
 beta_list = [
@@ -72,10 +85,10 @@ beta_list = [
 
 repeat_idx_list = [
     0,
-    1,
-    2,
-    3,
-    4,
+    # 1,
+    # 2,
+    # 3,
+    # 4,
 ]
 
 setup_dict = {
@@ -90,6 +103,7 @@ setup_dict = {
     'train_classifier': '1',
     'test_classifier': '1',
     'extract_classifier_features': '1',
+    'classification_model': 'ResNet18',
 
     # Attack
     'train_attacker': '1',
@@ -99,8 +113,8 @@ setup_dict = {
     'early_stop': '1',
     'early_stop_observation_period': 20,
     'gpu_id': 3,
-    'print_training': False,
-    'description': '0804set',
+    'print_training': '0',
+    'description': '0805ref1.0',
 }
 
 for dataset in dataset_list:

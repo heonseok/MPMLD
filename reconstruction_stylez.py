@@ -289,7 +289,7 @@ class Reconstructor(object):
         in_loss = self.membership_loss(pred, torch.ones_like(pred))
 
         z_ref = self.inference_z(inputs_ref)
-        class_z_ref, _ = self.split_class_membership_style(z_ref)
+        class_z_ref, _, _ = self.split_class_membership_style(z_ref)
         pred_ref = self.discs['membership_cz'](class_z_ref)
         out_loss = self.membership_loss(pred_ref, torch.zeros_like(pred_ref))
 
