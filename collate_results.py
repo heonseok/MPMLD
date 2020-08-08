@@ -9,7 +9,7 @@ base_path = os.path.join('/mnt/disk1/heonseok/MPMLD')
 if not os.path.exists('Figs'):
     os.mkdir('Figs')
 
-REPEAT = 1
+REPEAT = 5 
 
 
 # -------------------------------------------------------------------------------------------------------------------- #
@@ -158,9 +158,22 @@ def main():
     #     'VAE1e-06_z64_setsize5000_lr0.001_ref0.1_rw1.0_cc0.0_cm1.0_mc0.0_mm1.0',
     # ]
 
-    description = '0805ref1.0style'
+    # description = '0805ref1.0style'
+    # model_list = [
+    #     'VAE1e-06_z64_setsize5000_lr0.001_ref1.0_rw1.0_cc1.0_cm0.0_mc0.0_mm1.0',
+    # ]
+
+    description = '0805class_conditional_mem_disc'
     model_list = [
+        # 'VAE1e-06_z64_setsize5000_lr0.001_ref1.0_rw1.0_cc1.0_cm0.0_mc0.0_mm0.0',
+        # 'VAE1e-06_z64_setsize5000_lr0.001_ref1.0_rw1.0_cc0.0_cm1.0_mc0.0_mm0.0',
+        # 'VAE1e-06_z64_setsize5000_lr0.001_ref1.0_rw1.0_cc0.0_cm0.0_mc1.0_mm0.0',
+        # 'VAE1e-06_z64_setsize5000_lr0.001_ref1.0_rw1.0_cc0.0_cm0.0_mc0.0_mm1.0',
+
         'VAE1e-06_z64_setsize5000_lr0.001_ref1.0_rw1.0_cc1.0_cm0.0_mc0.0_mm1.0',
+        'VAE1e-06_z64_setsize5000_lr0.001_ref1.0_rw1.0_cc0.0_cm1.0_mc1.0_mm0.0',
+        'VAE1e-06_z64_setsize5000_lr0.001_ref1.0_rw1.0_cc1.0_cm0.0_mc1.0_mm0.0',
+        'VAE1e-06_z64_setsize5000_lr0.001_ref1.0_rw1.0_cc0.0_cm1.0_mc0.0_mm1.0',
     ]
 
 
@@ -180,8 +193,8 @@ def main():
         print(model)
         collate_reconstructions(dataset, description, model, recon_type_list)
         collate_disentanglement_result(dataset, description, model)
-        # collate_classification_result(dataset, description, model, recon_type_list)
-        # collate_attack_result(dataset, description, model, recon_type_list)
+        collate_classification_result(dataset, description, model, recon_type_list)
+        collate_attack_result(dataset, description, model, recon_type_list)
 
     print('Finish!')
 

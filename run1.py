@@ -89,21 +89,17 @@ weight_list = [
 
     # 0807
     # [1, 0, 1, 0, 0],
-    # [1, 0, 1, 0, 1],
-    # [1, 0, 1, 1, 0],
-    [1, 0, 2, 1, 0],
-    [1, 0, 1, 2, 0],
-    [1, 0, 2, 2, 0],
+    [1, 0, 1, 0, 1],
 ]
 
 beta_list = [
     # 0.0
-    # 0.000001,
+    0.000001,
     # 0.00001,
     # 0.0001,
     # 0.001,
     # 0.01,
-    0.1,
+    # 0.1,
     # 1.0,
 ]
 
@@ -137,7 +133,7 @@ setup_dict = {
     'early_stop': '1',
     'early_stop_observation_period': 20,
     'gpu_id': 3,
-    'print_training': '0',
+    'print_training': '1',
     'description': '0807ScaledMembership',
 }
 

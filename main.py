@@ -13,8 +13,9 @@ from data import load_dataset
 import torch
 from torch.utils.data import Subset, ConcatDataset
 
-from reconstruction import Reconstructor
+# from reconstruction import Reconstructor
 # from reconstruction_stylez import Reconstructor
+from reconstruction_class_conditional import Reconstructor
 from classification import Classifier
 from attack import Attacker
 
@@ -26,7 +27,6 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--base_path', type=str, default='/mnt/disk1/heonseok/MPMLD')
 parser.add_argument('--dataset', type=str, default='SVHN',
                     choices=['MNIST', 'Fashion-MNIST', 'SVHN', 'CIFAR-10', 'adult', 'location', ])
-parser.add_argument('--description', type=str, default='0804stylez')
 parser.add_argument('--setsize', type=int, default=5000)
 parser.add_argument('--train_batch_size', type=int, default=100)
 parser.add_argument('--valid_batch_size', type=int, default=100)
@@ -48,13 +48,13 @@ parser.add_argument('--disc_lr', type=float, default=0.001)
 
 parser.add_argument('--recon_weight', type=float, default='1')
 parser.add_argument('--class_cz_weight', type=float, default='0')
-parser.add_argument('--class_mz_weight', type=float, default='1')
+parser.add_argument('--class_mz_weight', type=float, default='0')
 parser.add_argument('--membership_cz_weight', type=float, default='1')
-parser.add_argument('--membership_mz_weight', type=float, default='0')
-parser.add_argument('--ref_ratio', type=float, default=0.1)
+parser.add_argument('--membership_mz_weight', type=float, default='1')
+parser.add_argument('--ref_ratio', type=float, default=1.0)
 
 # ---- Classification ---- #
-parser.add_argument('--classification_model', type=str, default='DenseNet121',
+parser.add_argument('--classification_model', type=str, default='ResNet18',
                     choices=['FCClassifier', 'ConvClassifier', 'VGG19', 'ResNet18', 'ResNet50', 'ResNet101',
                              'DenseNet121'])
 parser.add_argument('--class_lr', type=float, default=0.0001)
@@ -64,6 +64,7 @@ parser.add_argument('--attack_lr', type=float, default=0.01)
 
 # -------------------------------------------------------------------------------------------------------------------- #
 # -------- Control flags -------- #
+parser.add_argument('--description', type=str, default='0805conditional_membership_disc')
 # ---- Reconstruction ---- #
 parser.add_argument('--train_reconstructor', type=str2bool, default='1')
 parser.add_argument('--reconstruct_datasets', type=str2bool, default='1')
@@ -169,14 +170,32 @@ reconstruction_type_list = [
     # 'cz_mb_sb',  # Content: zero, Membership: base, Style: base
     # 'cz_mb_sz',  # Content: zero, Membership: base, Style: zero
 
-    'cb_mb',  # Content: base, Membership: base
+    'cb_mr',
+    # 'cs1.2_mb0.8',
+    # 'cb_mb_n1',
+    # 'cb_mb_n0.5',
+    # 'cb_mb_n0.1',
+    # 'cb_ms0.8',  # Content: base, Membership: scaled
+    # 'cb_ms0.8_n0.2',  # Content: base, Membership: scaled
+    # 'cb_ms0.5',  # Content: base, Membership: scaled
+    # 'cb_ms0.25',  # Content: base, Membership: scaled
+    # 'cb_ms0.1',  # Content: base, Membership: scaled
     'cb_mz',  # Content: base, Membership: zero
-    'cz_mb',  # Content: zero, Membership: base
-
+    'cb_mb',  # Content: base, Membership: base
+    # 'cz_mb',  # Content: zero, Membership: base
+    # 'cb_ms0.5_n0.5',
+    # 'cb_ms0.5_n0.1',
     # 'cb_ms',  # Content: base, Membership: sampled
     # 'cs_mb',  # Content: sampled, Membership: zero
     # 'cs_ms',  # Content: sampled, Membership: sampled
     # 'cb_mn',  # Content: base, Membership: normal
+
+    # 'cb_mConstant',
+    # 'cb_mConstant0.8',
+    # 'cb_mInter0.8',
+    # 'cb_mr1.2',
+    # 'cb_mr2.0',
+    # 'cb_mAvg',
 ]
 
 attack_type_list = [
@@ -208,19 +227,28 @@ if args.plot_recons:
     if not os.path.exists(img_dir):
         os.makedirs(img_dir)
 
-    img_list = [
-        'raw.png',
-        'cb_mb.png',
-        'cb_mz.png',
-        'cz_mb.png',
-
-        # 'cb_mb_sb.png',
-        # 'cb_mb_sz.png',
-        # 'cb_mz_sb.png',
-        # 'cb_mz_sz.png',
-        # 'cz_mb_sb.png',
-        # 'cz_mb_sz.png',
-    ]
+    img_list = ['raw.png']
+    for recon_type in reconstruction_type_list:
+        img_list.append(recon_type + '.png')
+    # img_list = [
+    #     'raw.png',
+    #     'cb_mb_n1.png',
+    #
+    #     # 'cb_ms0.8.png',
+    #     # 'cb_ms0.5.png',
+    #     # 'cb_ms0.25.png',
+    #     # 'cb_ms0.1.png',
+    #     # 'cb_mz.png',
+    #     # 'cb_mb.png',
+    #     # 'cz_mb.png',
+    #
+    #     # 'cb_mb_sb.png',
+    #     # 'cb_mb_sz.png',
+    #     # 'cb_mz_sb.png',
+    #     # 'cb_mz_sz.png',
+    #     # 'cz_mb_sb.png',
+    #     # 'cz_mb_sz.png',
+    # ]
 
     plt.figure(1, figsize=(10, 4))
     for img_idx, recon_type in enumerate(img_list):
@@ -317,4 +345,3 @@ if args.use_reconstructed_dataset:
 #             print('Inout {:<3} dataset: {}'.format(dataset_type, len(dataset)))
 #         print()
 #         classifier.extract_features(inout_datasets)
-
