@@ -14,8 +14,8 @@ setsize_list = [
     # 500,
     # 1000,
     # 2000,
-    # 4000,
-    5000,
+    4000,
+    # 5000,
     # 5000,
     # 10000,
     # 20000,
@@ -88,12 +88,17 @@ weight_list = [
     # [1, 0, 2, 0, 0],
 
     # 0807
+    [1, 0, 0, 0, 0],
     # [1, 0, 1, 0, 0],
+    # [1, 0, 0, 1, 0],
     # [1, 0, 1, 0, 1],
     # [1, 0, 1, 1, 0],
-    [1, 0, 2, 1, 0],
-    [1, 0, 1, 2, 0],
-    [1, 0, 2, 2, 0],
+    # [1, 0, 2, 1, 0],
+    # [1, 0, 1, 2, 0],
+    # [1, 0, 2, 2, 0],
+    # [1, 0, 0.5, 1, 0],
+    # [1, 0, 1, 0.5, 0],
+    # [1, 0, 0.5, 0.5, 0],
 ]
 
 beta_list = [
@@ -109,10 +114,10 @@ beta_list = [
 
 repeat_idx_list = [
     0,
-    # 1,
-    # 2,
-    # 3,
-    # 4,
+    1,
+    2,
+    3,
+    4,
 ]
 
 setup_dict = {
@@ -128,6 +133,7 @@ setup_dict = {
     'test_classifier': '1',
     'extract_classifier_features': '1',
     'classification_model': 'ResNet18',
+    # 'classification_model': 'FCClassifier',
 
     # Attack
     'train_attacker': '1',
@@ -138,7 +144,7 @@ setup_dict = {
     'early_stop_observation_period': 20,
     'gpu_id': 3,
     'print_training': '0',
-    'description': '0807ScaledMembership',
+    'description': '0811',
 }
 
 for dataset in dataset_list:

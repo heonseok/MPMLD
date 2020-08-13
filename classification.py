@@ -42,11 +42,8 @@ class Classifier(object):
             net = DenseNet(Bottleneck, [6, 12, 24, 16], growth_rate=32, num_classes=100)
         elif args.dataset == 'adult':
             net = module.FCClassifier(108, output_dim=2)
-        # elif args.dataset == 'location':
-        #     if args.classifier_type == 'A':
-        #         net = module.FCClassifier(446, output_dim=30)
-        #     elif args.classifier_type == 'B':
-        #         net = module.FCNClassifierB(446, output_dim=30)
+        elif args.dataset == 'location':
+            net = module.FCClassifier(446, output_dim=30)
 
         elif args.dataset in ['MNIST', 'Fashion-MNIST']:
             net = module.ConvClassifier()
