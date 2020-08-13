@@ -170,19 +170,19 @@ reconstruction_type_list = [
     # 'cz_mb_sb',  # Content: zero, Membership: base, Style: base
     # 'cz_mb_sz',  # Content: zero, Membership: base, Style: zero
 
-    'cb_mr',
+    # 'cb_mr',
     # 'cs1.2_mb0.8',
     # 'cb_mb_n1',
     # 'cb_mb_n0.5',
     # 'cb_mb_n0.1',
     # 'cb_ms0.8',  # Content: base, Membership: scaled
     # 'cb_ms0.8_n0.2',  # Content: base, Membership: scaled
-    'cb_ms0.5',  # Content: base, Membership: scaled
+    # 'cb_ms0.5',  # Content: base, Membership: scaled
     # 'cb_ms0.25',  # Content: base, Membership: scaled
     # 'cb_ms0.1',  # Content: base, Membership: scaled
-    'cb_mz',  # Content: base, Membership: zero
+    # 'cb_mz',  # Content: base, Membership: zero
     'cb_mb',  # Content: base, Membership: base
-    'cz_mb',  # Content: zero, Membership: base
+    # 'cz_mb',  # Content: zero, Membership: base
     # 'cb_ms0.5_n0.5',
     # 'cb_ms0.5_n0.1',
     # 'cb_ms',  # Content: base, Membership: sampled
