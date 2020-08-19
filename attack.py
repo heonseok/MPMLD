@@ -14,18 +14,13 @@ from sklearn import metrics
 
 class Attacker(object):
     def __init__(self, args):
-        self.train_batch_size = args.train_batch_size
-        self.valid_batch_size = args.valid_batch_size
+        self.train_batch_size = args.attack_train_batch_size
         self.test_batch_size = args.test_batch_size
         self.epochs = args.epochs
         self.early_stop = args.early_stop
         self.early_stop_observation_period = args.early_stop_observation_period
 
         self.attack_path = args.attack_path
-        # print(self.attack_path)
-        # if not os.path.exists(self.attack_path):
-        #     os.makedirs(self.attack_path)
-
         self.attack_type = args.attack_type
 
         # Model
@@ -37,7 +32,8 @@ class Attacker(object):
                 net = MIAttacker(20)
             elif args.dataset == 'location':
                 net = MIAttacker(60)
-        # elif self.attack_type ==
+        elif self.attack_type == 'white':
+            pass
 
         self.start_epoch = 0
         self.best_valid_acc = 0
@@ -76,12 +72,12 @@ class Attacker(object):
         self.valid_auroc = checkpoint['valid_auroc']
         self.start_epoch = checkpoint['epoch']
 
-    def train_epoch(self, trainloader, epoch):
+    def train_epoch(self, train_loader, epoch):
         self.net.train()
         train_loss = 0
         predicted = []
         labels = []
-        for batch_idx, (inputs, targets) in enumerate(trainloader):
+        for batch_idx, (inputs, targets) in enumerate(train_loader):
             inputs, targets = inputs.to(self.device), targets.to(self.device)
             self.optimizer.zero_grad()
             outputs = self.net(inputs)
@@ -155,31 +151,32 @@ class Attacker(object):
         elif type == 'test':
             return acc, auroc
 
-    def train(self, trainset, validset=None):
+    def train(self, train_set, valid_set=None):
         print('==> Start training {}'.format(self.attack_path))
         self.train_flag = True
-        trainloader = torch.utils.data.DataLoader(trainset, batch_size=self.train_batch_size, shuffle=True,
-                                                  num_workers=2)
+        train_loader = torch.utils.data.DataLoader(train_set, batch_size=self.train_batch_size, shuffle=True,
+                                                   num_workers=2)
         if self.early_stop:
-            validloader = torch.utils.data.DataLoader(validset, batch_size=self.valid_batch_size, shuffle=True,
-                                                      num_workers=2)
+            valid_loader = torch.utils.data.DataLoader(valid_set, batch_size=self.test_batch_size, shuffle=True,
+                                                       num_workers=2)
         for epoch in range(self.start_epoch, self.start_epoch + self.epochs):
             if self.train_flag:
-                self.train_epoch(trainloader, epoch)
+                self.train_epoch(train_loader, epoch)
                 if self.early_stop:
-                    self.inference(validloader, epoch, type='valid')
+                    self.inference(valid_loader, epoch, type='valid')
             else:
                 break
 
-    def test(self, testset):
+    def test(self, test_set):
         # print('==> Test {}'.format(self.attack_path))
         try:
             self.load()
         except FileNotFoundError:
             print('There is no pre-trained model; First, train the classifier.')
             sys.exit(1)
-        testloader = torch.utils.data.DataLoader(testset, batch_size=self.test_batch_size, shuffle=False, num_workers=2)
-        test_acc, test_auroc = self.inference(testloader, epoch=-1, type='test')
+        test_loader = torch.utils.data.DataLoader(test_set, batch_size=self.test_batch_size, shuffle=False,
+                                                  num_workers=2)
+        test_acc, test_auroc = self.inference(test_loader, epoch=-1, type='test')
         acc_dict = {
             'train': self.train_acc,
             'valid': self.best_valid_acc,

@@ -20,7 +20,7 @@ class Reconstructor(object):
             os.makedirs(self.reconstruction_path)
 
         self.beta = args.beta
-        self.train_batch_size = args.recon_train_batch_size
+        self.train_batch_size = args.train_batch_size
         self.test_batch_size = args.test_batch_size
         self.epochs = args.epochs
         self.early_stop = args.early_stop
@@ -188,6 +188,21 @@ class Reconstructor(object):
             if self.disentangle:
                 self.disentangle_z(inputs, targets)
 
+            # ---- Swap membership info ---- #
+            z_tr = self.inference_z(inputs)
+            cz_tr, mz_tr = self.split_class_membership(z_tr)
+
+            z_re = self.inference_z(inputs_ref)
+            cz_re, mz_re = self.split_class_membership(z_re)
+
+            z_ctr_mre = torch.cat([cz_tr, mz_re])
+            z_cre_mtr = torch.cat([cz_re, mz_tr])
+
+            recon_ctr_mre = self.nets['decoder'](z_ctr_mre)
+            recon_cre_mtr = self.nets['decoder'](z_cre_mtr)
+
+
+
         # todo : loop
         self.acc_dict['class_fz'] = corrects['class_fz'] / total
         self.acc_dict['class_cz'] = corrects['class_cz'] / total
@@ -279,8 +294,8 @@ class Reconstructor(object):
         membership_loss.backward()
         self.optimizer['membership_fz'].step()
 
-        pred = pred.cpu().detach().numpy().squeeze(axis=1)
-        pred_ref = pred_ref.cpu().detach().numpy().squeeze(axis=1)
+        pred = pred.cpu().detach().numpy().squeeze()
+        pred_ref = pred_ref.cpu().detach().numpy().squeeze()
         pred_concat = np.concatenate((pred, pred_ref))
         inout_concat = np.concatenate((np.ones_like(pred), np.zeros_like(pred_ref)))
 
@@ -309,8 +324,8 @@ class Reconstructor(object):
         membership_loss.backward()
         self.optimizer['membership_cz'].step()
 
-        pred = pred.cpu().detach().numpy().squeeze(axis=1)
-        pred_ref = pred_ref.cpu().detach().numpy().squeeze(axis=1)
+        pred = pred.cpu().detach().numpy().squeeze()
+        pred_ref = pred_ref.cpu().detach().numpy().squeeze()
         pred_concat = np.concatenate((pred, pred_ref))
         inout_concat = np.concatenate((np.ones_like(pred), np.zeros_like(pred_ref)))
 
@@ -339,8 +354,8 @@ class Reconstructor(object):
         membership_loss.backward()
         self.optimizer['membership_mz'].step()
 
-        pred = pred.cpu().detach().numpy().squeeze(axis=1)
-        pred_ref = pred_ref.cpu().detach().numpy().squeeze(axis=1)
+        pred = pred.cpu().detach().numpy().squeeze()
+        pred_ref = pred_ref.cpu().detach().numpy().squeeze()
         pred_concat = np.concatenate((pred, pred_ref))
         inout_concat = np.concatenate((np.ones_like(pred), np.zeros_like(pred_ref)))
 
@@ -429,7 +444,7 @@ class Reconstructor(object):
         print('==> Start training {}'.format(self.reconstruction_path))
         self.train_flag = True
         if self.early_stop:
-            valid_loader = DataLoader(valid_set, batch_size=self.test_batch_size, shuffle=True, num_workers=2)
+            valid_loader = DataLoader(valid_set, batch_size=self.train_batch_size, shuffle=True, num_workers=2)
         for epoch in range(self.start_epoch, self.start_epoch + self.epochs):
             permutated_idx = np.random.permutation(ref_set.__len__())
             ref_set = Subset(ref_set, permutated_idx)
@@ -477,10 +492,6 @@ class Reconstructor(object):
                         if reconstruction_type == 'cb_mb':
                             z[:, self.class_idx] = mu_class
                             z[:, self.membership_idx] = mu_membership
-                        elif reconstruction_type == 'cr_mr':
-                            z[:, self.class_idx] = self.reparameterize(mu_class, logvar_class)
-                            z[:, self.membership_idx] = self.reparameterize(mu_membership, logvar_membership)
-
                         elif reconstruction_type == 'cb_mz':
                             z[:, self.class_idx] = mu_class
                             z[:, self.membership_idx] = torch.zeros_like(mu_membership).to(self.device)

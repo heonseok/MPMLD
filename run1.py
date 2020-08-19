@@ -88,27 +88,55 @@ weight_list = [
     # [1, 0, 2, 0, 0],
 
     # 0807
+    # [1, 0, 0, 0, 0],
     # [1, 0, 1, 0, 0],
-    [1, 0, 1, 0, 1],
+    # [1, 0, 0, 1, 0],
+    # [1, 0, 1, 0, 1],
+    # [1, 0, 1, 1, 0],
+    # [1, 0, 2, 1, 0],
+    # [1, 0, 1, 2, 0],
+    # [1, 0, 2, 2, 0],
+    # [1, 0, 0.5, 1, 0],
+    # [1, 0, 1, 0.5, 0],
+    # [1, 0, 0.5, 0.5, 0],
+
+    # 0813
+    # [0.01, 0, 0, 0, 0],
+    # [0.05, 0, 0, 0, 0],
+    # [0.1, 0, 0, 0, 0],
+    # [0.5, 0, 0, 0, 0],
+
+    # [0.01, 0, 1, 1, 0],
+    # [0.05, 0, 1, 1, 0],
+    # [0.1, 0, 1, 1, 0],
+    # [0.5, 0, 1, 1, 0],
+    # [0.5, 0, 1, 1, 0],
+    # [0.5, 0, 2, 2, 0],
+    # [0.5, 0, 5, 5, 0],
+    # [0.5, 0, 10, 10, 0],
+
+    # 0818
+    [1, 0, 0, 0, 0],
+    # [1, 0, 1, 1, 0],
 ]
 
 beta_list = [
     # 0.0
-    0.000001,
+    # 0.000001,
     # 0.00001,
     # 0.0001,
     # 0.001,
     # 0.01,
-    # 0.1,
+    0.1,
     # 1.0,
 ]
 
 repeat_idx_list = [
     0,
-    # 1,
-    # 2,
-    # 3,
-    # 4,
+    1,
+    2,
+    3,
+    4,
 ]
 
 setup_dict = {
@@ -118,12 +146,14 @@ setup_dict = {
     'plot_recons': '1',
 
     'use_reconstructed_dataset': '1',
+    'disentangle_with_reparameterization': '1',
 
     # Classification
     'train_classifier': '1',
     'test_classifier': '1',
     'extract_classifier_features': '1',
     'classification_model': 'ResNet18',
+    # 'classification_model': 'FCClassifier',
 
     # Attack
     'train_attacker': '1',
@@ -132,9 +162,10 @@ setup_dict = {
     'epochs': 500,
     'early_stop': '1',
     'early_stop_observation_period': 20,
-    'gpu_id': 3,
+    'gpu_id': 0,
     'print_training': '1',
-    'description': '0807ScaledMembership',
+    'description': '0818bs4',
+    'recon_train_batch_size': 4,
 }
 
 for dataset in dataset_list:

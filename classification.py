@@ -11,8 +11,7 @@ import module
 
 class Classifier(object):
     def __init__(self, args):
-        self.train_batch_size = args.train_batch_size
-        self.valid_batch_size = args.valid_batch_size
+        self.train_batch_size = args.class_train_batch_size
         self.test_batch_size = args.test_batch_size
         self.epochs = args.epochs
         self.early_stop = args.early_stop
@@ -168,19 +167,19 @@ class Classifier(object):
         elif type == 'test':
             return acc
 
-    def train(self, trainset, validset=None):
+    def train(self, train_set, valid_set=None):
         print('==> Start training {}'.format(self.classification_path))
         self.train_flag = True
-        trainloader = torch.utils.data.DataLoader(trainset, batch_size=self.train_batch_size, shuffle=True,
-                                                  num_workers=2)
+        train_loader = torch.utils.data.DataLoader(train_set, batch_size=self.train_batch_size, shuffle=True,
+                                                   num_workers=2)
         if self.early_stop:
-            validloader = torch.utils.data.DataLoader(validset, batch_size=self.valid_batch_size, shuffle=True,
-                                                      num_workers=2)
+            valid_loader = torch.utils.data.DataLoader(valid_set, batch_size=self.test_batch_size, shuffle=True,
+                                                       num_workers=2)
         for epoch in range(self.start_epoch, self.start_epoch + self.epochs):
             if self.train_flag:
-                self.train_epoch(trainloader, epoch)
+                self.train_epoch(train_loader, epoch)
                 if self.early_stop:
-                    self.inference(validloader, epoch, type='valid')
+                    self.inference(valid_loader, epoch, type='valid')
                 # self.scheduler.step()
             else:
                 break
@@ -192,8 +191,8 @@ class Classifier(object):
         except FileNotFoundError:
             print('There is no pre-trained model; First, train the classifier.')
             sys.exit(1)
-        testloader = torch.utils.data.DataLoader(testset, batch_size=self.test_batch_size, shuffle=False, num_workers=2)
-        test_acc = self.inference(testloader, epoch=-1, type='test')
+        test_loader = torch.utils.data.DataLoader(testset, batch_size=self.test_batch_size, shuffle=False, num_workers=2)
+        test_acc = self.inference(test_loader, epoch=-1, type='test')
         acc_dict = {
             'train': self.train_acc,
             'valid': self.best_valid_acc,
