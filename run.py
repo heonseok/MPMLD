@@ -116,8 +116,8 @@ weight_list = [
     # [0.5, 0, 10, 10, 0],
 
     # 0818
-    # [1, 0, 0, 0, 0],
-    [1, 0, 1, 1, 0],
+    [1, 0, 0, 0, 0],
+    # [1, 0, 1, 1, 0],
 ]
 
 beta_list = [
@@ -132,10 +132,9 @@ beta_list = [
 ]
 
 setup_dict = {
-    'repeat_start': 0,
-    'repeat_end': 5,
 
     # Reconstruction
+    'recon_train_batch_size': 4,
     'train_reconstructor': '0',
     'reconstruct_datasets': '0',
     'plot_recons': '0',
@@ -144,6 +143,7 @@ setup_dict = {
     'disentangle_with_reparameterization': '1',
 
     # Classification
+    'recon_train_batch_size': 8,
     'train_classifier': '1',
     'test_classifier': '1',
     'extract_classifier_features': '1',
@@ -154,13 +154,14 @@ setup_dict = {
     'train_attacker': '1',
     'test_attacker': '1',
 
+    'repeat_start': 0,
+    'repeat_end': 5,
     'epochs': 500,
     'early_stop': '1',
     'early_stop_observation_period': 20,
-    'gpu_id': 1,
+    'gpu_id': 0,
     'print_training': '1',
-    'description': '0818bs4',
-    'recon_train_batch_size': 4,
+    'description': 'baseline',
 }
 
 for dataset in dataset_list:

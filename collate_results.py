@@ -163,24 +163,29 @@ def main():
     #     'VAE1e-06_z64_setsize5000_lr0.001_ref1.0_rw1.0_cc1.0_cm0.0_mc0.0_mm1.0',
     # ]
 
-    description = '0805class_conditional_mem_disc'
-    model_list = [
-        # 'VAE1e-06_z64_setsize5000_lr0.001_ref1.0_rw1.0_cc1.0_cm0.0_mc0.0_mm0.0',
-        # 'VAE1e-06_z64_setsize5000_lr0.001_ref1.0_rw1.0_cc0.0_cm1.0_mc0.0_mm0.0',
-        # 'VAE1e-06_z64_setsize5000_lr0.001_ref1.0_rw1.0_cc0.0_cm0.0_mc1.0_mm0.0',
-        # 'VAE1e-06_z64_setsize5000_lr0.001_ref1.0_rw1.0_cc0.0_cm0.0_mc0.0_mm1.0',
+    # description = '0805class_conditional_mem_disc'
+    # model_list = [
+    #     # 'VAE1e-06_z64_setsize5000_lr0.001_ref1.0_rw1.0_cc1.0_cm0.0_mc0.0_mm0.0',
+    #     # 'VAE1e-06_z64_setsize5000_lr0.001_ref1.0_rw1.0_cc0.0_cm1.0_mc0.0_mm0.0',
+    #     # 'VAE1e-06_z64_setsize5000_lr0.001_ref1.0_rw1.0_cc0.0_cm0.0_mc1.0_mm0.0',
+    #     # 'VAE1e-06_z64_setsize5000_lr0.001_ref1.0_rw1.0_cc0.0_cm0.0_mc0.0_mm1.0',
+    #
+    #     'VAE1e-06_z64_setsize5000_lr0.001_ref1.0_rw1.0_cc1.0_cm0.0_mc0.0_mm1.0',
+    #     'VAE1e-06_z64_setsize5000_lr0.001_ref1.0_rw1.0_cc0.0_cm1.0_mc1.0_mm0.0',
+    #     'VAE1e-06_z64_setsize5000_lr0.001_ref1.0_rw1.0_cc1.0_cm0.0_mc1.0_mm0.0',
+    #     'VAE1e-06_z64_setsize5000_lr0.001_ref1.0_rw1.0_cc0.0_cm1.0_mc0.0_mm1.0',
+    # ]
 
-        'VAE1e-06_z64_setsize5000_lr0.001_ref1.0_rw1.0_cc1.0_cm0.0_mc0.0_mm1.0',
-        'VAE1e-06_z64_setsize5000_lr0.001_ref1.0_rw1.0_cc0.0_cm1.0_mc1.0_mm0.0',
-        'VAE1e-06_z64_setsize5000_lr0.001_ref1.0_rw1.0_cc1.0_cm0.0_mc1.0_mm0.0',
-        'VAE1e-06_z64_setsize5000_lr0.001_ref1.0_rw1.0_cc0.0_cm1.0_mc0.0_mm1.0',
+    description = '0818bs2'
+    model_list = [
+        'VAE0.1_z64_setsize5000_lr0.001_ref1.0_rw1.0_cc0.0_cm1.0_mc1.0_mm0.0',
     ]
 
 
     recon_type_list = [
         'cb_mb',
-        'cb_mz',
-        'cz_mb',
+        # 'cb_mz',
+        # 'cz_mb',
 
         # 'cb_mb_sb',
         # 'cb_mb_sz',

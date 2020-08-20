@@ -131,16 +131,10 @@ beta_list = [
     # 1.0,
 ]
 
-repeat_idx_list = [
-    0,
-    1,
-    2,
-    3,
-    4,
-]
-
 setup_dict = {
+
     # Reconstruction
+    'recon_train_batch_size': 2,
     'train_reconstructor': '1',
     'reconstruct_datasets': '1',
     'plot_recons': '1',
@@ -149,6 +143,7 @@ setup_dict = {
     'disentangle_with_reparameterization': '1',
 
     # Classification
+    'recon_train_batch_size': 8,
     'train_classifier': '1',
     'test_classifier': '1',
     'extract_classifier_features': '1',
@@ -159,13 +154,14 @@ setup_dict = {
     'train_attacker': '1',
     'test_attacker': '1',
 
+    'repeat_start': 0,
+    'repeat_end': 5,
     'epochs': 500,
     'early_stop': '1',
     'early_stop_observation_period': 20,
-    'gpu_id': 0,
+    'gpu_id': 1,
     'print_training': '1',
-    'description': '0818bs4',
-    'recon_train_batch_size': 4,
+    'description': 'baseline',
 }
 
 for dataset in dataset_list:
@@ -175,27 +171,25 @@ for dataset in dataset_list:
                 for recon_lr in recon_lr_list:
                     for ref_ratio in ref_ratio_list:
                         for weight in weight_list:
-                            for repeat_idx in repeat_idx_list:
-                                args_list = []
-                                target_setup_dict = setup_dict
-                                target_setup_dict['dataset'] = dataset
-                                target_setup_dict['z_dim'] = z_dim
-                                target_setup_dict['setsize'] = setsize
-                                target_setup_dict['repeat_idx'] = str(repeat_idx)
-                                target_setup_dict['recon_lr'] = str(recon_lr)
-                                target_setup_dict['ref_ratio'] = str(ref_ratio)
-                                target_setup_dict['beta'] = str(beta)
-                                target_setup_dict['recon_weight'] = str(weight[0])
-                                target_setup_dict['class_cz_weight'] = str(weight[1])
-                                target_setup_dict['class_mz_weight'] = str(weight[2])
-                                target_setup_dict['membership_cz_weight'] = str(weight[3])
-                                target_setup_dict['membership_mz_weight'] = str(weight[4])
+                            args_list = []
+                            target_setup_dict = setup_dict
+                            target_setup_dict['dataset'] = dataset
+                            target_setup_dict['z_dim'] = z_dim
+                            target_setup_dict['setsize'] = setsize
+                            target_setup_dict['recon_lr'] = str(recon_lr)
+                            target_setup_dict['ref_ratio'] = str(ref_ratio)
+                            target_setup_dict['beta'] = str(beta)
+                            target_setup_dict['recon_weight'] = str(weight[0])
+                            target_setup_dict['class_cz_weight'] = str(weight[1])
+                            target_setup_dict['class_mz_weight'] = str(weight[2])
+                            target_setup_dict['membership_cz_weight'] = str(weight[3])
+                            target_setup_dict['membership_mz_weight'] = str(weight[4])
 
-                                args_list.append('python main.py')
-                                for k, v in target_setup_dict.items():
-                                    args_list.append('--{} {}'.format(k, v))
+                            args_list.append('python main.py')
+                            for k, v in target_setup_dict.items():
+                                args_list.append('--{} {}'.format(k, v))
 
-                                model = ' '.join(args_list)
-                                print(model)
-                                print()
-                                os.system(model)
+                            model = ' '.join(args_list)
+                            print(model)
+                            print()
+                            os.system(model)
