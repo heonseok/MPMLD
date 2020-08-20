@@ -32,8 +32,12 @@ class Reconstructor(object):
 
         self.z_dim = args.z_dim
         self.disc_input_dim = int(self.z_dim / 2)
+
         self.class_idx = range(0, self.disc_input_dim)
         self.membership_idx = range(self.disc_input_dim, self.z_dim)
+
+        # self.class_idx = range(0, self.z_dim)
+        # self.membership_idx = []
 
         self.nets = dict()
 

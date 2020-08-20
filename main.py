@@ -78,13 +78,13 @@ parser.add_argument('--plot_recons', type=str2bool, default='1')
 # ---- Classification ---- #
 parser.add_argument('--use_reconstructed_dataset', type=str2bool, default='1')
 
-parser.add_argument('--train_classifier', type=str2bool, default='1')
-parser.add_argument('--test_classifier', type=str2bool, default='1')
-parser.add_argument('--extract_classifier_features', type=str2bool, default='1')
+parser.add_argument('--train_classifier', type=str2bool, default='0')
+parser.add_argument('--test_classifier', type=str2bool, default='0')
+parser.add_argument('--extract_classifier_features', type=str2bool, default='0')
 
 # ---- Attack ---- #
-parser.add_argument('--train_attacker', type=str2bool, default='1')
-parser.add_argument('--test_attacker', type=str2bool, default='1')
+parser.add_argument('--train_attacker', type=str2bool, default='0')
+parser.add_argument('--test_attacker', type=str2bool, default='0')
 
 # -------------------------------------------------------------------------------------------------------------------- #
 
@@ -108,7 +108,7 @@ for repeat_idx in range(args.repeat_start, args.repeat_end):
                                                                            ))
 
     args.recon_output_path = os.path.join(args.base_path, args.dataset, args.description, args.reconstruction_name)
-    args.raw_output_path = os.path.join(args.base_path, args.dataset, 'raw_setsize{}'.format(args.setsize))
+    args.raw_output_path = os.path.join(args.base_path, args.dataset, args.description, 'raw_setsize{}'.format(args.setsize))
 
     if not os.path.exists(args.recon_output_path):
         os.makedirs(args.recon_output_path)
