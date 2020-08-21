@@ -134,7 +134,7 @@ beta_list = [
 setup_dict = {
 
     # Reconstruction
-    'recon_train_batch_size': 4,
+    'recon_train_batch_size': 2,
     'train_reconstructor': '0',
     'reconstruct_datasets': '0',
     'plot_recons': '0',
@@ -143,7 +143,7 @@ setup_dict = {
     'disentangle_with_reparameterization': '1',
 
     # Classification
-    'recon_train_batch_size': 8,
+    'class_train_batch_size': 2,
     'train_classifier': '1',
     'test_classifier': '1',
     'extract_classifier_features': '1',
@@ -159,8 +159,8 @@ setup_dict = {
     'epochs': 500,
     'early_stop': '1',
     'early_stop_observation_period': 20,
-    'gpu_id': 0,
-    'print_training': '1',
+    'gpu_id': 3,
+    'print_training': '0',
     'description': 'baseline',
 }
 

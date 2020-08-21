@@ -143,7 +143,7 @@ setup_dict = {
     'disentangle_with_reparameterization': '1',
 
     # Classification
-    'recon_train_batch_size': 8,
+    'class_train_batch_size': 8,
     'train_classifier': '1',
     'test_classifier': '1',
     'extract_classifier_features': '1',
@@ -160,7 +160,7 @@ setup_dict = {
     'early_stop': '1',
     'early_stop_observation_period': 20,
     'gpu_id': 1,
-    'print_training': '1',
+    'print_training': '0',
     'description': 'baseline',
 }
 

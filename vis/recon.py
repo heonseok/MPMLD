@@ -15,22 +15,36 @@ REPEAT = 5
 # -------------------------------------------------------------------------------------------------------------------- #
 def main():
     dataset = 'SVHN'
-    description = 'baseline'
+    # description = 'baseline'
     # bs_list = [8]
     # class_model = 'ResNet18_lr0.0001_bs8'
 
     data_list = [
-        ('raw_setsize5000', 'ResNet18_lr0.0001_bs8', 'raw'),
-        ('VAE0.1_z64_setsize5000_lr0.001_bs8_ref1.0_rw1.0_cc0.0_cm0.0_mc0.0_mm0.0', 'ResNet18_lr0.0001_bs8/cb_mb', 'VAE'),
-        # ('VAE0.1_z64_setsize5000_lr0.001_bs8_ref1.0_rw1.0_cc0.0_cm0.0_mc0.0_mm0.0', 'ResNet18_lr0.0001_bs8/cr_mr', 'VAE(r)'),
-        ('VAE0.1_z64_setsize5000_lr0.001_bs8_ref1.0_rw1.0_cc1.0_cm0.0_mc0.0_mm0.0', 'ResNet18_lr0.0001_bs8/cb_mb', 'VAE(cc)'),
-        ('VAE0.1_z64_setsize5000_lr0.001_bs8_ref1.0_rw1.0_cc0.0_cm1.0_mc1.0_mm0.0', 'ResNet18_lr0.0001_bs8/cb_mb', 'VAE(cmmc)'),
+        ('baseline', 'raw_setsize5000', 'ResNet18_lr0.0001_bs8', 'raw'),
+        # ('VAE0.1_z64_setsize5000_lr0.001_bs2_ref1.0_rw1.0_cc0.0_cm0.0_mc0.0_mm0.0', 'ResNet18_lr0.0001_bs8/cb_mb', 'VAE(2)'),
+
+        ('baseline', 'VAE0.1_z64_setsize5000_lr0.001_bs2_ref1.0_rw1.0_cc0.0_cm0.0_mc0.0_mm0.0', 'ResNet18_lr0.0001_bs8/cb_mb', '22b'),
+        ('baseline', 'VAE0.1_z64_setsize5000_lr0.001_bs2_ref1.0_rw1.0_cc0.0_cm0.0_mc0.0_mm0.0', 'ResNet18_lr0.0001_bs8/cr_mr', '22r'),
+
+        ('baseline', 'VAE0.1_z64_setsize5000_lr0.001_bs2_ref1.0_rw1.0_cc0.0_cm0.0_mc0.0_mm0.0', 'ResNet18_lr0.0001_bs8/cb_mb', '28b'),
+        ('baseline', 'VAE0.1_z64_setsize5000_lr0.001_bs2_ref1.0_rw1.0_cc0.0_cm0.0_mc0.0_mm0.0', 'ResNet18_lr0.0001_bs8/cr_mr', '28r'),
+
+        ('baseline', 'VAE0.1_z64_setsize5000_lr0.001_bs4_ref1.0_rw1.0_cc0.0_cm0.0_mc0.0_mm0.0', 'ResNet18_lr0.0001_bs8/cb_mb', '48b'),
+        ('baseline', 'VAE0.1_z64_setsize5000_lr0.001_bs4_ref1.0_rw1.0_cc0.0_cm0.0_mc0.0_mm0.0', 'ResNet18_lr0.0001_bs8/cr_mr', '48r'),
+
+        ('baseline', 'VAE0.1_z64_setsize5000_lr0.001_bs8_ref1.0_rw1.0_cc0.0_cm0.0_mc0.0_mm0.0', 'ResNet18_lr0.0001_bs8/cb_mb', '88b'),
+        ('baseline', 'VAE0.1_z64_setsize5000_lr0.001_bs8_ref1.0_rw1.0_cc0.0_cm0.0_mc0.0_mm0.0', 'ResNet18_lr0.0001_bs8/cr_mr', '88r'),
+
+        ('0818bs2', 'VAE0.1_z64_setsize5000_lr0.001_ref1.0_rw1.0_cc0.0_cm1.0_mc1.0_mm0.0', 'ResNet18/cb_mb', 'cm22b')
+        # ('VAE0.1_z64_setsize5000_lr0.001_bs8_ref1.0_rw1.0_cc0.0_cm0.0_mc0.0_mm0.0', 'ResNet18_lr0.0001_bs8/cr_mr', 'VAE(8r)'),
+        # ('VAE0.1_z64_setsize5000_lr0.001_bs8_ref1.0_rw1.0_cc1.0_cm0.0_mc0.0_mm0.0', 'ResNet18_lr0.0001_bs8/cb_mb', 'VAE(cc)'),
+        # ('VAE0.1_z64_setsize5000_lr0.001_bs8_ref1.0_rw1.0_cc0.0_cm1.0_mc1.0_mm0.0', 'ResNet18_lr0.0001_bs8/cb_mb', 'VAE(cmmc)'),
     ]
 
     class_df = pd.DataFrame()
     attack_df = pd.DataFrame()
 
-    for data, class_model, data_name in data_list:
+    for description, data, class_model, data_name in data_list:
         class_model_path = os.path.join(base_path, dataset, description, data, 'classification', class_model)
         attack_model_path = os.path.join(base_path, dataset, description, data, 'attack', class_model, 'black')
 
