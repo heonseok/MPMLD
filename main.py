@@ -15,7 +15,8 @@ from torch.utils.data import Subset, ConcatDataset
 
 # from reconstruction import Reconstructor
 # from reconstruction_stylez import Reconstructor
-from reconstruction_class_conditional import Reconstructor
+# from reconstruction_class_conditional import Reconstructor
+from reconstruction_without_disentanglement import Reconstructor
 from classification import Classifier
 from attack import Attacker
 
@@ -45,8 +46,10 @@ parser.add_argument('--disc_lr', type=float, default=0.001)
 parser.add_argument('--recon_train_batch_size', type=int, default=8)
 
 parser.add_argument('--recon_weight', type=float, default='1')
+parser.add_argument('--class_fz_weight', type=float, default='0')
 parser.add_argument('--class_cz_weight', type=float, default='0')
 parser.add_argument('--class_mz_weight', type=float, default='0')
+parser.add_argument('--membership_fz_weight', type=float, default='0')
 parser.add_argument('--membership_cz_weight', type=float, default='0')
 parser.add_argument('--membership_mz_weight', type=float, default='0')
 parser.add_argument('--ref_ratio', type=float, default=1.0)
@@ -66,7 +69,8 @@ parser.add_argument('--attack_train_batch_size', type=int, default=100)
 
 # -------------------------------------------------------------------------------------------------------------------- #
 # -------- Control flags -------- #
-parser.add_argument('--description', type=str, default='baseline')
+parser.add_argument('--description', type=str, default='0823')
+# parser.add_argument('--description', type=str, default='baseline')
 parser.add_argument('--repeat_start', type=int, default=0)
 parser.add_argument('--repeat_end', type=int, default=5)
 
@@ -98,17 +102,23 @@ for repeat_idx in range(args.repeat_start, args.repeat_end):
         args.reconstruction_model += str(args.beta)
 
     args.reconstruction_name = os.path.join(
-        '{}_z{}_setsize{}_lr{}_bs{}_ref{}_rw{}_cc{}_cm{}_mc{}_mm{}'.format(args.reconstruction_model, args.z_dim,
-                                                                           args.setsize, args.recon_lr,
-                                                                           args.recon_train_batch_size, args.ref_ratio,
-                                                                           args.recon_weight,
-                                                                           args.class_cz_weight, args.class_mz_weight,
-                                                                           args.membership_cz_weight,
-                                                                           args.membership_mz_weight,
-                                                                           ))
+        '{}_z{}_setsize{}_lr{}_bs{}_ref{}_rw{}_cf{}_cc{}_cm{}_mf{}_mc{}_mm{}'.format(args.reconstruction_model,
+                                                                                     args.z_dim,
+                                                                                     args.setsize, args.recon_lr,
+                                                                                     args.recon_train_batch_size,
+                                                                                     args.ref_ratio,
+                                                                                     args.recon_weight,
+                                                                                     args.class_fz_weight,
+                                                                                     args.class_cz_weight,
+                                                                                     args.class_mz_weight,
+                                                                                     args.membership_fz_weight,
+                                                                                     args.membership_cz_weight,
+                                                                                     args.membership_mz_weight,
+                                                                                     ))
 
     args.recon_output_path = os.path.join(args.base_path, args.dataset, args.description, args.reconstruction_name)
-    args.raw_output_path = os.path.join(args.base_path, args.dataset, args.description, 'raw_setsize{}'.format(args.setsize))
+    args.raw_output_path = os.path.join(args.base_path, args.dataset, args.description,
+                                        'raw_setsize{}'.format(args.setsize))
 
     if not os.path.exists(args.recon_output_path):
         os.makedirs(args.recon_output_path)
@@ -173,7 +183,7 @@ for repeat_idx in range(args.repeat_start, args.repeat_end):
     # ---- Combination ---- #
     reconstruction_type_list = [
         'cb_mb',  # Content: base, Membership: base
-        'cr_mr',  # Content: reparameterization, Membership: reparameterization
+        # 'cr_mr',  # Content: reparameterization, Membership: reparameterization
 
         # 'cb_mz',  # Content: base, Membership: zero
         # 'cz_mb',  # Content: zero, Membership: base

@@ -116,8 +116,12 @@ weight_list = [
     # [0.5, 0, 10, 10, 0],
 
     # 0818
-    [1, 0, 0, 0, 0],
+    # [1, 2, 0, 0, 0],
+    # [1, 2, 0, 0, 0],
     # [1, 0, 1, 1, 0],
+
+    # 0823
+    [1, 0, 0, 0, 1, 0, 0],
 ]
 
 beta_list = [
@@ -135,25 +139,26 @@ setup_dict = {
 
     # Reconstruction
     'recon_train_batch_size': 2,
-    'train_reconstructor': '0',
-    'reconstruct_datasets': '0',
-    'plot_recons': '0',
+    'train_reconstructor': '1',
+    'reconstruct_datasets': '1',
+    'plot_recons': '1',
 
     'use_reconstructed_dataset': '1',
     'disentangle_with_reparameterization': '1',
 
     # Classification
     'class_train_batch_size': 2,
-    'train_classifier': '1',
-    'test_classifier': '1',
-    'extract_classifier_features': '1',
+    'train_classifier': '0',
+    'test_classifier': '0',
+    'extract_classifier_features': '0',
     'classification_model': 'ResNet18',
     # 'classification_model': 'FCClassifier',
 
     # Attack
-    'train_attacker': '1',
-    'test_attacker': '1',
+    'train_attacker': '0',
+    'test_attacker': '0',
 
+    # Common
     'repeat_start': 0,
     'repeat_end': 5,
     'epochs': 500,
@@ -162,6 +167,7 @@ setup_dict = {
     'gpu_id': 3,
     'print_training': '0',
     'description': 'baseline',
+    # 'description': '0821noDE',
 }
 
 for dataset in dataset_list:

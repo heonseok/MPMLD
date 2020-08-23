@@ -372,7 +372,7 @@ class Reconstructor(object):
 
         if self.weights['class_cz'] != 0:
             pred = self.discs['class_cz'](cz)
-            loss += self.weights['class_mz'] * self.class_loss(pred, targets)
+            loss += self.weights['class_cz'] * self.class_loss(pred, targets)
 
         if self.weights['class_mz'] != 0:
             pred = self.discs['class_mz'](mz)

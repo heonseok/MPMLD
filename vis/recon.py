@@ -23,19 +23,23 @@ def main():
         ('baseline', 'raw_setsize5000', 'ResNet18_lr0.0001_bs8', 'raw'),
         # ('VAE0.1_z64_setsize5000_lr0.001_bs2_ref1.0_rw1.0_cc0.0_cm0.0_mc0.0_mm0.0', 'ResNet18_lr0.0001_bs8/cb_mb', 'VAE(2)'),
 
-        ('baseline', 'VAE0.1_z64_setsize5000_lr0.001_bs2_ref1.0_rw1.0_cc0.0_cm0.0_mc0.0_mm0.0', 'ResNet18_lr0.0001_bs8/cb_mb', '22b'),
-        ('baseline', 'VAE0.1_z64_setsize5000_lr0.001_bs2_ref1.0_rw1.0_cc0.0_cm0.0_mc0.0_mm0.0', 'ResNet18_lr0.0001_bs8/cr_mr', '22r'),
+        # ('baseline', 'VAE0.1_z64_setsize5000_lr0.001_bs2_ref1.0_rw1.0_cc0.0_cm0.0_mc0.0_mm0.0', 'ResNet18_lr0.0001_bs8/cb_mb', '22b'),
+        # ('baseline', 'VAE0.1_z64_setsize5000_lr0.001_bs2_ref1.0_rw1.0_cc0.0_cm0.0_mc0.0_mm0.0', 'ResNet18_lr0.0001_bs8/cr_mr', '22r'),
 
-        ('baseline', 'VAE0.1_z64_setsize5000_lr0.001_bs2_ref1.0_rw1.0_cc0.0_cm0.0_mc0.0_mm0.0', 'ResNet18_lr0.0001_bs8/cb_mb', '28b'),
-        ('baseline', 'VAE0.1_z64_setsize5000_lr0.001_bs2_ref1.0_rw1.0_cc0.0_cm0.0_mc0.0_mm0.0', 'ResNet18_lr0.0001_bs8/cr_mr', '28r'),
+        # ('baseline', 'VAE0.1_z64_setsize5000_lr0.001_bs2_ref1.0_rw1.0_cc0.0_cm0.0_mc0.0_mm0.0', 'ResNet18_lr0.0001_bs8/cb_mb', '28b'),
+        # ('baseline', 'VAE0.1_z64_setsize5000_lr0.001_bs2_ref1.0_rw1.0_cc0.0_cm0.0_mc0.0_mm0.0', 'ResNet18_lr0.0001_bs8/cr_mr', '28r'),
 
-        ('baseline', 'VAE0.1_z64_setsize5000_lr0.001_bs4_ref1.0_rw1.0_cc0.0_cm0.0_mc0.0_mm0.0', 'ResNet18_lr0.0001_bs8/cb_mb', '48b'),
-        ('baseline', 'VAE0.1_z64_setsize5000_lr0.001_bs4_ref1.0_rw1.0_cc0.0_cm0.0_mc0.0_mm0.0', 'ResNet18_lr0.0001_bs8/cr_mr', '48r'),
+        # ('baseline', 'VAE0.1_z64_setsize5000_lr0.001_bs4_ref1.0_rw1.0_cc0.0_cm0.0_mc0.0_mm0.0', 'ResNet18_lr0.0001_bs8/cb_mb', '48b'),
+        # ('baseline', 'VAE0.1_z64_setsize5000_lr0.001_bs4_ref1.0_rw1.0_cc0.0_cm0.0_mc0.0_mm0.0', 'ResNet18_lr0.0001_bs8/cr_mr', '48r'),
 
-        ('baseline', 'VAE0.1_z64_setsize5000_lr0.001_bs8_ref1.0_rw1.0_cc0.0_cm0.0_mc0.0_mm0.0', 'ResNet18_lr0.0001_bs8/cb_mb', '88b'),
-        ('baseline', 'VAE0.1_z64_setsize5000_lr0.001_bs8_ref1.0_rw1.0_cc0.0_cm0.0_mc0.0_mm0.0', 'ResNet18_lr0.0001_bs8/cr_mr', '88r'),
+        # ('baseline', 'VAE0.1_z64_setsize5000_lr0.001_bs8_ref1.0_rw1.0_cc0.0_cm0.0_mc0.0_mm0.0', 'ResNet18_lr0.0001_bs8/cb_mb', '88b'),
+        # ('baseline', 'VAE0.1_z64_setsize5000_lr0.001_bs8_ref1.0_rw1.0_cc0.0_cm0.0_mc0.0_mm0.0', 'ResNet18_lr0.0001_bs8/cr_mr', '88r'),
 
-        ('0818bs2', 'VAE0.1_z64_setsize5000_lr0.001_ref1.0_rw1.0_cc0.0_cm1.0_mc1.0_mm0.0', 'ResNet18/cb_mb', 'cm22b')
+        ('0818bs2', 'VAE0.1_z64_setsize5000_lr0.001_ref1.0_rw1.0_cc0.0_cm1.0_mc1.0_mm0.0', 'ResNet18/cb_mb', '22b+AG'),
+        ('0821noDE', 'VAE0.1_z64_setsize5000_lr0.001_bs2_ref1.0_rw1.0_cc1.0_cm0.0_mc0.0_mm0.0', 'ResNet18_lr0.0001_bs2/cb_mb', '22b'),
+        # ('0821noDE', 'VAE0.1_z64_setsize5000_lr0.001_bs2_ref1.0_rw1.0_cc1.0_cm0.0_mc0.0_mm0.0', 'ResNet18_lr0.0001_bs4/cb_mb', '24b'),
+        # ('0821noDE', 'VAE0.1_z64_setsize5000_lr0.001_bs2_ref1.0_rw1.0_cc1.0_cm0.0_mc0.0_mm0.0', 'ResNet18_lr0.0001_bs8/cb_mb', '28b'),
+        # ('0818bs2', 'VAE0.1_z64_setsize5000_lr0.001_ref1.0_rw1.0_cc0.0_cm1.0_mc1.0_mm0.0', 'ResNet18/cr_mr', 'cm22r'),
         # ('VAE0.1_z64_setsize5000_lr0.001_bs8_ref1.0_rw1.0_cc0.0_cm0.0_mc0.0_mm0.0', 'ResNet18_lr0.0001_bs8/cr_mr', 'VAE(8r)'),
         # ('VAE0.1_z64_setsize5000_lr0.001_bs8_ref1.0_rw1.0_cc1.0_cm0.0_mc0.0_mm0.0', 'ResNet18_lr0.0001_bs8/cb_mb', 'VAE(cc)'),
         # ('VAE0.1_z64_setsize5000_lr0.001_bs8_ref1.0_rw1.0_cc0.0_cm1.0_mc1.0_mm0.0', 'ResNet18_lr0.0001_bs8/cb_mb', 'VAE(cmmc)'),
@@ -61,8 +65,9 @@ def main():
             attack_df = attack_df.append({'data': data_name, 'attack_type': 'black', 'acc': attack_acc_dict['test']},
                                          ignore_index=True)
 
-    sns.barplot(x='data', y='acc', hue='dataset', data=class_df)
-    plt.ylim(0.5, 1.01)
+    # sns.barplot(x='data', y='acc', hue='dataset', data=class_df)
+    sns.boxplot(x='data', y='acc', hue='dataset', data=class_df)
+    plt.ylim(0.7, 1.01)
     plt.tight_layout()
     img_dir = os.path.join('Figs', dataset, description, 'classification_collated')
     if not os.path.exists(img_dir):
@@ -73,8 +78,9 @@ def main():
     drive_path = os.path.join('Research/MPMLD/', img_dir)
     os.system('rclone copy -P {} remote:{}'.format(img_path, drive_path))
 
-    sns.barplot(x='data', y='acc', data=attack_df)
-    plt.ylim(0.5, 0.65)
+    # sns.barplot(x='data', y='acc', data=attack_df)
+    sns.boxplot(x='data', y='acc', data=attack_df)
+    plt.ylim(0.49, 0.65)
     plt.tight_layout()
     img_dir = os.path.join('Figs', dataset, description, 'attack_collated')
     if not os.path.exists(img_dir):

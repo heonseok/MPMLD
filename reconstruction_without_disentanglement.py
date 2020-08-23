@@ -20,22 +20,24 @@ class Reconstructor(object):
             os.makedirs(self.reconstruction_path)
 
         self.beta = args.beta
-        self.train_batch_size = args.train_batch_size
+        self.train_batch_size = args.recon_train_batch_size
         self.test_batch_size = args.test_batch_size
         self.epochs = args.epochs
         self.early_stop = args.early_stop
         self.early_stop_observation_period = args.early_stop_observation_period
         self.use_scheduler = False
         self.print_training = args.print_training
+        self.class_num = args.class_num
+        self.disentangle_with_reparameterization = args.disentangle_with_reparameterization
 
         self.z_dim = args.z_dim
-        # self.disc_input_dim = int(self.z_dim / 2)
-        self.disc_input_dim = 22
-        self.class_idx = range(0, 22)
-        self.membership_idx = range(22, 44)
-        self.style_idx = range(44, 64)
-        # self.class_idx = range(0, self.disc_input_dim)
-        # self.membership_idx = range(self.disc_input_dim, self.z_dim)
+        self.disc_input_dim = int(self.z_dim / 2)
+
+        self.class_idx = range(0, self.disc_input_dim)
+        self.membership_idx = range(self.disc_input_dim, self.z_dim)
+
+        # self.class_idx = range(0, self.z_dim)
+        # self.membership_idx = []
 
         self.nets = dict()
 
@@ -57,9 +59,9 @@ class Reconstructor(object):
             'class_cz': module.ClassDiscriminator(self.disc_input_dim, args.class_num),
             'class_mz': module.ClassDiscriminator(self.disc_input_dim, args.class_num),
 
-            'membership_fz': module.MembershipDiscriminator(self.z_dim, 1),
-            'membership_cz': module.MembershipDiscriminator(self.disc_input_dim, 1),
-            'membership_mz': module.MembershipDiscriminator(self.disc_input_dim, 1),
+            'membership_fz': module.MembershipDiscriminator(self.z_dim + args.class_num, 1),
+            'membership_cz': module.MembershipDiscriminator(self.disc_input_dim + args.class_num, 1),
+            'membership_mz': module.MembershipDiscriminator(self.disc_input_dim + args.class_num, 1),
         }
 
         self.recon_loss = self.get_loss_function()
@@ -78,8 +80,10 @@ class Reconstructor(object):
 
         self.weights = {
             'recon': args.recon_weight,
+            'class_fz': args.class_fz_weight,
             'class_cz': args.class_cz_weight,
             'class_mz': args.class_mz_weight,
+            'membership_fz': args.membership_fz_weight,
             'membership_cz': args.membership_cz_weight,
             'membership_mz': args.membership_mz_weight,
         }
@@ -94,8 +98,9 @@ class Reconstructor(object):
         for disc_type in self.discs:
             self.discs[disc_type] = self.discs[disc_type].to(self.device)
 
-        self.disentangle = (self.weights['class_cz'] + self.weights['class_mz']
-                            + self.weights['membership_cz'] + self.weights['membership_mz'] > 0)
+        self.disentangle = (
+                self.weights['class_fz'] + self.weights['class_cz'] + self.weights['class_mz'] +
+                self.weights['membership_fz'] + self.weights['membership_cz'] + self.weights['membership_mz'] > 0)
 
         self.start_epoch = 0
         self.best_valid_loss = float("inf")
@@ -191,26 +196,26 @@ class Reconstructor(object):
                 self.disentangle_z(inputs, targets)
 
         # todo : loop
-        self.acc_dict['class_fz'] = corrects['class_fz'] / total
-        self.acc_dict['class_cz'] = corrects['class_cz'] / total
-        self.acc_dict['class_mz'] = corrects['class_mz'] / total
-
-        self.acc_dict['membership_fz'] = corrects['membership_fz'] / (2 * total)
-        self.acc_dict['membership_cz'] = corrects['membership_cz'] / (2 * total)
-        self.acc_dict['membership_mz'] = corrects['membership_mz'] / (2 * total)
-
-        if self.print_training:
-            print(
-                '\nEpoch: {:>3}, Acc) Class (fz, cz, mz) : {:.4f}, {:.4f}, {:.4f}, Membership (fz, cz, mz) : {:.4f}, {:.4f}, {:.4f}'.format(
-                    epoch, self.acc_dict['class_fz'], self.acc_dict['class_cz'], self.acc_dict['class_mz'],
-                    self.acc_dict['membership_fz'], self.acc_dict['membership_cz'], self.acc_dict['membership_mz'], ))
-
-            for loss_type in losses:
-                losses[loss_type] = losses[loss_type] / (batch_idx + 1)
-            print(
-                'Losses) MSE: {:.2f}, KLD: {:.2f}, Class (fz, cz, mz): {:.2f}, {:.2f}, {:.2f}, Membership (fz, cz, mz): {:.2f}, {:.2f}, {:.2f},'.format(
-                    losses['MSE'], losses['KLD'], losses['class_fz'], losses['class_cz'], losses['class_mz'],
-                    losses['membership_fz'], losses['membership_cz'], losses['membership_mz'], ))
+        # self.acc_dict['class_fz'] = corrects['class_fz'] / total
+        # self.acc_dict['class_cz'] = corrects['class_cz'] / total
+        # self.acc_dict['class_mz'] = corrects['class_mz'] / total
+        #
+        # self.acc_dict['membership_fz'] = corrects['membership_fz'] / (2 * total)
+        # self.acc_dict['membership_cz'] = corrects['membership_cz'] / (2 * total)
+        # self.acc_dict['membership_mz'] = corrects['membership_mz'] / (2 * total)
+        #
+        # if self.print_training:
+        #     print(
+        #         '\nEpoch: {:>3}, Acc) Class (fz, cz, mz) : {:.4f}, {:.4f}, {:.4f}, Membership (fz, cz, mz) : {:.4f}, {:.4f}, {:.4f}'.format(
+        #             epoch, self.acc_dict['class_fz'], self.acc_dict['class_cz'], self.acc_dict['class_mz'],
+        #             self.acc_dict['membership_fz'], self.acc_dict['membership_cz'], self.acc_dict['membership_mz'], ))
+        #
+        #     for loss_type in losses:
+        #         losses[loss_type] = losses[loss_type] / (batch_idx + 1)
+        #     print(
+        #         'Losses) MSE: {:.2f}, KLD: {:.2f}, Class (fz, cz, mz): {:.2f}, {:.2f}, {:.2f}, Membership (fz, cz, mz): {:.2f}, {:.2f}, {:.2f},'.format(
+        #             losses['MSE'], losses['KLD'], losses['class_fz'], losses['class_cz'], losses['class_mz'],
+        #             losses['membership_fz'], losses['membership_cz'], losses['membership_mz'], ))
 
     def train_reconstructor(self, inputs):
         self.optimizer['encoder'].zero_grad()
@@ -239,7 +244,7 @@ class Reconstructor(object):
     def train_disc_class_cz(self, inputs, targets):
         self.optimizer['class_cz'].zero_grad()
         z = self.inference_z(inputs)
-        class_z, _, _ = self.split_class_membership_style(z)
+        class_z, _ = self.split_class_membership(z)
         pred = self.discs['class_cz'](class_z)
         class_loss = self.class_loss(pred, targets)
         class_loss.backward()
@@ -251,7 +256,7 @@ class Reconstructor(object):
     def train_disc_class_mz(self, inputs, targets):
         self.optimizer['class_mz'].zero_grad()
         z = self.inference_z(inputs)
-        _, membership_z, _ = self.split_class_membership_style(z)
+        _, membership_z = self.split_class_membership(z)
         pred = self.discs['class_mz'](membership_z)
         class_loss_membership = self.class_loss(pred, targets)
         class_loss_membership.backward()
@@ -262,11 +267,18 @@ class Reconstructor(object):
 
     def train_disc_membership_fz(self, inputs, targets, inputs_ref, targets_ref):
         self.optimizer['membership_fz'].zero_grad()
+
         z = self.inference_z(inputs)
+        targets_onehot = torch.zeros((len(targets), self.class_num)).to(self.device)
+        targets_onehot = targets_onehot.scatter_(1, targets.reshape((-1, 1)), 1)
+        z = torch.cat((z, targets_onehot), dim=1)
         pred = self.discs['membership_fz'](z)
         in_loss = self.membership_loss(pred, torch.ones_like(pred))
 
         z_ref = self.inference_z(inputs_ref)
+        targets_ref_onehot = torch.zeros((len(targets_ref), self.class_num)).to(self.device)
+        targets_ref_onehot = targets_ref_onehot.scatter_(1, targets_ref.reshape((-1, 1)), 1)
+        z_ref = torch.cat((z_ref, targets_ref_onehot), dim=1)
         pred_ref = self.discs['membership_fz'](z_ref)
         out_loss = self.membership_loss(pred_ref, torch.zeros_like(pred_ref))
 
@@ -274,8 +286,8 @@ class Reconstructor(object):
         membership_loss.backward()
         self.optimizer['membership_fz'].step()
 
-        pred = pred.cpu().detach().numpy().squeeze()
-        pred_ref = pred_ref.cpu().detach().numpy().squeeze()
+        pred = pred.cpu().detach().numpy().squeeze(axis=1)
+        pred_ref = pred_ref.cpu().detach().numpy().squeeze(axis=1)
         pred_concat = np.concatenate((pred, pred_ref))
         inout_concat = np.concatenate((np.ones_like(pred), np.zeros_like(pred_ref)))
 
@@ -283,13 +295,20 @@ class Reconstructor(object):
 
     def train_disc_membership_cz(self, inputs, targets, inputs_ref, targets_ref):
         self.optimizer['membership_cz'].zero_grad()
+
         z = self.inference_z(inputs)
-        class_z, _, _ = self.split_class_membership_style(z)
+        class_z, _ = self.split_class_membership(z)
+        targets_onehot = torch.zeros((len(targets), self.class_num)).to(self.device)
+        targets_onehot = targets_onehot.scatter_(1, targets.reshape((-1, 1)), 1)
+        class_z = torch.cat((class_z, targets_onehot), dim=1)
         pred = self.discs['membership_cz'](class_z)
         in_loss = self.membership_loss(pred, torch.ones_like(pred))
 
         z_ref = self.inference_z(inputs_ref)
-        class_z_ref, _, _ = self.split_class_membership_style(z_ref)
+        class_z_ref, _ = self.split_class_membership(z_ref)
+        targets_ref_onehot = torch.zeros((len(targets_ref), self.class_num)).to(self.device)
+        targets_ref_onehot = targets_ref_onehot.scatter_(1, targets_ref.reshape((-1, 1)), 1)
+        class_z_ref = torch.cat((class_z_ref, targets_ref_onehot), dim=1)
         pred_ref = self.discs['membership_cz'](class_z_ref)
         out_loss = self.membership_loss(pred_ref, torch.zeros_like(pred_ref))
 
@@ -297,8 +316,8 @@ class Reconstructor(object):
         membership_loss.backward()
         self.optimizer['membership_cz'].step()
 
-        pred = pred.cpu().detach().numpy().squeeze()
-        pred_ref = pred_ref.cpu().detach().numpy().squeeze()
+        pred = pred.cpu().detach().numpy().squeeze(axis=1)
+        pred_ref = pred_ref.cpu().detach().numpy().squeeze(axis=1)
         pred_concat = np.concatenate((pred, pred_ref))
         inout_concat = np.concatenate((np.ones_like(pred), np.zeros_like(pred_ref)))
 
@@ -306,13 +325,20 @@ class Reconstructor(object):
 
     def train_disc_membership_mz(self, inputs, targets, inputs_ref, targets_ref):
         self.optimizer['membership_mz'].zero_grad()
+
         z = self.inference_z(inputs)
-        _, membership_z, _ = self.split_class_membership_style(z)
+        _, membership_z = self.split_class_membership(z)
+        targets_onehot = torch.zeros((len(targets), self.class_num)).to(self.device)
+        targets_onehot = targets_onehot.scatter_(1, targets.reshape((-1, 1)), 1)
+        membership_z = torch.cat((membership_z, targets_onehot), dim=1)
         pred = self.discs['membership_mz'](membership_z)
         in_loss = self.membership_loss(pred, torch.ones_like(pred))
 
         z_ref = self.inference_z(inputs_ref)
-        _, membership_z_ref, _ = self.split_class_membership_style(z_ref)
+        _, membership_z_ref = self.split_class_membership(z_ref)
+        targets_ref_onehot = torch.zeros((len(targets_ref), self.class_num)).to(self.device)
+        targets_ref_onehot = targets_ref_onehot.scatter_(1, targets_ref.reshape((-1, 1)), 1)
+        membership_z_ref = torch.cat((membership_z_ref, targets_ref_onehot), dim=1)
         pred_ref = self.discs['membership_mz'](membership_z_ref)
         out_loss = self.membership_loss(pred_ref, torch.zeros_like(pred_ref))
 
@@ -320,8 +346,8 @@ class Reconstructor(object):
         membership_loss.backward()
         self.optimizer['membership_mz'].step()
 
-        pred = pred.cpu().detach().numpy().squeeze()
-        pred_ref = pred_ref.cpu().detach().numpy().squeeze()
+        pred = pred.cpu().detach().numpy().squeeze(axis=1)
+        pred_ref = pred_ref.cpu().detach().numpy().squeeze(axis=1)
         pred_concat = np.concatenate((pred, pred_ref))
         inout_concat = np.concatenate((np.ones_like(pred), np.zeros_like(pred_ref)))
 
@@ -332,7 +358,13 @@ class Reconstructor(object):
         loss = 0
 
         z = self.inference_z(inputs)
-        cz, mz, sz = self.split_class_membership_style(z)
+        cz, mz = self.split_class_membership(z)
+        targets_onehot = torch.zeros((len(targets), self.class_num)).to(self.device)
+        targets_onehot = targets_onehot.scatter_(1, targets.reshape((-1, 1)), 1)
+
+        if self.weights['class_fz'] != 0:
+            pred = self.discs['class_fz'](z)
+            loss += self.weights['class_fz'] * self.class_loss(pred, targets)
 
         if self.weights['class_cz'] != 0:
             pred = self.discs['class_cz'](cz)
@@ -342,12 +374,16 @@ class Reconstructor(object):
             pred = self.discs['class_mz'](mz)
             loss += -self.weights['class_mz'] * self.class_loss(pred, targets)
 
+        if self.weights['membership_fz'] != 0:
+            pred = self.discs['membership_fz'](torch.cat((z, targets_onehot), dim=1))
+            loss += - self.weights['membership_fz'] * self.membership_loss(pred, torch.ones_like(pred))
+
         if self.weights['membership_cz'] != 0:
-            pred = self.discs['membership_cz'](cz)
+            pred = self.discs['membership_cz'](torch.cat((cz, targets_onehot), dim=1))
             loss += - self.weights['membership_cz'] * self.membership_loss(pred, torch.ones_like(pred))
 
         if self.weights['membership_mz'] != 0:
-            pred = self.discs['membership_mz'](mz)
+            pred = self.discs['membership_mz'](torch.cat((mz, targets_onehot), dim=1))
             loss += self.weights['membership_mz'] * self.membership_loss(pred, torch.ones_like(pred))
 
         loss.backward()
@@ -406,7 +442,7 @@ class Reconstructor(object):
         print('==> Start training {}'.format(self.reconstruction_path))
         self.train_flag = True
         if self.early_stop:
-            valid_loader = DataLoader(valid_set, batch_size=self.train_batch_size, shuffle=True, num_workers=2)
+            valid_loader = DataLoader(valid_set, batch_size=self.test_batch_size, shuffle=True, num_workers=2)
         for epoch in range(self.start_epoch, self.start_epoch + self.epochs):
             permutated_idx = np.random.permutation(ref_set.__len__())
             ref_set = Subset(ref_set, permutated_idx)
@@ -448,42 +484,132 @@ class Reconstructor(object):
 
                         z = torch.zeros_like(mu).to(self.device)
 
-                        mu_class, mu_membership, mu_style = self.split_class_membership_style(mu)
-                        # logvar_class, logvar_membership, logvar_style = self.split_class_membership_style(logvar)
+                        mu_class, mu_membership = self.split_class_membership(mu)
+                        logvar_class, logvar_membership = self.split_class_membership(logvar)
 
-                        if reconstruction_type == 'cb_mb_sb':
+                        if reconstruction_type == 'cb_mb':
                             z[:, self.class_idx] = mu_class
                             z[:, self.membership_idx] = mu_membership
-                            z[:, self.style_idx] = mu_style
+                        elif reconstruction_type == 'cr_mr':
+                            z[:, self.class_idx] = self.reparameterize(mu_class, logvar_class)
+                            z[:, self.membership_idx] = self.reparameterize(mu_membership, logvar_membership)
 
-                        elif reconstruction_type == 'cb_mb_sz':
-                            z[:, self.class_idx] = mu_class
-                            z[:, self.membership_idx] = mu_membership
-                            z[:, self.style_idx] = torch.zeros_like(mu_style).to(self.device)
-
-                        elif reconstruction_type == 'cb_mz_sb':
+                        elif reconstruction_type == 'cb_mz':
                             z[:, self.class_idx] = mu_class
                             z[:, self.membership_idx] = torch.zeros_like(mu_membership).to(self.device)
-                            z[:, self.style_idx] = mu_style
-
-                        elif reconstruction_type == 'cb_mz_sz':
+                        elif reconstruction_type == 'cz_mb':
+                            z[:, self.class_idx] = torch.zeros_like(mu_class).to(self.device)
+                            z[:, self.membership_idx] = mu_membership
+                        elif reconstruction_type == 'cs1.2_ms0.8':  # scaling
+                            z[:, self.class_idx] = mu_class * 1.2
+                            z[:, self.membership_idx] = mu_membership * 0.8
+                        elif reconstruction_type == 'cb_ms0.8':  # scaling
                             z[:, self.class_idx] = mu_class
-                            z[:, self.membership_idx] = torch.zeros_like(mu_membership).to(self.device)
-                            z[:, self.style_idx] = torch.zeros_like(mu_style).to(self.device)
+                            z[:, self.membership_idx] = mu_membership * 0.8
+                        elif reconstruction_type == 'cb_ms0.5':  # scaling
+                            z[:, self.class_idx] = mu_class
+                            z[:, self.membership_idx] = mu_membership * 0.5
+                        elif reconstruction_type == 'cb_ms0.25':  # scaling
+                            z[:, self.class_idx] = mu_class
+                            z[:, self.membership_idx] = mu_membership * 0.25
+                        elif reconstruction_type == 'cb_ms0.1':  # scaling
+                            z[:, self.class_idx] = mu_class
+                            z[:, self.membership_idx] = mu_membership * 0.1
+                        elif reconstruction_type == 'cb_mb_n1':  # + noise
+                            z[:, self.class_idx] = mu_class
+                            z[:, self.membership_idx] = mu_membership + torch.randn_like(mu_membership).to(self.device)
+                        elif reconstruction_type == 'cb_mb_n0.5':  # + noise
+                            z[:, self.class_idx] = mu_class
+                            z[:, self.membership_idx] = mu_membership + 0.5 * torch.randn_like(mu_membership).to(
+                                self.device)
+                        elif reconstruction_type == 'cb_mb_n0.1':  # + noise
+                            z[:, self.class_idx] = mu_class
+                            z[:, self.membership_idx] = mu_membership + 0.1 * torch.randn_like(mu_membership).to(
+                                self.device)
+                        elif reconstruction_type == 'cb_mr':
+                            z[:, self.class_idx] = mu_class
+                            z[:, self.membership_idx] = self.reparameterize(mu_membership, logvar_membership)
+                        elif reconstruction_type == 'cb_ms0.5_n0.5':  # scaling
+                            z[:, self.class_idx] = mu_class
+                            z[:, self.membership_idx] = mu_membership * 0.5 + 0.5 * torch.randn_like(mu_membership).to(
+                                self.device)
+                        elif reconstruction_type == 'cb_ms0.5_n0.1':  # scaling
+                            z[:, self.class_idx] = mu_class
+                            z[:, self.membership_idx] = mu_membership * 0.5 + 0.1 * torch.randn_like(mu_membership).to(
+                                self.device)
+                        elif reconstruction_type == 'cb_ms0.8_n0.2':  # scaling
+                            z[:, self.class_idx] = mu_class
+                            z[:, self.membership_idx] = mu_membership * 0.8 + 0.2 * torch.randn_like(mu_membership).to(
+                                self.device)
+                        elif reconstruction_type == 'cb_mConstant':
+                            z[:, self.class_idx] = mu_class
+                            for idx in range(z.shape[0]):
+                                z[idx, self.membership_idx] = mu_membership[0]
+                        elif reconstruction_type == 'cb_mConstant0.8':
+                            z[:, self.class_idx] = mu_class
+                            mu_membership_constant = 0.8 * mu_membership[0]
+                            for idx in range(z.shape[0]):
+                                z[idx, self.membership_idx] = mu_membership_constant
+                        elif reconstruction_type == 'cb_mInter0.8':
+                            z[:, self.class_idx] = mu_class
+                            mu_membership_constant = 0.2 * mu_membership[0]
+                            for idx in range(z.shape[0]):
+                                z[idx, self.membership_idx] = 0.8 * mu_membership[idx] + mu_membership_constant
 
-                        elif reconstruction_type == 'cz_mb_sb':
-                            z[:, self.class_idx] = torch.zeros_like(mu_class).to(self.device)
-                            z[:, self.membership_idx] = mu_membership
-                            z[:, self.style_idx] = mu_style
+                        elif reconstruction_type == 'cb_mAvg':
+                            z[:, self.class_idx] = mu_class
+                            mu_membership_constant = torch.mean(mu_membership, dim=0)
+                            for idx in range(z.shape[0]):
+                                z[idx, self.membership_idx] = mu_membership_constant
 
-                        elif reconstruction_type == 'cz_mb_sz':
-                            z[:, self.class_idx] = torch.zeros_like(mu_class).to(self.device)
-                            z[:, self.membership_idx] = mu_membership
-                            z[:, self.style_idx] = torch.zeros_like(mu_style).to(self.device)
+                        elif reconstruction_type == 'cb_mr1.2':
+                            z[:, self.class_idx] = mu_class
+                            std = torch.exp(0.5 * logvar_membership)
+                            eps = torch.randn_like(std)
+                            z[:, self.membership_idx] = mu_membership + 1.2 * std * eps
 
-                        # elif reconstruction_type == 'cb_mr':
+                        elif reconstruction_type == 'cb_mr2.0':
+                            z[:, self.class_idx] = mu_class
+                            std = torch.exp(0.5 * logvar_membership)
+                            eps = torch.randn_like(std)
+                            z[:, self.membership_idx] = mu_membership + 2. * std * eps
+
+                            # print(mu_membership.shape)
+                            # print(mu_membership[0].shape)
+                            # z[:, self.membership_idx] = mu_membership[0]
+                            # print(torch.repeat_interleave(mu_membership[0], mu_membership.shape[0], 1).shape)
+                            # sys.exit(1)
+
+                        # if reconstruction_type == 'cb_mb_sb':
                         #     z[:, self.class_idx] = mu_class
-                        #     z[:, self.membership_idx] = self.reparameterize(mu_membership, logvar_membership)
+                        #     z[:, self.membership_idx] = mu_membership
+                        #     z[:, self.style_idx] = mu_style
+                        #
+                        # elif reconstruction_type == 'cb_mb_sz':
+                        #     z[:, self.class_idx] = mu_class
+                        #     z[:, self.membership_idx] = mu_membership
+                        #     z[:, self.style_idx] = torch.zeros_like(mu_style).to(self.device)
+                        #
+                        # elif reconstruction_type == 'cb_mz_sb':
+                        #     z[:, self.class_idx] = mu_class
+                        #     z[:, self.membership_idx] = torch.zeros_like(mu_membership).to(self.device)
+                        #     z[:, self.style_idx] = mu_style
+                        #
+                        # elif reconstruction_type == 'cb_mz_sz':
+                        #     z[:, self.class_idx] = mu_class
+                        #     z[:, self.membership_idx] = torch.zeros_like(mu_membership).to(self.device)
+                        #     z[:, self.style_idx] = torch.zeros_like(mu_style).to(self.device)
+                        #
+                        # elif reconstruction_type == 'cz_mb_sb':
+                        #     z[:, self.class_idx] = torch.zeros_like(mu_class).to(self.device)
+                        #     z[:, self.membership_idx] = mu_membership
+                        #     z[:, self.style_idx] = mu_style
+                        #
+                        # elif reconstruction_type == 'cz_mb_sz':
+                        #     z[:, self.class_idx] = torch.zeros_like(mu_class).to(self.device)
+                        #     z[:, self.membership_idx] = mu_membership
+                        #     z[:, self.style_idx] = torch.zeros_like(mu_style).to(self.device)
+
                         #
                         # elif reconstruction_type == 'cr_mb':
                         #     z[:, self.class_idx] = self.reparameterize(mu_class, logvar_class)
@@ -531,7 +657,8 @@ class Reconstructor(object):
 
         np.save(os.path.join(self.reconstruction_path, 'mse.npy'), mse_list)
 
-    def reparameterize(self, mu, logvar):
+    @staticmethod
+    def reparameterize(mu, logvar):
         std = torch.exp(0.5 * logvar)
         eps = torch.randn_like(std)
 
@@ -539,14 +666,16 @@ class Reconstructor(object):
 
     def inference_z(self, z):
         mu, logvar = self.nets['encoder'](z)
-        return self.reparameterize(mu, logvar)
+        if self.disentangle_with_reparameterization:
+            return self.reparameterize(mu, logvar)
+        else:
+            return mu
 
-    def split_class_membership_style(self, z):
+    def split_class_membership(self, z):
         class_z = z[:, self.class_idx]
         membership_z = z[:, self.membership_idx]
-        style_z = z[:, self.style_idx]
 
-        return class_z, membership_z, style_z
+        return class_z, membership_z
 
     def get_loss_function(self):
         def loss_function(recon_x, x, mu, logvar):
