@@ -81,7 +81,7 @@ class Classifier(object):
     #########################
     def load(self):
         # print('====> Loading checkpoint {}'.format(self.classification_path))
-        checkpoint = torch.load(os.path.join(self.classification_path, 'ckpt.pth'))
+        checkpoint = torch.load(os.path.join(self.classification_path, 'ckpt.pth'), map_location=self.device)
         self.net.load_state_dict(checkpoint['net'])
         self.best_valid_acc = checkpoint['best_valid_acc']
         self.train_acc = checkpoint['train_acc']
@@ -185,7 +185,7 @@ class Classifier(object):
                 break
 
     def test(self, testset):
-        # print('==> Test {}'.format(self.classification_path))
+        print('==> Test {}'.format(self.classification_path))
         try:
             self.load()
         except FileNotFoundError:
@@ -233,7 +233,11 @@ class Classifier(object):
                 prediction_scores_batch = torch.softmax(logits_, dim=1).cpu().detach().numpy()
                 labels_batch = targets.cpu().detach().numpy()
 
-                # x1, x2, x3 = self.net.extract_features(inputs)
+                # out_list = self.net.extract_features(inputs)
+                #
+                # print(out_list)
+                # print(out_list.shape)
+                # sys.exit(1)
                 # print(x1.shape)
                 # print(x2.shape)
                 # print(x3.shape)

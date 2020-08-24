@@ -13,7 +13,7 @@ import torchvision.utils as vutils
 from torch.utils.data import Subset, DataLoader
 
 
-class Reconstructor(object):
+class SingleReconstructor(object):
     def __init__(self, args):
         self.reconstruction_path = args.reconstruction_path
         if not os.path.exists(self.reconstruction_path):
@@ -35,9 +35,6 @@ class Reconstructor(object):
 
         self.class_idx = range(0, self.disc_input_dim)
         self.membership_idx = range(self.disc_input_dim, self.z_dim)
-
-        # self.class_idx = range(0, self.z_dim)
-        # self.membership_idx = []
 
         self.nets = dict()
 
@@ -196,26 +193,26 @@ class Reconstructor(object):
                 self.disentangle_z(inputs, targets)
 
         # todo : loop
-        # self.acc_dict['class_fz'] = corrects['class_fz'] / total
-        # self.acc_dict['class_cz'] = corrects['class_cz'] / total
-        # self.acc_dict['class_mz'] = corrects['class_mz'] / total
-        #
-        # self.acc_dict['membership_fz'] = corrects['membership_fz'] / (2 * total)
-        # self.acc_dict['membership_cz'] = corrects['membership_cz'] / (2 * total)
-        # self.acc_dict['membership_mz'] = corrects['membership_mz'] / (2 * total)
-        #
-        # if self.print_training:
-        #     print(
-        #         '\nEpoch: {:>3}, Acc) Class (fz, cz, mz) : {:.4f}, {:.4f}, {:.4f}, Membership (fz, cz, mz) : {:.4f}, {:.4f}, {:.4f}'.format(
-        #             epoch, self.acc_dict['class_fz'], self.acc_dict['class_cz'], self.acc_dict['class_mz'],
-        #             self.acc_dict['membership_fz'], self.acc_dict['membership_cz'], self.acc_dict['membership_mz'], ))
-        #
-        #     for loss_type in losses:
-        #         losses[loss_type] = losses[loss_type] / (batch_idx + 1)
-        #     print(
-        #         'Losses) MSE: {:.2f}, KLD: {:.2f}, Class (fz, cz, mz): {:.2f}, {:.2f}, {:.2f}, Membership (fz, cz, mz): {:.2f}, {:.2f}, {:.2f},'.format(
-        #             losses['MSE'], losses['KLD'], losses['class_fz'], losses['class_cz'], losses['class_mz'],
-        #             losses['membership_fz'], losses['membership_cz'], losses['membership_mz'], ))
+        self.acc_dict['class_fz'] = corrects['class_fz'] / total
+        self.acc_dict['class_cz'] = corrects['class_cz'] / total
+        self.acc_dict['class_mz'] = corrects['class_mz'] / total
+
+        self.acc_dict['membership_fz'] = corrects['membership_fz'] / (2 * total)
+        self.acc_dict['membership_cz'] = corrects['membership_cz'] / (2 * total)
+        self.acc_dict['membership_mz'] = corrects['membership_mz'] / (2 * total)
+
+        if self.print_training:
+            print(
+                '\nEpoch: {:>3}, Acc) Class (fz, cz, mz) : {:.4f}, {:.4f}, {:.4f}, Membership (fz, cz, mz) : {:.4f}, {:.4f}, {:.4f}'.format(
+                    epoch, self.acc_dict['class_fz'], self.acc_dict['class_cz'], self.acc_dict['class_mz'],
+                    self.acc_dict['membership_fz'], self.acc_dict['membership_cz'], self.acc_dict['membership_mz'], ))
+
+            for loss_type in losses:
+                losses[loss_type] = losses[loss_type] / (batch_idx + 1)
+            print(
+                'Losses) MSE: {:.2f}, KLD: {:.2f}, Class (fz, cz, mz): {:.2f}, {:.2f}, {:.2f}, Membership (fz, cz, mz): {:.2f}, {:.2f}, {:.2f},'.format(
+                    losses['MSE'], losses['KLD'], losses['class_fz'], losses['class_cz'], losses['class_mz'],
+                    losses['membership_fz'], losses['membership_cz'], losses['membership_mz'], ))
 
     def train_reconstructor(self, inputs):
         self.optimizer['encoder'].zero_grad()

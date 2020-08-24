@@ -35,8 +35,10 @@ def main():
         # ('baseline', 'VAE0.1_z64_setsize5000_lr0.001_bs8_ref1.0_rw1.0_cc0.0_cm0.0_mc0.0_mm0.0', 'ResNet18_lr0.0001_bs8/cb_mb', '88b'),
         # ('baseline', 'VAE0.1_z64_setsize5000_lr0.001_bs8_ref1.0_rw1.0_cc0.0_cm0.0_mc0.0_mm0.0', 'ResNet18_lr0.0001_bs8/cr_mr', '88r'),
 
-        ('0818bs2', 'VAE0.1_z64_setsize5000_lr0.001_ref1.0_rw1.0_cc0.0_cm1.0_mc1.0_mm0.0', 'ResNet18/cb_mb', '22b+AG'),
-        ('0821noDE', 'VAE0.1_z64_setsize5000_lr0.001_bs2_ref1.0_rw1.0_cc1.0_cm0.0_mc0.0_mm0.0', 'ResNet18_lr0.0001_bs2/cb_mb', '22b'),
+        ('0818bs2', 'VAE0.1_z64_setsize5000_lr0.001_ref1.0_rw1.0_cc0.0_cm1.0_mc1.0_mm0.0', 'ResNet18/cb_mb', '22bb+AG'),
+        ('0818bs2', 'VAE0.1_z64_setsize5000_lr0.001_ref1.0_rw1.0_cc0.0_cm1.0_mc1.0_mm0.0', 'ResNet18/cz_mb', '22zb+AG'),
+        ('0818bs2', 'VAE0.1_z64_setsize5000_lr0.001_ref1.0_rw1.0_cc0.0_cm1.0_mc1.0_mm0.0', 'ResNet18/cb_mz', '22bz+AG'),
+        # ('0821noDE', 'VAE0.1_z64_setsize5000_lr0.001_bs2_ref1.0_rw1.0_cc1.0_cm0.0_mc0.0_mm0.0', 'ResNet18_lr0.0001_bs2/cb_mb', '22b'),
         # ('0821noDE', 'VAE0.1_z64_setsize5000_lr0.001_bs2_ref1.0_rw1.0_cc1.0_cm0.0_mc0.0_mm0.0', 'ResNet18_lr0.0001_bs4/cb_mb', '24b'),
         # ('0821noDE', 'VAE0.1_z64_setsize5000_lr0.001_bs2_ref1.0_rw1.0_cc1.0_cm0.0_mc0.0_mm0.0', 'ResNet18_lr0.0001_bs8/cb_mb', '28b'),
         # ('0818bs2', 'VAE0.1_z64_setsize5000_lr0.001_ref1.0_rw1.0_cc0.0_cm1.0_mc1.0_mm0.0', 'ResNet18/cr_mr', 'cm22r'),
@@ -67,7 +69,7 @@ def main():
 
     # sns.barplot(x='data', y='acc', hue='dataset', data=class_df)
     sns.boxplot(x='data', y='acc', hue='dataset', data=class_df)
-    plt.ylim(0.7, 1.01)
+    plt.ylim(0.0, 1.01)
     plt.tight_layout()
     img_dir = os.path.join('Figs', dataset, description, 'classification_collated')
     if not os.path.exists(img_dir):

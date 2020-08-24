@@ -64,7 +64,7 @@ class Attacker(object):
     #########################
     def load(self):
         # print('====> Loading checkpoint {}'.format(self.attack_path))
-        checkpoint = torch.load(os.path.join(self.attack_path, 'ckpt.pth'))
+        checkpoint = torch.load(os.path.join(self.attack_path, 'ckpt.pth'), map_location=self.device)
         self.net.load_state_dict(checkpoint['net'])
         self.best_valid_acc = checkpoint['best_valid_acc']
         self.train_acc = checkpoint['train_acc']

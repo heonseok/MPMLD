@@ -43,85 +43,10 @@ recon_lr_list = [
     # 0.1,
 ]
 
-# recon, class_cz(+), class_mz(-), membership_cz(-), membership_mz(+)
+# recon, class_fz(+), class_cz(+), class_mz(-), membership_fz(-), membership_cz(-), membership_mz(+)
 weight_list = [
-    # 0803
-    # [1, 0, 0, 0, 0],
-
-    # [1, 1, 0, 0, 0],
-    # [1, 0, 1, 0, 0],
-    # [1, 0, 0, 1, 0],
-    # [1, 0, 0, 0, 1],
-
-    # [1, 0, 1, 1, 0],
-    # [1, 2, 2, 1, 0],
-    # [1, 1, 1, 1, 1],
-    # [1, 1, 1, 0, 0],
-    # [1, 0, 1, 0, 1],
-    # [1, 1, 0, 1, 0],
-    # [1, 1, 0, 0, 1],
-
-    # [1, 1, 1, 1, 1],
-
-    # [1, 0, 1, 2, 0],
-    # [1, 0, 2, 1, 0],
-    # [1, 0, 2, 2, 0],
-
-    # [1, 0, 1, 0.1, 0],
-
-    # [1, 2, 0, 0, 2],
-
-    # 0805 class conditional
-    # [1, 1, 0, 0, 0],
-    # [1, 0, 1, 0, 0],
-    # [1, 0, 0, 1, 0],
-    # [1, 0, 0, 0, 1],
-
-    # [1, 1, 0, 0, 1],
-    # [1, 0, 1, 1, 0],
-    # [1, 1, 0, 1, 0],
-    # [1, 0, 1, 0, 1],
-
-    # [1, 0, 2, 0, 1],
-    # [1, 0, 1.5, 0, 1],
-    # [1, 0, 1.5, 0, 0],
-    # [1, 0, 2, 0, 0],
-
-    # 0807
-    # [1, 0, 0, 0, 0],
-    # [1, 0, 1, 0, 0],
-    # [1, 0, 0, 1, 0],
-    # [1, 0, 1, 0, 1],
-    # [1, 0, 1, 1, 0],
-    # [1, 0, 2, 1, 0],
-    # [1, 0, 1, 2, 0],
-    # [1, 0, 2, 2, 0],
-    # [1, 0, 0.5, 1, 0],
-    # [1, 0, 1, 0.5, 0],
-    # [1, 0, 0.5, 0.5, 0],
-
-    # 0813
-    # [0.01, 0, 0, 0, 0],
-    # [0.05, 0, 0, 0, 0],
-    # [0.1, 0, 0, 0, 0],
-    # [0.5, 0, 0, 0, 0],
-
-    # [0.01, 0, 1, 1, 0],
-    # [0.05, 0, 1, 1, 0],
-    # [0.1, 0, 1, 1, 0],
-    # [0.5, 0, 1, 1, 0],
-    # [0.5, 0, 1, 1, 0],
-    # [0.5, 0, 2, 2, 0],
-    # [0.5, 0, 5, 5, 0],
-    # [0.5, 0, 10, 10, 0],
-
-    # 0818
-    # [1, 2, 0, 0, 0],
-    # [1, 2, 0, 0, 0],
-    # [1, 0, 1, 1, 0],
-
     # 0823
-    [1, 0, 0, 0, 1, 0, 0],
+    [1, 0, 0, 1, 0, 1, 0],
 ]
 
 beta_list = [
@@ -138,6 +63,7 @@ beta_list = [
 setup_dict = {
 
     # Reconstruction
+    'encoder_num': 'single',
     'recon_train_batch_size': 2,
     'train_reconstructor': '1',
     'reconstruct_datasets': '1',
@@ -147,7 +73,7 @@ setup_dict = {
     'disentangle_with_reparameterization': '1',
 
     # Classification
-    'class_train_batch_size': 2,
+    'class_train_batch_size': 32,
     'train_classifier': '0',
     'test_classifier': '0',
     'extract_classifier_features': '0',
@@ -160,13 +86,13 @@ setup_dict = {
 
     # Common
     'repeat_start': 0,
-    'repeat_end': 5,
+    'repeat_end': 1,
     'epochs': 500,
     'early_stop': '1',
     'early_stop_observation_period': 20,
     'gpu_id': 3,
-    'print_training': '0',
-    'description': 'baseline',
+    'print_training': '1',
+    'description': '0824',
     # 'description': '0821noDE',
 }
 
@@ -185,11 +111,14 @@ for dataset in dataset_list:
                             target_setup_dict['recon_lr'] = str(recon_lr)
                             target_setup_dict['ref_ratio'] = str(ref_ratio)
                             target_setup_dict['beta'] = str(beta)
+
                             target_setup_dict['recon_weight'] = str(weight[0])
-                            target_setup_dict['class_cz_weight'] = str(weight[1])
-                            target_setup_dict['class_mz_weight'] = str(weight[2])
-                            target_setup_dict['membership_cz_weight'] = str(weight[3])
-                            target_setup_dict['membership_mz_weight'] = str(weight[4])
+                            target_setup_dict['class_fz_weight'] = str(weight[1])
+                            target_setup_dict['class_cz_weight'] = str(weight[2])
+                            target_setup_dict['class_mz_weight'] = str(weight[3])
+                            target_setup_dict['membership_fz_weight'] = str(weight[4])
+                            target_setup_dict['membership_cz_weight'] = str(weight[5])
+                            target_setup_dict['membership_mz_weight'] = str(weight[6])
 
                             args_list.append('python main.py')
                             for k, v in target_setup_dict.items():

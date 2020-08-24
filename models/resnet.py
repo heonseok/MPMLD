@@ -103,6 +103,18 @@ class ResNet(nn.Module):
         out = self.linear(out)
         return out
 
+    # def extract_features(self, x):
+    #     x1 = F.relu(self.bn1(self.conv1(x)))
+    #     x2 = self.layer1(x1)
+    #     x3 = self.layer2(x2)
+    #     x4 = self.layer3(x3)
+    #     x5 = self.layer4(x4)
+    #     x6 = F.avg_pool2d(x5, 4)
+    #     out_list = [x1, x2, x3, x4, x5, x6]
+    #     for idx, out in enumerate(out_list):
+    #         out_list[idx] = out.view(out.size(0), -1)
+    #     return out_list
+
 
 def ResNet18():
     return ResNet(BasicBlock, [2, 2, 2, 2])
