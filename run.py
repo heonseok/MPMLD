@@ -43,31 +43,32 @@ recon_lr_list = [
     # 0.1,
 ]
 
-# recon, class_fz(+), class_cz(+), class_mz(-), membership_fz(-), membership_cz(-), membership_mz(+)
+# recon, class_pos, class_neg, membership_pos, membership_neg
 weight_list = [
-    # 0823
-    [1, 0, 0, 1, 0, 1, 0],
+    # 0824
+    [1, 0, 0, 0, 0],
+    # [1, 0, 0, 0, 0],
 ]
 
 beta_list = [
     # 0.0
     # 0.000001,
     # 0.00001,
-    # 0.0001,
-    # 0.001,
-    # 0.01,
-    0.1,
+    0.0001,
+    0.001,
+    0.01,
+    # 0.1,
     # 1.0,
 ]
 
 setup_dict = {
 
     # Reconstruction
-    'encoder_num': 'single',
-    'recon_train_batch_size': 2,
+    'share_encoder': '0',
+    'recon_train_batch_size': 32,
     'train_reconstructor': '1',
     'reconstruct_datasets': '1',
-    'plot_recons': '1',
+    'plot_recons': '0',
 
     'use_reconstructed_dataset': '1',
     'disentangle_with_reparameterization': '1',
@@ -91,8 +92,8 @@ setup_dict = {
     'early_stop': '1',
     'early_stop_observation_period': 20,
     'gpu_id': 3,
-    'print_training': '1',
-    'description': '0824',
+    'print_training': '0',
+    'description': '0824_4typesDisentanglement',
     # 'description': '0821noDE',
 }
 
@@ -113,12 +114,10 @@ for dataset in dataset_list:
                             target_setup_dict['beta'] = str(beta)
 
                             target_setup_dict['recon_weight'] = str(weight[0])
-                            target_setup_dict['class_fz_weight'] = str(weight[1])
-                            target_setup_dict['class_cz_weight'] = str(weight[2])
-                            target_setup_dict['class_mz_weight'] = str(weight[3])
-                            target_setup_dict['membership_fz_weight'] = str(weight[4])
-                            target_setup_dict['membership_cz_weight'] = str(weight[5])
-                            target_setup_dict['membership_mz_weight'] = str(weight[6])
+                            target_setup_dict['class_pos_weight'] = str(weight[1])
+                            target_setup_dict['class_neg_weight'] = str(weight[2])
+                            target_setup_dict['membership_pos_weight'] = str(weight[3])
+                            target_setup_dict['membership_neg_weight'] = str(weight[4])
 
                             args_list.append('python main.py')
                             for k, v in target_setup_dict.items():

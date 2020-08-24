@@ -13,8 +13,8 @@ from data import load_dataset
 import torch
 from torch.utils.data import Subset, ConcatDataset
 
-from reconstruction_single_encoder import SingleReconstructor
-from reconstruction_two_encoder import TwoReconstructor
+# from reconstruction_single_encoder import SingleReconstructor
+from reconstruction import Reconstructor
 from classification import Classifier
 from attack import Attacker
 
@@ -44,12 +44,10 @@ parser.add_argument('--disc_lr', type=float, default=0.001)
 parser.add_argument('--recon_train_batch_size', type=int, default=32)
 
 parser.add_argument('--recon_weight', type=float, default='1')
-parser.add_argument('--class_fz_weight', type=float, default='0')
-parser.add_argument('--class_cz_weight', type=float, default='0')
-parser.add_argument('--class_mz_weight', type=float, default='1')
-parser.add_argument('--membership_fz_weight', type=float, default='0')
-parser.add_argument('--membership_cz_weight', type=float, default='1')
-parser.add_argument('--membership_mz_weight', type=float, default='0')
+parser.add_argument('--class_pos_weight', type=float, default='0')
+parser.add_argument('--class_neg_weight', type=float, default='0')
+parser.add_argument('--membership_pos_weight', type=float, default='0')
+parser.add_argument('--membership_neg_weight', type=float, default='0')
 parser.add_argument('--ref_ratio', type=float, default=1.0)
 
 parser.add_argument('--disentangle_with_reparameterization', type=str2bool, default='1')
@@ -67,15 +65,15 @@ parser.add_argument('--attack_train_batch_size', type=int, default=100)
 
 # -------------------------------------------------------------------------------------------------------------------- #
 # -------- Control flags -------- #
-parser.add_argument('--description', type=str, default='0824')
+parser.add_argument('--description', type=str, default='0824_4typesDisentanglement')
 # parser.add_argument('--description', type=str, default='baseline')
 parser.add_argument('--repeat_start', type=int, default=0)
 parser.add_argument('--repeat_end', type=int, default=1)
 
 # ---- Reconstruction ---- #
-parser.add_argument('--encoder_num', type=str, choices=['single', 'two'], default='single')
-parser.add_argument('--train_reconstructor', type=str2bool, default='0')
-parser.add_argument('--reconstruct_datasets', type=str2bool, default='0')
+parser.add_argument('--share_encoder', type=str2bool, default='0')
+parser.add_argument('--train_reconstructor', type=str2bool, default='1')
+parser.add_argument('--reconstruct_datasets', type=str2bool, default='1')
 parser.add_argument('--plot_recons', type=str2bool, default='0')
 
 # ---- Classification ---- #
@@ -90,8 +88,7 @@ parser.add_argument('--train_attacker', type=str2bool, default='0')
 parser.add_argument('--test_attacker', type=str2bool, default='0')
 
 # ---- ---- #
-parser.add_argument('--test_with_raw_classifier', type=str2bool, default='0')
-
+# parser.add_argument('--test_with_raw_classifier', type=str2bool, default='0')
 
 # -------------------------------------------------------------------------------------------------------------------- #
 
@@ -104,26 +101,24 @@ for repeat_idx in range(args.repeat_start, args.repeat_end):
     if args.reconstruction_model == 'VAE':
         args.reconstruction_model += str(args.beta)
 
-    if args.encoder_num == 'single':
-        Reconstructor = SingleReconstructor
-    elif args.encoder_num == 'two':
-        Reconstructor = TwoReconstructor
+    if args.share_encoder:
+        encoder_type = 'shared'
+    else:
+        encoder_type = 'distinct'
 
     args.reconstruction_name = os.path.join(
-        '{}{}_z{}_setsize{}_lr{}_bs{}_ref{}_rw{}_cf{}_cc{}_cm{}_mf{}_mc{}_mm{}'.format(args.encoder_num,
-                                                                                       args.reconstruction_model,
-                                                                                       args.z_dim,
-                                                                                       args.setsize, args.recon_lr,
-                                                                                       args.recon_train_batch_size,
-                                                                                       args.ref_ratio,
-                                                                                       args.recon_weight,
-                                                                                       args.class_fz_weight,
-                                                                                       args.class_cz_weight,
-                                                                                       args.class_mz_weight,
-                                                                                       args.membership_fz_weight,
-                                                                                       args.membership_cz_weight,
-                                                                                       args.membership_mz_weight,
-                                                                                       ))
+        '{}_{}Enc_z{}_setsize{}_lr{}_bs{}_ref{}_rw{}_cp{}_cn{}_mp{}_mn{}'.format(args.reconstruction_model,
+                                                                                 encoder_type,
+                                                                                 args.z_dim,
+                                                                                 args.setsize, args.recon_lr,
+                                                                                 args.recon_train_batch_size,
+                                                                                 args.ref_ratio,
+                                                                                 args.recon_weight,
+                                                                                 args.class_pos_weight,
+                                                                                 args.class_neg_weight,
+                                                                                 args.membership_pos_weight,
+                                                                                 args.membership_neg_weight,
+                                                                                 ))
 
     args.recon_output_path = os.path.join(args.base_path, args.dataset, args.description, args.reconstruction_name)
     args.raw_output_path = os.path.join(args.base_path, args.dataset, args.description,
@@ -191,11 +186,9 @@ for repeat_idx in range(args.repeat_start, args.repeat_end):
 
     # ---- Combination ---- #
     reconstruction_type_list = [
-        'cb_mb',  # Content: base, Membership: base
-        'cb_mz',  # Content: base, Membership: zero
-        'cz_mb',  # Content: zero, Membership: base
-
-        # 'cr_mr',  # Content: reparameterization, Membership: reparameterization
+        'recon0',  # [1, 1, 1, 1]
+        'recon1',  # [1, 1, 0, 1]
+        'recon2',  # [1, 0, 0, 1]
     ]
 
     attack_type_list = [
@@ -343,23 +336,24 @@ for repeat_idx in range(args.repeat_start, args.repeat_end):
                     attacker.test(inout_feature_sets['test'])
         print()
 
-    if args.test_with_raw_classifier:
-        args.raw_output_path = os.path.join(args.base_path, args.dataset, 'baseline', 'raw_setsize{}'.format(args.setsize))
-        args.classification_path = os.path.join(args.raw_output_path, 'classification', args.classification_name,
-                                                'repeat{}'.format(repeat_idx))
-        classifier = Classifier(args)
-        for recon_type in reconstruction_type_list:
-            reconstructed_data_path = os.path.join(args.reconstruction_path, 'recon_{}.pt'.format(recon_type))
-            recon_datasets = utils.build_reconstructed_datasets(reconstructed_data_path)
-
-            print(recon_type)
-            # classifier.test(recon_datasets['train'])
-            classifier.test(recon_datasets['test'])
-
-            for attack_type in attack_type_list:
-                args.attack_type = attack_type
-                args.attack_path = os.path.join(args.raw_output_path, 'attack', args.classification_name,
-                                                attack_type, 'repeat{}'.format(repeat_idx))
-                attacker = Attacker(args)
-                inout_feature_sets = utils.build_inout_feature_sets(args.classification_path, attack_type)
-                attacker.test(inout_feature_sets['test'])
+    # if args.test_with_raw_classifier:
+    #     args.raw_output_path = os.path.join(args.base_path, args.dataset, 'baseline',
+    #                                         'raw_setsize{}'.format(args.setsize))
+    #     args.classification_path = os.path.join(args.raw_output_path, 'classification', args.classification_name,
+    #                                             'repeat{}'.format(repeat_idx))
+    #     classifier = Classifier(args)
+    #     for recon_type in reconstruction_type_list:
+    #         reconstructed_data_path = os.path.join(args.reconstruction_path, 'recon_{}.pt'.format(recon_type))
+    #         recon_datasets = utils.build_reconstructed_datasets(reconstructed_data_path)
+    #
+    #         print(recon_type)
+    #         # classifier.test(recon_datasets['train'])
+    #         classifier.test(recon_datasets['test'])
+    #
+    #         for attack_type in attack_type_list:
+    #             args.attack_type = attack_type
+    #             args.attack_path = os.path.join(args.raw_output_path, 'attack', args.classification_name,
+    #                                             attack_type, 'repeat{}'.format(repeat_idx))
+    #             attacker = Attacker(args)
+    #             inout_feature_sets = utils.build_inout_feature_sets(args.classification_path, attack_type)
+    #             attacker.test(inout_feature_sets['test'])
