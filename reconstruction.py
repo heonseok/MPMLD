@@ -31,6 +31,7 @@ class Reconstructor(object):
         self.class_num = args.class_num
         self.disentangle_with_reparameterization = args.disentangle_with_reparameterization
         self.share_encoder = args.share_encoder
+        self.train_flag = False
 
         self.z_dim = args.z_dim
 
@@ -106,11 +107,14 @@ class Reconstructor(object):
         # self.train_loss = 0
         self.early_stop_count = 0
 
-        self.acc_dict = {
-            'class_pn': 0, 'class_pp': 0, 'class_np': 0, 'class_nn': 0,
-            'membership_pn': 0, 'membership_pp': 0, 'membership_np': 0, 'membership_nn': 0,
+        self.class_acc_dict = {
+            'pn': 0., 'pp': 0., 'np': 0., 'nn': 0.,
         }
-        self.best_acc_dict = {}
+        self.membership_acc_dict = {
+            'pn': 0., 'pp': 0., 'np': 0., 'nn': 0.,
+        }
+        self.best_class_acc_dict = {}
+        self.best_membership_acc_dict = {}
 
         if 'cuda' in str(self.device):
             cudnn.benchmark = True
@@ -146,76 +150,49 @@ class Reconstructor(object):
 
         losses = {
             'MSE': 0, 'KLD': 0,
-            'class_pn': 0, 'class_pp': 0, 'class_np': 0, 'class_nn': 0,
-            'membership_pn': 0, 'membership_pp': 0, 'membership_np': 0, 'membership_nn': 0,
+            'class': {'pn': 0, 'pp': 0, 'np': 0, 'nn': 0},
+            'membership': {'pn': 0, 'pp': 0, 'np': 0, 'nn': 0},
         }
 
         corrects = {
-            'class_pn': 0, 'class_pp': 0, 'class_np': 0, 'class_nn': 0,
-            'membership_pn': 0, 'membership_pp': 0, 'membership_np': 0, 'membership_nn': 0,
+            'class': {'pn': 0, 'pp': 0, 'np': 0, 'nn': 0},
+            'membership': {'pn': 0, 'pp': 0, 'np': 0, 'nn': 0},
         }
 
-        for batch_idx, (inputs, targets, inputs_ref, targets_ref) in enumerate(train_ref_loader):
-            inputs, targets = inputs.to(self.device), targets.to(self.device)
-            inputs_ref, targets_ref = inputs_ref.to(self.device), targets_ref.to(self.device)
+        for batch_idx, (x, y, x_ref, y_ref) in enumerate(train_ref_loader):
+            x, y = x.to(self.device), y.to(self.device)
+            x_ref, y_ref = x_ref.to(self.device), y_ref.to(self.device)
 
-            total += targets.size(0)
+            total += y.size(0)
 
             # ---- Reconstruction (Encoder & Decoder) ---- #
-            recon_loss, MSE, KLD = self.train_reconstructor(inputs)
+            recon_loss, MSE, KLD = self.train_reconstructor(x)
             losses['MSE'] += MSE
             losses['KLD'] += KLD
 
-        #     # ---- Class discriminators ---- #
-        #     correct_class_fz, loss_class_fz = self.train_disc_class_fz(inputs, targets)
-        #     correct_class_cz, loss_class_cz = self.train_disc_class_cz(inputs, targets)
-        #     correct_class_mz, loss_class_mz = self.train_disc_class_mz(inputs, targets)
-        #
-        #     corrects['class_fz'] += correct_class_fz
-        #     corrects['class_cz'] += correct_class_cz
-        #     corrects['class_mz'] += correct_class_mz
-        #     losses['class_fz'] += loss_class_fz
-        #     losses['class_cz'] += loss_class_cz
-        #     losses['class_mz'] += loss_class_mz
-        #
-        #     # ---- Membership discriminators ---- #
-        #     correct_membership_fz, loss_membership_fz = self.train_disc_membership_fz(inputs, targets,
-        #                                                                               inputs_ref, targets_ref)
-        #     correct_membership_cz, loss_membership_cz = self.train_disc_membership_cz(inputs, targets,
-        #                                                                               inputs_ref, targets_ref)
-        #     correct_membership_mz, loss_membership_mz = self.train_disc_membership_mz(inputs, targets,
-        #                                                                               inputs_ref, targets_ref)
-        #     corrects['membership_fz'] += correct_membership_fz
-        #     corrects['membership_cz'] += correct_membership_cz
-        #     corrects['membership_mz'] += correct_membership_mz
-        #     losses['membership_fz'] += loss_membership_fz
-        #     losses['membership_cz'] += loss_membership_cz
-        #     losses['membership_mz'] += loss_membership_mz
-        #
-        #     if self.disentangle:
-        #         self.disentangle_z(inputs, targets)
-        #
-        # # todo : loop
-        # self.acc_dict['class_fz'] = corrects['class_fz'] / total
-        # self.acc_dict['class_cz'] = corrects['class_cz'] / total
-        # self.acc_dict['class_mz'] = corrects['class_mz'] / total
-        #
-        # self.acc_dict['membership_fz'] = corrects['membership_fz'] / (2 * total)
-        # self.acc_dict['membership_cz'] = corrects['membership_cz'] / (2 * total)
-        # self.acc_dict['membership_mz'] = corrects['membership_mz'] / (2 * total)
-        #
-        # if self.print_training:
-        #     print(
-        #         '\nEpoch: {:>3}, Acc) Class (fz, cz, mz) : {:.4f}, {:.4f}, {:.4f}, Membership (fz, cz, mz) : {:.4f}, {:.4f}, {:.4f}'.format(
-        #             epoch, self.acc_dict['class_fz'], self.acc_dict['class_cz'], self.acc_dict['class_mz'],
-        #             self.acc_dict['membership_fz'], self.acc_dict['membership_cz'], self.acc_dict['membership_mz'], ))
-        #
-        #     for loss_type in losses:
-        #         losses[loss_type] = losses[loss_type] / (batch_idx + 1)
-        #     print(
-        #         'Losses) MSE: {:.2f}, KLD: {:.2f}, Class (fz, cz, mz): {:.2f}, {:.2f}, {:.2f}, Membership (fz, cz, mz): {:.2f}, {:.2f}, {:.2f},'.format(
-        #             losses['MSE'], losses['KLD'], losses['class_fz'], losses['class_cz'], losses['class_mz'],
-        #             losses['membership_fz'], losses['membership_cz'], losses['membership_mz'], ))
+            for encoder_name in self.encoder_name_list:
+                correct, loss = self.train_class_discriminator(encoder_name, x, y)
+                corrects['class'][encoder_name] += correct
+                losses['class'][encoder_name] += loss
+
+                correct, loss = self.train_membership_discriminator(encoder_name, x, y, x_ref, y_ref)
+                corrects['membership'][encoder_name] += correct
+                losses['membership'][encoder_name] += loss
+
+            if self.disentangle:
+                self.disentangle(x, y)
+
+        for encoder_name in self.encoder_name_list:
+            self.class_acc_dict[encoder_name] = corrects['class'][encoder_name] / total
+            self.membership_acc_dict[encoder_name] = corrects['membership'][encoder_name] / (2 * total)
+
+        if self.print_training:
+            class_acc = 'class) '
+            membership_acc = 'membership) '
+            for encoder_name in self.encoder_name_list:
+                class_acc += '{}: {:.4f}, '.format(encoder_name, self.class_acc_dict[encoder_name])
+                membership_acc += '{}: {:.4f}, '.format(encoder_name, self.membership_acc_dict[encoder_name])
+            print('Epoch: {:>3},'.format(epoch), class_acc, membership_acc)
 
     def train_reconstructor(self, inputs):
         for encoder_name in self.encoder_name_list:
@@ -242,61 +219,51 @@ class Reconstructor(object):
 
         return recon_loss.item(), MSE.item(), KLD.item()
 
-    def train_disc_class_fz(self, inputs, targets):
-        self.optimizer['class_fz'].zero_grad()
-        z = self.inference_z(inputs)
-        pred = self.discs['class_fz'](z)
-        class_loss_full = self.class_loss(pred, targets)
-        class_loss_full.backward()
-        self.optimizer['class_fz'].step()
+    def train_class_discriminator(self, encoder_name, x, y):
+        self.class_discs_opt[encoder_name].zero_grad()
 
-        _, pred_class_from_full = pred.max(1)
-        return pred_class_from_full.eq(targets).sum().item(), class_loss_full.item()
+        mu_, logvar_ = self.encoders[encoder_name](x)
+        mu = mu_[:, self.z_idx[encoder_name]]
+        logvar = logvar_[:, self.z_idx[encoder_name]]
+        z = self.reparameterize(mu, logvar)
 
-    def train_disc_class_cz(self, inputs, targets):
-        self.optimizer['class_cz'].zero_grad()
-        z = self.inference_z(inputs)
-        class_z, _ = self.split_class_membership(z)
-        pred = self.discs['class_cz'](class_z)
-        class_loss = self.class_loss(pred, targets)
+        pred = self.class_discs[encoder_name](z)
+        class_loss = self.class_loss(pred, y)
         class_loss.backward()
-        self.optimizer['class_cz'].step()
+
+        self.class_discs_opt[encoder_name].step()
 
         _, pred_class = pred.max(1)
-        return pred_class.eq(targets).sum().item(), class_loss.item()
+        return pred_class.eq(y).sum().item(), class_loss.item()
 
-    def train_disc_class_mz(self, inputs, targets):
-        self.optimizer['class_mz'].zero_grad()
-        z = self.inference_z(inputs)
-        _, membership_z = self.split_class_membership(z)
-        pred = self.discs['class_mz'](membership_z)
-        class_loss_membership = self.class_loss(pred, targets)
-        class_loss_membership.backward()
-        self.optimizer['class_mz'].step()
+    def train_membership_discriminator(self, encoder_name, x, y, x_ref, y_ref):
+        self.membership_discs_opt[encoder_name].zero_grad()
 
-        _, pred_class_from_membership = pred.max(1)
-        return pred_class_from_membership.eq(targets).sum().item(), class_loss_membership.item()
+        mu_, logvar_ = self.encoders[encoder_name](x)
+        mu = mu_[:, self.z_idx[encoder_name]]
+        logvar = logvar_[:, self.z_idx[encoder_name]]
+        z = self.reparameterize(mu, logvar)
 
-    def train_disc_membership_fz(self, inputs, targets, inputs_ref, targets_ref):
-        self.optimizer['membership_fz'].zero_grad()
-
-        z = self.inference_z(inputs)
-        targets_onehot = torch.zeros((len(targets), self.class_num)).to(self.device)
-        targets_onehot = targets_onehot.scatter_(1, targets.reshape((-1, 1)), 1)
+        targets_onehot = torch.zeros((len(y), self.class_num)).to(self.device)
+        targets_onehot = targets_onehot.scatter_(1, y.reshape((-1, 1)), 1)
         z = torch.cat((z, targets_onehot), dim=1)
-        pred = self.discs['membership_fz'](z)
+        pred = self.membership_discs[encoder_name](z)
         in_loss = self.membership_loss(pred, torch.ones_like(pred))
 
-        z_ref = self.inference_z(inputs_ref)
-        targets_ref_onehot = torch.zeros((len(targets_ref), self.class_num)).to(self.device)
-        targets_ref_onehot = targets_ref_onehot.scatter_(1, targets_ref.reshape((-1, 1)), 1)
+        mu_, logvar_ = self.encoders[encoder_name](x_ref)
+        mu = mu_[:, self.z_idx[encoder_name]]
+        logvar = logvar_[:, self.z_idx[encoder_name]]
+        z_ref = self.reparameterize(mu, logvar)
+
+        targets_ref_onehot = torch.zeros((len(y_ref), self.class_num)).to(self.device)
+        targets_ref_onehot = targets_ref_onehot.scatter_(1, y_ref.reshape((-1, 1)), 1)
         z_ref = torch.cat((z_ref, targets_ref_onehot), dim=1)
-        pred_ref = self.discs['membership_fz'](z_ref)
+        pred_ref = self.membership_discs[encoder_name](z_ref)
         out_loss = self.membership_loss(pred_ref, torch.zeros_like(pred_ref))
 
         membership_loss = in_loss + out_loss
         membership_loss.backward()
-        self.optimizer['membership_fz'].step()
+        self.membership_discs_opt[encoder_name].step()
 
         pred = pred.cpu().detach().numpy().squeeze(axis=1)
         pred_ref = pred_ref.cpu().detach().numpy().squeeze(axis=1)
@@ -305,110 +272,40 @@ class Reconstructor(object):
 
         return np.sum(inout_concat == np.round(pred_concat)), membership_loss.item()
 
-    def train_disc_membership_cz(self, inputs, targets, inputs_ref, targets_ref):
-        self.optimizer['membership_cz'].zero_grad()
+    def disentangle(self, x, y):
+        targets_onehot = torch.zeros((len(y), self.class_num)).to(self.device)
+        targets_onehot = targets_onehot.scatter_(1, y.reshape((-1, 1)), 1)
 
-        z = self.inference_z(inputs)
-        class_z, _ = self.split_class_membership(z)
-        targets_onehot = torch.zeros((len(targets), self.class_num)).to(self.device)
-        targets_onehot = targets_onehot.scatter_(1, targets.reshape((-1, 1)), 1)
-        class_z = torch.cat((class_z, targets_onehot), dim=1)
-        pred = self.discs['membership_cz'](class_z)
-        in_loss = self.membership_loss(pred, torch.ones_like(pred))
+        for encoder_name in self.encoder_name_list:
+            if encoder_name[0] == 'p':
+                class_weight = 1. * self.weights['class_pos']
+            elif encoder_name[0] == 'n':
+                class_weight = -1. * self.weights['class_neg']
 
-        z_ref = self.inference_z(inputs_ref)
-        class_z_ref, _ = self.split_class_membership(z_ref)
-        targets_ref_onehot = torch.zeros((len(targets_ref), self.class_num)).to(self.device)
-        targets_ref_onehot = targets_ref_onehot.scatter_(1, targets_ref.reshape((-1, 1)), 1)
-        class_z_ref = torch.cat((class_z_ref, targets_ref_onehot), dim=1)
-        pred_ref = self.discs['membership_cz'](class_z_ref)
-        out_loss = self.membership_loss(pred_ref, torch.zeros_like(pred_ref))
+            if encoder_name[1] == 'p':
+                membership_weight = 1. * self.weights['membership_pos']
+            elif encoder_name[1] == 'n':
+                membership_weight = -1. * self.weights['membership_neg']
 
-        membership_loss = in_loss + out_loss
-        membership_loss.backward()
-        self.optimizer['membership_cz'].step()
+            self.encoders_opt[encoder_name].zero_grad()
 
-        pred = pred.cpu().detach().numpy().squeeze(axis=1)
-        pred_ref = pred_ref.cpu().detach().numpy().squeeze(axis=1)
-        pred_concat = np.concatenate((pred, pred_ref))
-        inout_concat = np.concatenate((np.ones_like(pred), np.zeros_like(pred_ref)))
+            mu_, logvar_ = self.encoders[encoder_name](x)
+            mu = mu_[:, self.z_idx[encoder_name]]
+            logvar = logvar_[:, self.z_idx[encoder_name]]
 
-        return np.sum(inout_concat == np.round(pred_concat)), membership_loss.item()
+            z = self.reparameterize(mu, logvar)
+            class_pred = self.class_discs[encoder_name](z)
+            class_loss = class_weight * self.class_loss(class_pred, y)
 
-    def train_disc_membership_mz(self, inputs, targets, inputs_ref, targets_ref):
-        self.optimizer['membership_mz'].zero_grad()
+            z = torch.cat((z, targets_onehot), dim=1)
+            mem_pred = self.membership_discs[encoder_name](z)
+            membership_loss = membership_weight * self.membership_loss(mem_pred, torch.ones_like(mem_pred))
 
-        z = self.inference_z(inputs)
-        _, membership_z = self.split_class_membership(z)
-        targets_onehot = torch.zeros((len(targets), self.class_num)).to(self.device)
-        targets_onehot = targets_onehot.scatter_(1, targets.reshape((-1, 1)), 1)
-        membership_z = torch.cat((membership_z, targets_onehot), dim=1)
-        pred = self.discs['membership_mz'](membership_z)
-        in_loss = self.membership_loss(pred, torch.ones_like(pred))
+            loss = class_loss + membership_loss
+            loss.backward()
+            self.encoders_opt[encoder_name].step()
 
-        z_ref = self.inference_z(inputs_ref)
-        _, membership_z_ref = self.split_class_membership(z_ref)
-        targets_ref_onehot = torch.zeros((len(targets_ref), self.class_num)).to(self.device)
-        targets_ref_onehot = targets_ref_onehot.scatter_(1, targets_ref.reshape((-1, 1)), 1)
-        membership_z_ref = torch.cat((membership_z_ref, targets_ref_onehot), dim=1)
-        pred_ref = self.discs['membership_mz'](membership_z_ref)
-        out_loss = self.membership_loss(pred_ref, torch.zeros_like(pred_ref))
-
-        membership_loss = in_loss + out_loss
-        membership_loss.backward()
-        self.optimizer['membership_mz'].step()
-
-        pred = pred.cpu().detach().numpy().squeeze(axis=1)
-        pred_ref = pred_ref.cpu().detach().numpy().squeeze(axis=1)
-        pred_concat = np.concatenate((pred, pred_ref))
-        inout_concat = np.concatenate((np.ones_like(pred), np.zeros_like(pred_ref)))
-
-        return np.sum(inout_concat == np.round(pred_concat)), membership_loss.item()
-
-    def disentangle_z(self, inputs, targets):
-
-        z = self.inference_z(inputs)
-        cz, mz = self.split_class_membership(z)
-        targets_onehot = torch.zeros((len(targets), self.class_num)).to(self.device)
-        targets_onehot = targets_onehot.scatter_(1, targets.reshape((-1, 1)), 1)
-        self.optimizer['class_encoder'].zero_grad()
-        class_loss = 0
-        # if self.weights['class_fz'] != 0:
-        #     pred = self.discs['class_fz'](z)
-        #     loss += self.weights['class_fz'] * self.class_loss(pred, targets)
-
-        if self.weights['class_cz'] != 0:
-            pred = self.discs['class_cz'](cz)
-            class_loss += self.weights['class_cz'] * self.class_loss(pred, targets)
-
-        if self.weights['membership_cz'] != 0:
-            pred = self.discs['membership_cz'](torch.cat((cz, targets_onehot), dim=1))
-            class_loss += - self.weights['membership_cz'] * self.membership_loss(pred, torch.ones_like(pred))
-        class_loss.backward()
-        self.optimizer['class_encoder'].step()
-
-        z = self.inference_z(inputs)
-        cz, mz = self.split_class_membership(z)
-        targets_onehot = torch.zeros((len(targets), self.class_num)).to(self.device)
-        targets_onehot = targets_onehot.scatter_(1, targets.reshape((-1, 1)), 1)
-        self.optimizer['membership_encoder'].zero_grad()
-        membership_loss = 0
-        # if self.weights['membership_fz'] != 0:
-        #     pred = self.discs['membership_fz'](torch.cat((z, targets_onehot), dim=1))
-        #     loss += - self.weights['membership_fz'] * self.membership_loss(pred, torch.ones_like(pred))
-
-        if self.weights['class_mz'] != 0:
-            pred = self.discs['class_mz'](mz)
-            membership_loss += -self.weights['class_mz'] * self.class_loss(pred, targets)
-
-        if self.weights['membership_mz'] != 0:
-            pred = self.discs['membership_mz'](torch.cat((mz, targets_onehot), dim=1))
-            membership_loss += self.weights['membership_mz'] * self.membership_loss(pred, torch.ones_like(pred))
-
-        membership_loss.backward()
-        self.optimizer['membership_encoder'].step()
-
-    def inference(self, loader, epoch, type='valid'):
+    def inference(self, loader, epoch, inference_type='valid'):
         for encoder_name in self.encoder_name_list:
             self.encoders[encoder_name].eval()
             self.class_discs[encoder_name].eval()
@@ -433,7 +330,7 @@ class Reconstructor(object):
                 recon_loss, MSE, KLD = self.recon_loss(recons, inputs, mu, logvar)
                 loss += recon_loss.item()
 
-        if type == 'valid':
+        if inference_type == 'valid':
             if loss < self.best_valid_loss:
                 state = {
                     'best_valid_loss': loss,
@@ -449,9 +346,11 @@ class Reconstructor(object):
                 torch.save(state, os.path.join(self.reconstruction_path, 'ckpt.pth'))
                 self.best_valid_loss = loss
                 self.early_stop_count = 0
-                self.best_acc_dict = self.acc_dict
+                self.best_class_acc_dict = self.class_acc_dict
+                self.best_membership_acc_dict = self.membership_acc_dict
 
-                np.save(os.path.join(self.reconstruction_path, 'acc.npy'), self.best_acc_dict)
+                np.save(os.path.join(self.reconstruction_path, 'class_acc.npy'), self.best_class_acc_dict)
+                np.save(os.path.join(self.reconstruction_path, 'membership_acc.npy'), self.best_membership_acc_dict)
                 vutils.save_image(recons, os.path.join(self.reconstruction_path, '{}.png'.format(epoch)), nrow=10)
 
             else:
@@ -460,7 +359,8 @@ class Reconstructor(object):
                     print('Early stop count: {}'.format(self.early_stop_count))
 
             if self.early_stop_count == self.early_stop_observation_period:
-                print(self.best_acc_dict)
+                print(self.best_class_acc_dict)
+                print(self.best_membership_acc_dict)
                 if self.print_training:
                     print('Early stop count == {}; Terminate training\n'.format(self.early_stop_observation_period))
                 self.train_flag = False
@@ -481,7 +381,7 @@ class Reconstructor(object):
                     self.scheduler_enc.step()
                     self.scheduler_dec.step()
                 if self.early_stop:
-                    self.inference(valid_loader, epoch, type='valid')
+                    self.inference(valid_loader, epoch, inference_type='valid')
             else:
                 break
 
@@ -501,9 +401,13 @@ class Reconstructor(object):
         recon_dict = dict()
 
         recon_flag = {
-            'recon0': [1, 1, 1, 1],
-            'recon1': [1, 1, 0, 1],
-            'recon2': [1, 0, 0, 1],
+            'pn_pp_np_nn': [1, 1, 1, 1],
+            'pn_pp_nn': [1, 1, 0, 1],
+            'pn_pp': [1, 1, 0, 0],
+            'pn': [1, 0, 0, 0],
+            'pp': [0, 1, 0, 0],
+            'np': [0, 0, 1, 0],
+            'nn': [0, 0, 0, 1],
         }
 
         for recon_idx, recon_type in enumerate(recon_type_list):
@@ -524,35 +428,9 @@ class Reconstructor(object):
                             mu_, logvar_ = self.encoders[encoder_name](inputs)
                             if recon_flag[recon_type][encoder_idx] == 1:
                                 mu[:, self.z_idx[encoder_name]] = mu_[:, self.z_idx[encoder_name]]
-                            # logvar[:, self.z_idx[encoder_name]] = logvar_[:, self.z_idx[encoder_name]]
+                                logvar[:, self.z_idx[encoder_name]] = logvar_[:, self.z_idx[encoder_name]]
 
                         z = mu
-
-                        # mu, logvar = self.nets['encoder'](inputs)
-                        # mu_class, mu_membership = self.split_class_membership(mu)
-                        # logvar_class, logvar_membership = self.split_class_membership(logvar)
-
-                        # mu, logvar = self.nets['encoder'](inputs)
-                        # mu_class, mu_membership = self.split_class_membership(mu)
-                        # logvar_class, logvar_membership = self.split_class_membership(logvar)
-                        # class_mu, class_logvar = self.nets['class_encoder'](inputs)
-                        # membership_mu, membership_logvar = self.nets['membership_encoder'](inputs)
-                        #
-                        # mu = torch.cat([class_mu, membership_mu], dim=1)
-                        # z = torch.zeros_like(mu).to(self.device)
-
-                        # if reconstruction_type == 'cb_mb':
-                        #     z[:, self.class_idx] = class_mu
-                        #     z[:, self.membership_idx] = membership_mu
-                        # elif reconstruction_type == 'cr_mr':
-                        #     z[:, self.class_idx] = self.reparameterize(class_mu, class_logvar)
-                        #     z[:, self.membership_idx] = self.reparameterize(membership_mu, membership_logvar)
-                        # elif reconstruction_type == 'cb_mz':
-                        #     z[:, self.class_idx] = class_mu
-                        #     z[:, self.membership_idx] = torch.zeros_like(membership_mu).to(self.device)
-                        # elif reconstruction_type == 'cz_mb':
-                        #     z[:, self.class_idx] = torch.zeros_like(class_mu).to(self.device)
-                        #     z[:, self.membership_idx] = membership_mu
 
                         recons_batch = self.decoder(z).cpu()
                         labels_batch = targets

@@ -46,7 +46,11 @@ recon_lr_list = [
 # recon, class_pos, class_neg, membership_pos, membership_neg
 weight_list = [
     # 0824
-    [1, 0, 0, 0, 0],
+    [1, 1, 1, 1, 1],
+    [1, 2, 1, 1, 1],
+    [1, 1, 2, 1, 1],
+    [1, 1, 1, 2, 1],
+    [1, 1, 1, 1, 2],
     # [1, 0, 0, 0, 0],
 ]
 
@@ -55,8 +59,8 @@ beta_list = [
     # 0.000001,
     # 0.00001,
     0.0001,
-    0.001,
-    0.01,
+    # 0.001,
+    # 0.01,
     # 0.1,
     # 1.0,
 ]
@@ -66,9 +70,9 @@ setup_dict = {
     # Reconstruction
     'share_encoder': '0',
     'recon_train_batch_size': 32,
-    'train_reconstructor': '1',
+    'train_reconstructor': '0',
     'reconstruct_datasets': '1',
-    'plot_recons': '0',
+    'plot_recons': '1',
 
     'use_reconstructed_dataset': '1',
     'disentangle_with_reparameterization': '1',
@@ -87,7 +91,7 @@ setup_dict = {
 
     # Common
     'repeat_start': 0,
-    'repeat_end': 1,
+    'repeat_end': 5,
     'epochs': 500,
     'early_stop': '1',
     'early_stop_observation_period': 20,
