@@ -33,6 +33,10 @@ class Reconstructor(object):
         self.share_encoder = args.share_encoder
         self.train_flag = False
 
+        # self.small_recon_weight = 0.001
+        self.small_recon_weight = 0.01
+        # self.small_recon_weight = 0.1
+
         self.z_dim = args.z_dim
 
         # class (pos/neg) mem (pos/neg)
@@ -180,7 +184,7 @@ class Reconstructor(object):
                 losses['membership'][encoder_name] += loss
 
             if self.disentangle:
-                self.disentangle(x, y)
+                self.disentangle_encoders(x, y)
 
         for encoder_name in self.encoder_name_list:
             self.class_acc_dict[encoder_name] = corrects['class'][encoder_name] / total
@@ -194,22 +198,22 @@ class Reconstructor(object):
                 membership_acc += '{}: {:.4f}, '.format(encoder_name, self.membership_acc_dict[encoder_name])
             print('Epoch: {:>3},'.format(epoch), class_acc, membership_acc)
 
-    def train_reconstructor(self, inputs):
+    def train_reconstructor(self, x):
         for encoder_name in self.encoder_name_list:
             self.encoders_opt[encoder_name].zero_grad()
         self.decoder_opt.zero_grad()
 
-        mu = torch.zeros((inputs.shape[0], self.z_dim)).to(self.device)
-        logvar = torch.zeros((inputs.shape[0], self.z_dim)).to(self.device)
+        mu = torch.zeros((x.shape[0], self.z_dim)).to(self.device)
+        logvar = torch.zeros((x.shape[0], self.z_dim)).to(self.device)
         for encoder_idx, encoder_name in enumerate(self.encoder_name_list):
-            mu_, logvar_ = self.encoders[encoder_name](inputs)
+            mu_, logvar_ = self.encoders[encoder_name](x)
             mu[:, self.z_idx[encoder_name]] = mu_[:, self.z_idx[encoder_name]]
             logvar[:, self.z_idx[encoder_name]] = logvar_[:, self.z_idx[encoder_name]]
 
         z = self.reparameterize(mu, logvar)
 
         recons = self.decoder(z)
-        recon_loss, MSE, KLD = self.recon_loss(recons, inputs, mu, logvar)
+        recon_loss, MSE, KLD = self.recon_loss(recons, x, mu, logvar)
         recon_loss = self.weights['recon'] * recon_loss
         recon_loss.backward()
 
@@ -272,7 +276,7 @@ class Reconstructor(object):
 
         return np.sum(inout_concat == np.round(pred_concat)), membership_loss.item()
 
-    def disentangle(self, x, y):
+    def disentangle_encoders(self, x, y):
         targets_onehot = torch.zeros((len(y), self.class_num)).to(self.device)
         targets_onehot = targets_onehot.scatter_(1, y.reshape((-1, 1)), 1)
 
@@ -293,6 +297,14 @@ class Reconstructor(object):
             mu = mu_[:, self.z_idx[encoder_name]]
             logvar = logvar_[:, self.z_idx[encoder_name]]
 
+            mu_dec = torch.zeros_like(mu_)
+            logvar_dec = torch.zeros_like(logvar_)
+
+            mu_dec[:, self.z_idx[encoder_name]] = mu
+            logvar_dec[:, self.z_idx[encoder_name]] = logvar
+
+            z_dec = self.reparameterize(mu_dec, logvar_dec)
+
             z = self.reparameterize(mu, logvar)
             class_pred = self.class_discs[encoder_name](z)
             class_loss = class_weight * self.class_loss(class_pred, y)
@@ -301,7 +313,10 @@ class Reconstructor(object):
             mem_pred = self.membership_discs[encoder_name](z)
             membership_loss = membership_weight * self.membership_loss(mem_pred, torch.ones_like(mem_pred))
 
-            loss = class_loss + membership_loss
+            recons = self.decoder(z_dec)
+            recon_loss, _, _ = self.recon_loss(recons, x, mu_dec, logvar_dec)
+
+            loss = class_loss + membership_loss + self.small_recon_weight * recon_loss
             loss.backward()
             self.encoders_opt[encoder_name].step()
 
@@ -314,20 +329,20 @@ class Reconstructor(object):
 
         loss = 0
         with torch.no_grad():
-            for batch_idx, (inputs, targets) in enumerate(loader):
-                inputs, targets = inputs.to(self.device), targets.to(self.device)
+            for batch_idx, (x, y) in enumerate(loader):
+                x, y = x.to(self.device), y.to(self.device)
 
-                mu = torch.zeros((inputs.shape[0], self.z_dim)).to(self.device)
-                logvar = torch.zeros((inputs.shape[0], self.z_dim)).to(self.device)
+                mu = torch.zeros((x.shape[0], self.z_dim)).to(self.device)
+                logvar = torch.zeros((x.shape[0], self.z_dim)).to(self.device)
                 for encoder_idx, encoder_name in enumerate(self.encoder_name_list):
-                    mu_, logvar_ = self.encoders[encoder_name](inputs)
+                    mu_, logvar_ = self.encoders[encoder_name](x)
                     mu[:, self.z_idx[encoder_name]] = mu_[:, self.z_idx[encoder_name]]
                     logvar[:, self.z_idx[encoder_name]] = logvar_[:, self.z_idx[encoder_name]]
 
                 z = self.reparameterize(mu, logvar)
 
                 recons = self.decoder(z)
-                recon_loss, MSE, KLD = self.recon_loss(recons, inputs, mu, logvar)
+                recon_loss, MSE, KLD = self.recon_loss(recons, x, mu, logvar)
                 loss += recon_loss.item()
 
         if inference_type == 'valid':

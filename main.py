@@ -41,7 +41,7 @@ parser.add_argument('--beta', type=float, default=0.0001)
 parser.add_argument('--z_dim', type=int, default=64)
 parser.add_argument('--recon_lr', type=float, default=0.001)
 parser.add_argument('--disc_lr', type=float, default=0.001)
-parser.add_argument('--recon_train_batch_size', type=int, default=32)
+parser.add_argument('--recon_train_batch_size', type=int, default=4)
 
 parser.add_argument('--recon_weight', type=float, default='1')
 parser.add_argument('--class_pos_weight', type=float, default='1')
@@ -65,16 +65,16 @@ parser.add_argument('--attack_train_batch_size', type=int, default=100)
 
 # -------------------------------------------------------------------------------------------------------------------- #
 # -------- Control flags -------- #
-parser.add_argument('--description', type=str, default='0824_4typesDisentanglement')
+parser.add_argument('--description', type=str, default='0825_4typesDisentanglement_small_recon')
 # parser.add_argument('--description', type=str, default='baseline')
 parser.add_argument('--repeat_start', type=int, default=0)
 parser.add_argument('--repeat_end', type=int, default=1)
 
 # ---- Reconstruction ---- #
 parser.add_argument('--share_encoder', type=str2bool, default='0')
-parser.add_argument('--train_reconstructor', type=str2bool, default='0')
-parser.add_argument('--reconstruct_datasets', type=str2bool, default='0')
-parser.add_argument('--plot_recons', type=str2bool, default='0')
+parser.add_argument('--train_reconstructor', type=str2bool, default='1')
+parser.add_argument('--reconstruct_datasets', type=str2bool, default='1')
+parser.add_argument('--plot_recons', type=str2bool, default='1')
 
 # ---- Classification ---- #
 parser.add_argument('--use_reconstructed_dataset', type=str2bool, default='1')
@@ -84,8 +84,8 @@ parser.add_argument('--test_classifier', type=str2bool, default='0')
 parser.add_argument('--extract_classifier_features', type=str2bool, default='0')
 
 # ---- Attack ---- #
-parser.add_argument('--train_attacker', type=str2bool, default='1')
-parser.add_argument('--test_attacker', type=str2bool, default='1')
+parser.add_argument('--train_attacker', type=str2bool, default='0')
+parser.add_argument('--test_attacker', type=str2bool, default='0')
 
 # ---- ---- #
 # parser.add_argument('--test_with_raw_classifier', type=str2bool, default='0')
