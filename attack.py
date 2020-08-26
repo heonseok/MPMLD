@@ -189,5 +189,5 @@ class Attacker(object):
             'valid': self.valid_auroc,
             'test': test_auroc,
         }
-        print(auroc_dict)
+        # print(auroc_dict)
         np.save(os.path.join(self.attack_path, 'auroc.npy'), auroc_dict)
