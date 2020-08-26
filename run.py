@@ -95,7 +95,7 @@ setup_dict = {
     'early_stop_observation_period': 20,
     'gpu_id': 2,
     'print_training': '0',
-    'description': 'baseline',
+    'description': '0825_4typesDisentanglement_small_recon',
 }
 
 for dataset in dataset_list:

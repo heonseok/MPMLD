@@ -33,8 +33,8 @@ ref_ratio_list = [
     # 0.1,
     # 0.2,
     # 0.5,
-    # 1.0,
-    2.0,
+    1.0,
+    # 2.0,
 ]
 
 recon_lr_list = [
@@ -48,7 +48,7 @@ recon_lr_list = [
 weight_list = [
     # [1, 0, 0, 0, 0],
     # [1, 1, 1, 1, 1],
-    [1, 10, 10, 10, 10],
+    [1, 100, 100, 100, 100],
 ]
 
 beta_list = [
@@ -93,7 +93,7 @@ setup_dict = {
     'epochs': 500,
     'early_stop': '1',
     'early_stop_observation_period': 20,
-    'gpu_id': 2,
+    'gpu_id': 3,
     'print_training': '0',
     'description': '0825_4typesDisentanglement_small_recon',
     # 'description': '0821noDE',
