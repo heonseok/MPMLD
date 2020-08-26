@@ -50,13 +50,13 @@ def load_dataset(dataset, data_path):
 
     elif dataset == 'MNIST':
         transform_train = transforms.Compose([
-            # transforms.Resize(32),
+            transforms.Resize(32),
             transforms.ToTensor(),
             # transforms.Normalize(mean=[0.5], std=[0.5]),
         ])
 
         transform_test = transforms.Compose([
-            # transforms.Resize(32),
+            transforms.Resize(32),
             transforms.ToTensor(),
             # transforms.Normalize(mean=[0.5], std=[0.5]),
         ])
@@ -71,11 +71,13 @@ def load_dataset(dataset, data_path):
 
     elif dataset == 'Fashion-MNIST':
         transform_train = transforms.Compose([
+            transforms.Resize(32),
             transforms.ToTensor(),
             # transforms.Normalize(mean=[0.5], std=[0.5]),
         ])
 
         transform_test = transforms.Compose([
+            transforms.Resize(32),
             transforms.ToTensor(),
             # transforms.Normalize(mean=[0.5], std=[0.5]),
         ])

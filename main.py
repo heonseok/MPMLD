@@ -13,7 +13,6 @@ from data import load_dataset
 import torch
 from torch.utils.data import Subset, ConcatDataset
 
-# from reconstruction_single_encoder import SingleReconstructor
 from reconstruction import Reconstructor
 from classification import Classifier
 from attack import Attacker
@@ -26,13 +25,14 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--base_path', type=str, default='/mnt/disk1/heonseok/MPMLD')
 parser.add_argument('--dataset', type=str, default='SVHN',
                     choices=['MNIST', 'Fashion-MNIST', 'SVHN', 'CIFAR-10', 'adult', 'location', ])
-parser.add_argument('--setsize', type=int, default=5000)
+parser.add_argument('--setsize', type=int, default=10000)
 parser.add_argument('--early_stop', type=str2bool, default='1')
 parser.add_argument('--early_stop_observation_period', type=int, default=20)
 parser.add_argument('--gpu_id', type=int, default=3)
 parser.add_argument('--epochs', type=int, default=500)
 parser.add_argument('--resume', type=str2bool, default='0')
 parser.add_argument('--print_training', type=str2bool, default='1')
+parser.add_argument('--use_rclone', type=str2bool, default='0')
 parser.add_argument('--test_batch_size', type=int, default=100)
 
 # ---- Reconstruction ---- #
@@ -41,7 +41,7 @@ parser.add_argument('--beta', type=float, default=0.0001)
 parser.add_argument('--z_dim', type=int, default=64)
 parser.add_argument('--recon_lr', type=float, default=0.001)
 parser.add_argument('--disc_lr', type=float, default=0.001)
-parser.add_argument('--recon_train_batch_size', type=int, default=4)
+parser.add_argument('--recon_train_batch_size', type=int, default=32)
 
 parser.add_argument('--recon_weight', type=float, default='1')
 parser.add_argument('--class_pos_weight', type=float, default='1')
@@ -160,7 +160,7 @@ for repeat_idx in range(args.repeat_start, args.repeat_end):
         elif args.dataset == 'location':
             args.class_num = 30
 
-    elif args.dataset in ['MNIST', 'SVHN', 'CIFAR-10']:
+    elif args.dataset in ['MNIST', 'Fashion-MNIST', 'SVHN', 'CIFAR-10']:
         args.class_num = 10
 
     # Recon: Train, Class: Train, Attack: In(Train/Test)
@@ -189,6 +189,8 @@ for repeat_idx in range(args.repeat_start, args.repeat_end):
         'pn_pp_np_nn',  # [1, 1, 1, 1]
         'pn_pp_nn',  # [1, 1, 0, 1]
         'pn_pp',  # [1, 1, 0, 0]
+        'pp_np',  # [0, 1, 1, 0]
+        'np_nn',  # [0, 0, 1, 1]
         'pn',  # [1, 0, 0, 0]
         'pp',  # [1, 0, 0, 0]
         'np',  # [1, 0, 0, 0]
@@ -240,8 +242,9 @@ for repeat_idx in range(args.repeat_start, args.repeat_end):
         img_path = os.path.join(img_dir, '{}_repeat{}.png'.format(args.reconstruction_name, repeat_idx))
         plt.savefig(img_path)
 
-        drive_path = os.path.join('Research/MPMLD/', img_dir)
-        os.system('rclone copy -P {} remote:{}'.format(img_path, drive_path))
+        if args.use_rclone:
+            drive_path = os.path.join('Research/MPMLD/', img_dir)
+            os.system('rclone copy -P {} remote:{}'.format(img_path, drive_path))
 
     print()
 

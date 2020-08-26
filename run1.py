@@ -33,7 +33,8 @@ ref_ratio_list = [
     # 0.1,
     # 0.2,
     # 0.5,
-    1.0,
+    # 1.0,
+    2.0,
 ]
 
 recon_lr_list = [
@@ -43,98 +44,30 @@ recon_lr_list = [
     # 0.1,
 ]
 
-# recon, class_cz(+), class_mz(-), membership_cz(-), membership_mz(+)
+# recon, class_pos, class_neg, membership_pos, membership_neg
 weight_list = [
-    # 0803
     # [1, 0, 0, 0, 0],
-
-    # [1, 1, 0, 0, 0],
-    # [1, 0, 1, 0, 0],
-    # [1, 0, 0, 1, 0],
-    # [1, 0, 0, 0, 1],
-
-    # [1, 0, 1, 1, 0],
-    # [1, 2, 2, 1, 0],
     # [1, 1, 1, 1, 1],
-    # [1, 1, 1, 0, 0],
-    # [1, 0, 1, 0, 1],
-    # [1, 1, 0, 1, 0],
-    # [1, 1, 0, 0, 1],
-
-    # [1, 1, 1, 1, 1],
-
-    # [1, 0, 1, 2, 0],
-    # [1, 0, 2, 1, 0],
-    # [1, 0, 2, 2, 0],
-
-    # [1, 0, 1, 0.1, 0],
-
-    # [1, 2, 0, 0, 2],
-
-    # 0805 class conditional
-    # [1, 1, 0, 0, 0],
-    # [1, 0, 1, 0, 0],
-    # [1, 0, 0, 1, 0],
-    # [1, 0, 0, 0, 1],
-
-    # [1, 1, 0, 0, 1],
-    # [1, 0, 1, 1, 0],
-    # [1, 1, 0, 1, 0],
-    # [1, 0, 1, 0, 1],
-
-    # [1, 0, 2, 0, 1],
-    # [1, 0, 1.5, 0, 1],
-    # [1, 0, 1.5, 0, 0],
-    # [1, 0, 2, 0, 0],
-
-    # 0807
-    # [1, 0, 0, 0, 0],
-    # [1, 0, 1, 0, 0],
-    # [1, 0, 0, 1, 0],
-    # [1, 0, 1, 0, 1],
-    # [1, 0, 1, 1, 0],
-    # [1, 0, 2, 1, 0],
-    # [1, 0, 1, 2, 0],
-    # [1, 0, 2, 2, 0],
-    # [1, 0, 0.5, 1, 0],
-    # [1, 0, 1, 0.5, 0],
-    # [1, 0, 0.5, 0.5, 0],
-
-    # 0813
-    # [0.01, 0, 0, 0, 0],
-    # [0.05, 0, 0, 0, 0],
-    # [0.1, 0, 0, 0, 0],
-    # [0.5, 0, 0, 0, 0],
-
-    # [0.01, 0, 1, 1, 0],
-    # [0.05, 0, 1, 1, 0],
-    # [0.1, 0, 1, 1, 0],
-    # [0.5, 0, 1, 1, 0],
-    # [0.5, 0, 1, 1, 0],
-    # [0.5, 0, 2, 2, 0],
-    # [0.5, 0, 5, 5, 0],
-    # [0.5, 0, 10, 10, 0],
-
-    # 0818
-    [1, 0, 0, 0, 0],
-    # [1, 0, 1, 1, 0],
+    [1, 10, 10, 10, 10],
 ]
 
 beta_list = [
     # 0.0
     # 0.000001,
     # 0.00001,
-    # 0.0001,
+    0.0001,
     # 0.001,
     # 0.01,
-    0.1,
+    # 0.1,
     # 1.0,
 ]
 
 setup_dict = {
+    'base_path': '/mnt/disk1/heonseok/MPMLD',
 
     # Reconstruction
-    'recon_train_batch_size': 2,
+    'share_encoder': '0',
+    'recon_train_batch_size': 32,
     'train_reconstructor': '1',
     'reconstruct_datasets': '1',
     'plot_recons': '1',
@@ -143,7 +76,7 @@ setup_dict = {
     'disentangle_with_reparameterization': '1',
 
     # Classification
-    'class_train_batch_size': 8,
+    'class_train_batch_size': 32,
     'train_classifier': '1',
     'test_classifier': '1',
     'extract_classifier_features': '1',
@@ -154,14 +87,16 @@ setup_dict = {
     'train_attacker': '1',
     'test_attacker': '1',
 
+    # Common
     'repeat_start': 0,
     'repeat_end': 5,
     'epochs': 500,
     'early_stop': '1',
     'early_stop_observation_period': 20,
-    'gpu_id': 1,
+    'gpu_id': 2,
     'print_training': '0',
-    'description': 'baseline',
+    'description': '0825_4typesDisentanglement_small_recon',
+    # 'description': '0821noDE',
 }
 
 for dataset in dataset_list:
@@ -179,11 +114,12 @@ for dataset in dataset_list:
                             target_setup_dict['recon_lr'] = str(recon_lr)
                             target_setup_dict['ref_ratio'] = str(ref_ratio)
                             target_setup_dict['beta'] = str(beta)
+
                             target_setup_dict['recon_weight'] = str(weight[0])
-                            target_setup_dict['class_cz_weight'] = str(weight[1])
-                            target_setup_dict['class_mz_weight'] = str(weight[2])
-                            target_setup_dict['membership_cz_weight'] = str(weight[3])
-                            target_setup_dict['membership_mz_weight'] = str(weight[4])
+                            target_setup_dict['class_pos_weight'] = str(weight[1])
+                            target_setup_dict['class_neg_weight'] = str(weight[2])
+                            target_setup_dict['membership_pos_weight'] = str(weight[3])
+                            target_setup_dict['membership_neg_weight'] = str(weight[4])
 
                             args_list.append('python main.py')
                             for k, v in target_setup_dict.items():
