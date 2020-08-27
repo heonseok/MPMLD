@@ -470,7 +470,8 @@ class SingleReconstructor(object):
         for recon_idx, reconstruction_type in enumerate(reconstruction_type_list):
             recon_datasets_dict = {}
             for dataset_type, dataset in dataset_dict.items():
-                loader = DataLoader(dataset, batch_size=self.test_batch_size, shuffle=False, num_workers=2)
+                # loader = DataLoader(dataset, batch_size=self.test_batch_size, shuffle=False, num_workers=2)
+                loader = DataLoader(dataset, batch_size=2, shuffle=True, num_workers=2)
                 raws = []
                 recons = []
                 labels = []
@@ -484,98 +485,107 @@ class SingleReconstructor(object):
                         mu_class, mu_membership = self.split_class_membership(mu)
                         logvar_class, logvar_membership = self.split_class_membership(logvar)
 
-                        if reconstruction_type == 'cb_mb':
-                            z[:, self.class_idx] = mu_class
-                            z[:, self.membership_idx] = mu_membership
-                        elif reconstruction_type == 'cr_mr':
-                            z[:, self.class_idx] = self.reparameterize(mu_class, logvar_class)
-                            z[:, self.membership_idx] = self.reparameterize(mu_membership, logvar_membership)
+                        # ---- Swap ---- #
+                        mu, logvar = self.nets['encoder'](inputs)
 
-                        elif reconstruction_type == 'cb_mz':
-                            z[:, self.class_idx] = mu_class
-                            z[:, self.membership_idx] = torch.zeros_like(mu_membership).to(self.device)
-                        elif reconstruction_type == 'cz_mb':
-                            z[:, self.class_idx] = torch.zeros_like(mu_class).to(self.device)
-                            z[:, self.membership_idx] = mu_membership
-                        elif reconstruction_type == 'cs1.2_ms0.8':  # scaling
-                            z[:, self.class_idx] = mu_class * 1.2
-                            z[:, self.membership_idx] = mu_membership * 0.8
-                        elif reconstruction_type == 'cb_ms0.8':  # scaling
-                            z[:, self.class_idx] = mu_class
-                            z[:, self.membership_idx] = mu_membership * 0.8
-                        elif reconstruction_type == 'cb_ms0.5':  # scaling
-                            z[:, self.class_idx] = mu_class
-                            z[:, self.membership_idx] = mu_membership * 0.5
-                        elif reconstruction_type == 'cb_ms0.25':  # scaling
-                            z[:, self.class_idx] = mu_class
-                            z[:, self.membership_idx] = mu_membership * 0.25
-                        elif reconstruction_type == 'cb_ms0.1':  # scaling
-                            z[:, self.class_idx] = mu_class
-                            z[:, self.membership_idx] = mu_membership * 0.1
-                        elif reconstruction_type == 'cb_mb_n1':  # + noise
-                            z[:, self.class_idx] = mu_class
-                            z[:, self.membership_idx] = mu_membership + torch.randn_like(mu_membership).to(self.device)
-                        elif reconstruction_type == 'cb_mb_n0.5':  # + noise
-                            z[:, self.class_idx] = mu_class
-                            z[:, self.membership_idx] = mu_membership + 0.5 * torch.randn_like(mu_membership).to(
-                                self.device)
-                        elif reconstruction_type == 'cb_mb_n0.1':  # + noise
-                            z[:, self.class_idx] = mu_class
-                            z[:, self.membership_idx] = mu_membership + 0.1 * torch.randn_like(mu_membership).to(
-                                self.device)
-                        elif reconstruction_type == 'cb_mr':
-                            z[:, self.class_idx] = mu_class
-                            z[:, self.membership_idx] = self.reparameterize(mu_membership, logvar_membership)
-                        elif reconstruction_type == 'cb_ms0.5_n0.5':  # scaling
-                            z[:, self.class_idx] = mu_class
-                            z[:, self.membership_idx] = mu_membership * 0.5 + 0.5 * torch.randn_like(mu_membership).to(
-                                self.device)
-                        elif reconstruction_type == 'cb_ms0.5_n0.1':  # scaling
-                            z[:, self.class_idx] = mu_class
-                            z[:, self.membership_idx] = mu_membership * 0.5 + 0.1 * torch.randn_like(mu_membership).to(
-                                self.device)
-                        elif reconstruction_type == 'cb_ms0.8_n0.2':  # scaling
-                            z[:, self.class_idx] = mu_class
-                            z[:, self.membership_idx] = mu_membership * 0.8 + 0.2 * torch.randn_like(mu_membership).to(
-                                self.device)
-                        elif reconstruction_type == 'cb_mConstant':
-                            z[:, self.class_idx] = mu_class
-                            for idx in range(z.shape[0]):
-                                z[idx, self.membership_idx] = mu_membership[0]
-                        elif reconstruction_type == 'cb_mConstant0.8':
-                            z[:, self.class_idx] = mu_class
-                            mu_membership_constant = 0.8 * mu_membership[0]
-                            for idx in range(z.shape[0]):
-                                z[idx, self.membership_idx] = mu_membership_constant
-                        elif reconstruction_type == 'cb_mInter0.8':
-                            z[:, self.class_idx] = mu_class
-                            mu_membership_constant = 0.2 * mu_membership[0]
-                            for idx in range(z.shape[0]):
-                                z[idx, self.membership_idx] = 0.8 * mu_membership[idx] + mu_membership_constant
+                        z[0][self.class_idx] = mu[0][self.class_idx]
+                        z[1][self.class_idx] = mu[1][self.class_idx]
+                        z[0][self.membership_idx] = mu[1][self.membership_idx]
+                        z[1][self.membership_idx] = mu[0][self.membership_idx]
+                        # ---- Swap ---- #
 
-                        elif reconstruction_type == 'cb_mAvg':
-                            z[:, self.class_idx] = mu_class
-                            mu_membership_constant = torch.mean(mu_membership, dim=0)
-                            for idx in range(z.shape[0]):
-                                z[idx, self.membership_idx] = mu_membership_constant
+                        # if reconstruction_type == 'cb_mb':
+                        #     z[:, self.class_idx] = mu_class
+                        #     z[:, self.membership_idx] = mu_membership
+                        # elif reconstruction_type == 'cr_mr':
+                        #     z[:, self.class_idx] = self.reparameterize(mu_class, logvar_class)
+                        #     z[:, self.membership_idx] = self.reparameterize(mu_membership, logvar_membership)
+                        #
+                        # elif reconstruction_type == 'cb_mz':
+                        #     z[:, self.class_idx] = mu_class
+                        #     z[:, self.membership_idx] = torch.zeros_like(mu_membership).to(self.device)
+                        # elif reconstruction_type == 'cz_mb':
+                        #     z[:, self.class_idx] = torch.zeros_like(mu_class).to(self.device)
+                        #     z[:, self.membership_idx] = mu_membership
+                        # elif reconstruction_type == 'cs1.2_ms0.8':  # scaling
+                        #     z[:, self.class_idx] = mu_class * 1.2
+                        #     z[:, self.membership_idx] = mu_membership * 0.8
+                        # elif reconstruction_type == 'cb_ms0.8':  # scaling
+                        #     z[:, self.class_idx] = mu_class
+                        #     z[:, self.membership_idx] = mu_membership * 0.8
+                        # elif reconstruction_type == 'cb_ms0.5':  # scaling
+                        #     z[:, self.class_idx] = mu_class
+                        #     z[:, self.membership_idx] = mu_membership * 0.5
+                        # elif reconstruction_type == 'cb_ms0.25':  # scaling
+                        #     z[:, self.class_idx] = mu_class
+                        #     z[:, self.membership_idx] = mu_membership * 0.25
+                        # elif reconstruction_type == 'cb_ms0.1':  # scaling
+                        #     z[:, self.class_idx] = mu_class
+                        #     z[:, self.membership_idx] = mu_membership * 0.1
+                        # elif reconstruction_type == 'cb_mb_n1':  # + noise
+                        #     z[:, self.class_idx] = mu_class
+                        #     z[:, self.membership_idx] = mu_membership + torch.randn_like(mu_membership).to(self.device)
+                        # elif reconstruction_type == 'cb_mb_n0.5':  # + noise
+                        #     z[:, self.class_idx] = mu_class
+                        #     z[:, self.membership_idx] = mu_membership + 0.5 * torch.randn_like(mu_membership).to(
+                        #         self.device)
+                        # elif reconstruction_type == 'cb_mb_n0.1':  # + noise
+                        #     z[:, self.class_idx] = mu_class
+                        #     z[:, self.membership_idx] = mu_membership + 0.1 * torch.randn_like(mu_membership).to(
+                        #         self.device)
+                        # elif reconstruction_type == 'cb_mr':
+                        #     z[:, self.class_idx] = mu_class
+                        #     z[:, self.membership_idx] = self.reparameterize(mu_membership, logvar_membership)
+                        # elif reconstruction_type == 'cb_ms0.5_n0.5':  # scaling
+                        #     z[:, self.class_idx] = mu_class
+                        #     z[:, self.membership_idx] = mu_membership * 0.5 + 0.5 * torch.randn_like(mu_membership).to(
+                        #         self.device)
+                        # elif reconstruction_type == 'cb_ms0.5_n0.1':  # scaling
+                        #     z[:, self.class_idx] = mu_class
+                        #     z[:, self.membership_idx] = mu_membership * 0.5 + 0.1 * torch.randn_like(mu_membership).to(
+                        #         self.device)
+                        # elif reconstruction_type == 'cb_ms0.8_n0.2':  # scaling
+                        #     z[:, self.class_idx] = mu_class
+                        #     z[:, self.membership_idx] = mu_membership * 0.8 + 0.2 * torch.randn_like(mu_membership).to(
+                        #         self.device)
+                        # elif reconstruction_type == 'cb_mConstant':
+                        #     z[:, self.class_idx] = mu_class
+                        #     for idx in range(z.shape[0]):
+                        #         z[idx, self.membership_idx] = mu_membership[0]
+                        # elif reconstruction_type == 'cb_mConstant0.8':
+                        #     z[:, self.class_idx] = mu_class
+                        #     mu_membership_constant = 0.8 * mu_membership[0]
+                        #     for idx in range(z.shape[0]):
+                        #         z[idx, self.membership_idx] = mu_membership_constant
+                        # elif reconstruction_type == 'cb_mInter0.8':
+                        #     z[:, self.class_idx] = mu_class
+                        #     mu_membership_constant = 0.2 * mu_membership[0]
+                        #     for idx in range(z.shape[0]):
+                        #         z[idx, self.membership_idx] = 0.8 * mu_membership[idx] + mu_membership_constant
+                        #
+                        # elif reconstruction_type == 'cb_mAvg':
+                        #     z[:, self.class_idx] = mu_class
+                        #     mu_membership_constant = torch.mean(mu_membership, dim=0)
+                        #     for idx in range(z.shape[0]):
+                        #         z[idx, self.membership_idx] = mu_membership_constant
+                        #
+                        # elif reconstruction_type == 'cb_mr1.2':
+                        #     z[:, self.class_idx] = mu_class
+                        #     std = torch.exp(0.5 * logvar_membership)
+                        #     eps = torch.randn_like(std)
+                        #     z[:, self.membership_idx] = mu_membership + 1.2 * std * eps
+                        #
+                        # elif reconstruction_type == 'cb_mr2.0':
+                        #     z[:, self.class_idx] = mu_class
+                        #     std = torch.exp(0.5 * logvar_membership)
+                        #     eps = torch.randn_like(std)
+                        #     z[:, self.membership_idx] = mu_membership + 2. * std * eps
 
-                        elif reconstruction_type == 'cb_mr1.2':
-                            z[:, self.class_idx] = mu_class
-                            std = torch.exp(0.5 * logvar_membership)
-                            eps = torch.randn_like(std)
-                            z[:, self.membership_idx] = mu_membership + 1.2 * std * eps
-
-                        elif reconstruction_type == 'cb_mr2.0':
-                            z[:, self.class_idx] = mu_class
-                            std = torch.exp(0.5 * logvar_membership)
-                            eps = torch.randn_like(std)
-                            z[:, self.membership_idx] = mu_membership + 2. * std * eps
-
-                            # print(mu_membership.shape)
-                            # print(mu_membership[0].shape)
-                            # z[:, self.membership_idx] = mu_membership[0]
-                            # print(torch.repeat_interleave(mu_membership[0], mu_membership.shape[0], 1).shape)
-                            # sys.exit(1)
+                        # print(mu_membership.shape)
+                        # print(mu_membership[0].shape)
+                        # z[:, self.membership_idx] = mu_membership[0]
+                        # print(torch.repeat_interleave(mu_membership[0], mu_membership.shape[0], 1).shape)
+                        # sys.exit(1)
 
                         # if reconstruction_type == 'cb_mb_sb':
                         #     z[:, self.class_idx] = mu_class
@@ -623,23 +633,25 @@ class SingleReconstructor(object):
                         recons_batch = self.nets['decoder'](z).cpu()
                         labels_batch = targets
 
-                        if len(recons) == 0:
-                            raws = inputs.cpu()
-                            recons = recons_batch
-                            labels = labels_batch
+                        # if len(recons) == 0:
+                        raws = inputs.cpu()
+                        recons = recons_batch
+                        labels = labels_batch
 
-                            if dataset_type == 'train':
-                                vutils.save_image(recons, os.path.join(self.reconstruction_path,
-                                                                       '{}.png'.format(reconstruction_type)), nrow=10)
-                                recon_dict[reconstruction_type] = recons
+                        if dataset_type == 'train':
+                            # vutils.save_image(recons, os.path.join(self.reconstruction_path,
+                            #                                        'swap/swap{}.png'.format(batch_idx)), nrow=10)
+                            # recon_dict[reconstruction_type] = recons
+                            #
+                            # if recon_idx == 0:
+                            #     vutils.save_image(raws, os.path.join(self.reconstruction_path, 'swap/raw{}.png'.format(batch_idx)), nrow=10)
 
-                                if recon_idx == 0:
-                                    vutils.save_image(raws, os.path.join(self.reconstruction_path, 'raw.png'), nrow=10)
+                            vutils.save_image(torch.cat([raws, recons], dim=0), os.path.join(self.reconstruction_path, 'swap/{}.png'.format(batch_idx)), nrow=2)
 
-                        else:
-                            raws = torch.cat((raws, inputs.cpu()), axis=0)
-                            recons = torch.cat((recons, recons_batch), axis=0)
-                            labels = torch.cat((labels, labels_batch), axis=0)
+                        # else:
+                        #     raws = torch.cat((raws, inputs.cpu()), axis=0)
+                        #     recons = torch.cat((recons, recons_batch), axis=0)
+                        #     labels = torch.cat((labels, labels_batch), axis=0)
 
                 recon_datasets_dict[dataset_type] = {
                     'recons': recons,

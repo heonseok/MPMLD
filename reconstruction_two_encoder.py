@@ -491,13 +491,16 @@ class TwoReconstructor(object):
         for recon_idx, reconstruction_type in enumerate(reconstruction_type_list):
             recon_datasets_dict = {}
             for dataset_type, dataset in dataset_dict.items():
-                loader = DataLoader(dataset, batch_size=self.test_batch_size, shuffle=False, num_workers=2)
+                loader = DataLoader(dataset, batch_size=2, shuffle=False, num_workers=2)
+                # loader = DataLoader(dataset, batch_size=self.test_batch_size, shuffle=False, num_workers=2)
                 raws = []
                 recons = []
                 labels = []
                 with torch.no_grad():
                     for batch_idx, (inputs, targets) in enumerate(loader):
                         inputs = inputs.to(self.device)
+                        print(inputs.shape)
+                        sys.exit(1)
                         # mu, logvar = self.nets['encoder'](inputs)
                         # mu_class, mu_membership = self.split_class_membership(mu)
                         # logvar_class, logvar_membership = self.split_class_membership(logvar)
