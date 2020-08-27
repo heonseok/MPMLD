@@ -400,6 +400,9 @@ class Reconstructor(object):
             else:
                 break
 
+    def swap_membership(self, dataset_dict):
+        pass
+
     def reconstruct(self, dataset_dict, recon_type_list):
         try:
             self.load()

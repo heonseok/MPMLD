@@ -279,8 +279,12 @@ class VAEConvEncoder(nn.Module):
 
 
 class UnFlatten(nn.Module):
-    def forward(self, input, size=64):  # latent dim : 64
-        return input.view(input.size(0), size, 1, 1)
+    def __init__(self, size):
+        super().__init__()
+        self.size = size
+
+    def forward(self, input):  # latent dim : 64
+        return input.view(input.size(0), self.size, 1, 1)
 
 
 class VAEConvDecoder(nn.Module):
@@ -288,7 +292,7 @@ class VAEConvDecoder(nn.Module):
         super().__init__()
         # self.upsample = nn.Linear(latent_dim, 64 * 7 * 7)
         self.main = nn.Sequential(
-            UnFlatten(),
+            UnFlatten(latent_dim),
             nn.ConvTranspose2d(latent_dim, 1024, kernel_size=4, stride=1),
             # nn.BatchNorm2d(1024),
             nn.ReLU(),

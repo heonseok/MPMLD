@@ -23,8 +23,8 @@ setsize_list = [
 
 z_dim_list = [
     # '16',
-    # '32',
-    '64',
+    '32',
+    # '64',
     # '128',
     # '256',
 ]
@@ -46,8 +46,9 @@ recon_lr_list = [
 
 # recon, class_pos, class_neg, membership_pos, membership_neg
 weight_list = [
-    # [1, 0, 0, 0, 0],
-    [1, 1, 1, 1, 1],
+    [1, 0, 0, 0, 0],
+    # [10, 0, 0, 0, 0],
+    # [1, 1, 1, 1, 1],
     # [1, 10, 10, 10, 10],
 ]
 
@@ -55,9 +56,10 @@ beta_list = [
     # 0.0
     # 0.000001,
     # 0.00001,
-    0.0001,
+    # 0.0001,
     # 0.001,
-    # 0.01,
+    0.01,
+    # 0.05,
     # 0.1,
     # 1.0,
 ]
@@ -77,15 +79,15 @@ setup_dict = {
 
     # Classification
     'class_train_batch_size': 32,
-    'train_classifier': '1',
-    'test_classifier': '1',
-    'extract_classifier_features': '1',
+    'train_classifier': '0',
+    'test_classifier': '0',
+    'extract_classifier_features': '0',
     'classification_model': 'ResNet18',
     # 'classification_model': 'FCClassifier',
 
     # Attack
-    'train_attacker': '1',
-    'test_attacker': '1',
+    'train_attacker': '0',
+    'test_attacker': '0',
 
     # Common
     'repeat_start': 0,
@@ -93,7 +95,7 @@ setup_dict = {
     'epochs': 500,
     'early_stop': '1',
     'early_stop_observation_period': 20,
-    'gpu_id': 2,
+    'gpu_id': 3,
     'print_training': '0',
     'description': '0825_4typesDisentanglement_small_recon',
 }
