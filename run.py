@@ -23,9 +23,9 @@ setsize_list = [
 
 z_dim_list = [
     # '16',
-    '32',
+    # '32',
     # '64',
-    # '128',
+    '128',
     # '256',
 ]
 
@@ -46,9 +46,9 @@ recon_lr_list = [
 
 # recon, class_pos, class_neg, membership_pos, membership_neg
 weight_list = [
-    [1, 0, 0, 0, 0],
+    # [1, 0, 0, 0, 0],
     # [10, 0, 0, 0, 0],
-    # [1, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1],
     # [1, 10, 10, 10, 10],
 ]
 
@@ -70,8 +70,8 @@ setup_dict = {
     # Reconstruction
     'share_encoder': '0',
     'recon_train_batch_size': 32,
-    'train_reconstructor': '1',
-    'reconstruct_datasets': '1',
+    'train_reconstructor': '0',
+    'reconstruct_datasets': '0',
     'plot_recons': '1',
 
     'use_reconstructed_dataset': '1',
@@ -79,15 +79,15 @@ setup_dict = {
 
     # Classification
     'class_train_batch_size': 32,
-    'train_classifier': '0',
-    'test_classifier': '0',
-    'extract_classifier_features': '0',
+    'train_classifier': '1',
+    'test_classifier': '1',
+    'extract_classifier_features': '1',
     'classification_model': 'ResNet18',
     # 'classification_model': 'FCClassifier',
 
     # Attack
-    'train_attacker': '0',
-    'test_attacker': '0',
+    'train_attacker': '1',
+    'test_attacker': '1',
 
     # Common
     'repeat_start': 0,

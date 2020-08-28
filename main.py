@@ -32,7 +32,7 @@ parser.add_argument('--gpu_id', type=int, default=3)
 parser.add_argument('--epochs', type=int, default=500)
 parser.add_argument('--resume', type=str2bool, default='0')
 parser.add_argument('--print_training', type=str2bool, default='1')
-parser.add_argument('--use_rclone', type=str2bool, default='0')
+parser.add_argument('--use_rclone', type=str2bool, default='1')
 parser.add_argument('--test_batch_size', type=int, default=100)
 
 # ---- Reconstruction ---- #
@@ -187,14 +187,14 @@ for repeat_idx in range(args.repeat_start, args.repeat_end):
     # ---- Combination ---- #
     reconstruction_type_list = [
         'pn_pp_np_nn',  # [1, 1, 1, 1]
-        # 'pn_pp_nn',  # [1, 1, 0, 1]
-        # 'pn_pp',  # [1, 1, 0, 0]
-        # 'pp_np',  # [0, 1, 1, 0]
-        # 'np_nn',  # [0, 0, 1, 1]
-        # 'pn',  # [1, 0, 0, 0]
-        # 'pp',  # [1, 0, 0, 0]
-        # 'np',  # [1, 0, 0, 0]
-        # 'nn',  # [1, 0, 0, 0]
+        'pn_pp_nn',  # [1, 1, 0, 1]
+        'pn_pp',  # [1, 1, 0, 0]
+        'pp_np',  # [0, 1, 1, 0]
+        'np_nn',  # [0, 0, 1, 1]
+        'pn',  # [1, 0, 0, 0]
+        'pp',  # [1, 0, 0, 0]
+        'np',  # [1, 0, 0, 0]
+        'nn',  # [1, 0, 0, 0]
     ]
 
     attack_type_list = [
@@ -231,12 +231,18 @@ for repeat_idx in range(args.repeat_start, args.repeat_end):
         for recon_type in reconstruction_type_list:
             img_list.append(recon_type + '.png')
 
-        plt.figure(1, figsize=(10, 4))
+        # plt.figure(1, figsize=(10, 4))
+        fig, ax = plt.subplots(1, len(img_list), figsize=(20, 5))
+
         for img_idx, recon_type in enumerate(img_list):
-            plt.subplot(str(1) + str(len(img_list)) + str(img_idx + 1))
-            plt.imshow(mpimg.imread(os.path.join(args.reconstruction_path, recon_type)))
-            plt.xticks([])
-            plt.yticks([])
+            print(img_idx, recon_type)
+            # print(str(1) + str(len(img_list)) + str(img_idx + 1))
+            ax[img_idx].imshow(mpimg.imread(os.path.join(args.reconstruction_path, recon_type)))
+            ax[img_idx].set_title(recon_type)
+            # plt.subplot(str(1) + str(len(img_list)) + str(img_idx + 1))
+            # plt.imshow(mpimg.imread(os.path.join(args.reconstruction_path, recon_type)))
+            # ax[img_idx].xticks([])
+            # ax[img_idx].yticks([])
 
         plt.tight_layout()
         img_path = os.path.join(img_dir, '{}_repeat{}.png'.format(args.reconstruction_name, repeat_idx))
