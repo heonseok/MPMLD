@@ -30,10 +30,10 @@ z_dim_list = [
 ]
 
 ref_ratio_list = [
-    # 0.1,
+    0.1,
     # 0.2,
     # 0.5,
-    1.0,
+    # 1.0,
     # 2.0,
 ]
 
@@ -70,8 +70,8 @@ setup_dict = {
     # Reconstruction
     'share_encoder': '0',
     'recon_train_batch_size': 32,
-    'train_reconstructor': '0',
-    'reconstruct_datasets': '0',
+    'train_reconstructor': '1',
+    'reconstruct_datasets': '1',
     'plot_recons': '1',
 
     'use_reconstructed_dataset': '1',
