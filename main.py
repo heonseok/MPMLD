@@ -70,7 +70,7 @@ parser.add_argument('--description', type=str, default='0825_4typesDisentangleme
 # parser.add_argument('--description', type=str, default='baseline')
 parser.add_argument('--repeat_start', type=int, default=0)
 parser.add_argument('--repeat_end', type=int, default=1)
-parser.add_argument('--merged_discriminator', type=str2bool, default='1')
+parser.add_argument('--share_discriminator', type=str2bool, default='1')
 
 # ---- Reconstruction ---- #
 parser.add_argument('--share_encoder', type=str2bool, default='0')
@@ -108,7 +108,7 @@ for repeat_idx in range(args.repeat_start, args.repeat_end):
     else:
         encoder_type = 'distinct'
 
-    if args.merged_discriminator:
+    if args.share_discriminator:
         disc_type = 'shared'
         Reconstructor = SharedReconstructor
     else:
@@ -242,7 +242,8 @@ for repeat_idx in range(args.repeat_start, args.repeat_end):
             img_list.append(recon_type + '.png')
 
         # plt.figure(1, figsize=(10, 4))
-        fig, ax = plt.subplots(1, len(img_list), figsize=(20, 5))
+        fig, ax = plt.subplots(1, len(img_list), figsize=(20, 2))
+        # fig, ax = plt.subplots(1, len(img_list))
 
         for img_idx, recon_type in enumerate(img_list):
             print(img_idx, recon_type)
@@ -251,8 +252,8 @@ for repeat_idx in range(args.repeat_start, args.repeat_end):
             ax[img_idx].set_title(recon_type)
             # plt.subplot(str(1) + str(len(img_list)) + str(img_idx + 1))
             # plt.imshow(mpimg.imread(os.path.join(args.reconstruction_path, recon_type)))
-            # ax[img_idx].xticks([])
-            # ax[img_idx].yticks([])
+            ax[img_idx].get_xaxis().set_ticks([])
+            ax[img_idx].get_yaxis().set_ticks([])
 
         plt.tight_layout()
         img_path = os.path.join(img_dir, '{}_repeat{}.png'.format(args.reconstruction_name, repeat_idx))

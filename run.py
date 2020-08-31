@@ -3,9 +3,9 @@ import os
 dataset_list = [
     # 'adult'
     # 'location',
-    # 'MNIST',
+    'MNIST',
     # 'Fashion-MNIST',
-    'SVHN',
+    # 'SVHN',
     # 'CIFAR-10',
 ]
 
@@ -69,7 +69,7 @@ setup_dict = {
 
     # Reconstruction
     'share_encoder': '0',
-    'merged_discriminator': '1',
+    'share_discriminator': '0',
     'recon_train_batch_size': 32,
     'train_reconstructor': '1',
     'reconstruct_datasets': '1',
