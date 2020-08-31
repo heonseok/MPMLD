@@ -13,7 +13,8 @@ from data import load_dataset
 import torch
 from torch.utils.data import Subset, ConcatDataset
 
-from reconstruction import Reconstructor
+from reconstruction import DistinctReconstructor
+from reconstruction_merged_disc import SharedReconstructor
 from classification import Classifier
 from attack import Attacker
 
@@ -69,6 +70,7 @@ parser.add_argument('--description', type=str, default='0825_4typesDisentangleme
 # parser.add_argument('--description', type=str, default='baseline')
 parser.add_argument('--repeat_start', type=int, default=0)
 parser.add_argument('--repeat_end', type=int, default=1)
+parser.add_argument('--merged_discriminator', type=str2bool, default='1')
 
 # ---- Reconstruction ---- #
 parser.add_argument('--share_encoder', type=str2bool, default='0')
@@ -106,19 +108,27 @@ for repeat_idx in range(args.repeat_start, args.repeat_end):
     else:
         encoder_type = 'distinct'
 
+    if args.merged_discriminator:
+        disc_type = 'shared'
+        Reconstructor = SharedReconstructor
+    else:
+        disc_type = 'distinct'
+        Reconstructor = DistinctReconstructor
+
     args.reconstruction_name = os.path.join(
-        '{}_{}Enc_z{}_setsize{}_lr{}_bs{}_ref{}_rw{}_cp{}_cn{}_mp{}_mn{}'.format(args.reconstruction_model,
-                                                                                 encoder_type,
-                                                                                 args.z_dim,
-                                                                                 args.setsize, args.recon_lr,
-                                                                                 args.recon_train_batch_size,
-                                                                                 args.ref_ratio,
-                                                                                 args.recon_weight,
-                                                                                 args.class_pos_weight,
-                                                                                 args.class_neg_weight,
-                                                                                 args.membership_pos_weight,
-                                                                                 args.membership_neg_weight,
-                                                                                 ))
+        '{}_{}Enc_{}Disc_z{}_setsize{}_lr{}_bs{}_ref{}_rw{}_cp{}_cn{}_mp{}_mn{}'.format(args.reconstruction_model,
+                                                                                        encoder_type,
+                                                                                        disc_type,
+                                                                                        args.z_dim,
+                                                                                        args.setsize, args.recon_lr,
+                                                                                        args.recon_train_batch_size,
+                                                                                        args.ref_ratio,
+                                                                                        args.recon_weight,
+                                                                                        args.class_pos_weight,
+                                                                                        args.class_neg_weight,
+                                                                                        args.membership_pos_weight,
+                                                                                        args.membership_neg_weight,
+                                                                                        ))
 
     args.recon_output_path = os.path.join(args.base_path, args.dataset, args.description, args.reconstruction_name)
     args.raw_output_path = os.path.join(args.base_path, args.dataset, args.description,
