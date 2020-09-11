@@ -14,7 +14,7 @@ import torch
 from torch.utils.data import Subset, ConcatDataset
 
 from reconstruction import DistinctReconstructor
-from reconstruction_merged_disc import SharedReconstructor
+from reconstruction_shared_disc import SharedReconstructor
 from classification import Classifier
 from attack import Attacker
 

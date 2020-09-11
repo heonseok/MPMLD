@@ -123,70 +123,19 @@ def collate_attack_result(dataset, description, model, recon_type_list):
 
 # -------------------------------------------------------------------------------------------------------------------- #
 def main():
-    dataset = 'SVHN'
-    # description = '0803weights'
-    # model_list = [
-    #     # 'VAE1e-06_z64_setsize10000_lr0.001_ref0.1_rw1.0_cc0.0_cm0.0_mc0.0_mm0.0',
-    #     #
-    #     # 'VAE1e-06_z64_setsize10000_lr0.001_ref0.1_rw1.0_cc1.0_cm0.0_mc0.0_mm0.0',
-    #     # 'VAE1e-06_z64_setsize10000_lr0.001_ref0.1_rw1.0_cc0.0_cm1.0_mc0.0_mm0.0',
-    #     # 'VAE1e-06_z64_setsize10000_lr0.001_ref0.1_rw1.0_cc0.0_cm0.0_mc1.0_mm0.0',
-    #     # 'VAE1e-06_z64_setsize10000_lr0.001_ref0.1_rw1.0_cc0.0_cm0.0_mc0.0_mm1.0',
-    #     #
-    #     # 'VAE1e-06_z64_setsize10000_lr0.001_ref0.1_rw1.0_cc0.0_cm1.0_mc1.0_mm0.0',
-    #     # 'VAE1e-06_z64_setsize10000_lr0.001_ref0.1_rw1.0_cc0.0_cm1.0_mc0.0_mm1.0',
-    #     # 'VAE1e-06_z64_setsize10000_lr0.001_ref0.1_rw1.0_cc1.0_cm0.0_mc1.0_mm0.0',
-    #     # 'VAE1e-06_z64_setsize10000_lr0.001_ref0.1_rw1.0_cc1.0_cm0.0_mc0.0_mm1.0',
-    #
-    #     # 'VAE1e-06_z64_setsize10000_lr0.001_ref0.1_rw1.0_cc1.0_cm1.0_mc1.0_mm1.0',
-    # ]
-
-    # description = '0804set'
-    # model_list = [
-    #     'VAE1e-06_z64_setsize1000_lr0.001_ref0.1_rw1.0_cc0.0_cm0.0_mc0.0_mm0.0',
-    #     'VAE1e-06_z64_setsize2000_lr0.001_ref0.1_rw1.0_cc0.0_cm0.0_mc0.0_mm0.0',
-    #     'VAE1e-06_z64_setsize4000_lr0.001_ref0.1_rw1.0_cc0.0_cm0.0_mc0.0_mm0.0',
-    #     'VAE1e-06_z64_setsize5000_lr0.001_ref0.1_rw1.0_cc0.0_cm0.0_mc0.0_mm0.0',
-    # ]
-
-    # description = '0804style'
-    # model_list = [
-    #     # 'VAE1e-06_z64_setsize5000_lr0.001_ref0.1_rw1.0_cc1.0_cm0.0_mc0.0_mm0.0',
-    #     # 'VAE1e-06_z64_setsize5000_lr0.001_ref0.1_rw1.0_cc0.0_cm1.0_mc0.0_mm0.0',
-    #     # 'VAE1e-06_z64_setsize5000_lr0.001_ref0.1_rw1.0_cc0.0_cm0.0_mc1.0_mm0.0',
-    #     # 'VAE1e-06_z64_setsize5000_lr0.001_ref0.1_rw1.0_cc0.0_cm0.0_mc0.0_mm1.0',
-    #
-    #     'VAE1e-06_z64_setsize5000_lr0.001_ref0.1_rw1.0_cc0.0_cm1.0_mc1.0_mm0.0',
-    #     'VAE1e-06_z64_setsize5000_lr0.001_ref0.1_rw1.0_cc0.0_cm1.0_mc0.0_mm1.0',
-    # ]
-
-    # description = '0805ref1.0style'
-    # model_list = [
-    #     'VAE1e-06_z64_setsize5000_lr0.001_ref1.0_rw1.0_cc1.0_cm0.0_mc0.0_mm1.0',
-    # ]
-
-    # description = '0805class_conditional_mem_disc'
-    # model_list = [
-    #     # 'VAE1e-06_z64_setsize5000_lr0.001_ref1.0_rw1.0_cc1.0_cm0.0_mc0.0_mm0.0',
-    #     # 'VAE1e-06_z64_setsize5000_lr0.001_ref1.0_rw1.0_cc0.0_cm1.0_mc0.0_mm0.0',
-    #     # 'VAE1e-06_z64_setsize5000_lr0.001_ref1.0_rw1.0_cc0.0_cm0.0_mc1.0_mm0.0',
-    #     # 'VAE1e-06_z64_setsize5000_lr0.001_ref1.0_rw1.0_cc0.0_cm0.0_mc0.0_mm1.0',
-    #
-    #     'VAE1e-06_z64_setsize5000_lr0.001_ref1.0_rw1.0_cc1.0_cm0.0_mc0.0_mm1.0',
-    #     'VAE1e-06_z64_setsize5000_lr0.001_ref1.0_rw1.0_cc0.0_cm1.0_mc1.0_mm0.0',
-    #     'VAE1e-06_z64_setsize5000_lr0.001_ref1.0_rw1.0_cc1.0_cm0.0_mc1.0_mm0.0',
-    #     'VAE1e-06_z64_setsize5000_lr0.001_ref1.0_rw1.0_cc0.0_cm1.0_mc0.0_mm1.0',
-    # ]
-
-    # description = '0818bs2'
-    # model_list = [
-    #     'VAE0.1_z64_setsize5000_lr0.001_ref1.0_rw1.0_cc0.0_cm1.0_mc1.0_mm0.0',
-    # ]
+    # dataset = 'SVHN'
+    dataset = 'MNIST'
 
     description = '0825_4typesDisentanglement_small_recon'
     model_list = [
-        'VAE0.01_distinctEnc_sharedDisc_z128_setsize5000_lr0.001_bs32_ref1.0_rw1.0_cp1.0_cn1.0_mp1.0_mn1.0',
-        'VAE0.01_distinctEnc_distinctDisc_z128_setsize5000_lr0.001_bs32_ref1.0_rw1.0_cp1.0_cn1.0_mp1.0_mn1.0',
+        # 'VAE0.01_distinctEnc_sharedDisc_z128_setsize5000_lr0.001_bs32_ref1.0_rw1.0_cp1.0_cn1.0_mp1.0_mn1.0',
+        'VAE0.01_distinctEnc_distinctDisc_z128_setsize100_lr0.001_bs32_ref1.0_rw1.0_cp1.0_cn1.0_mp1.0_mn1.0',
+        'VAE0.01_distinctEnc_distinctDisc_z128_setsize200_lr0.001_bs32_ref1.0_rw1.0_cp1.0_cn1.0_mp1.0_mn1.0',
+        'VAE0.01_distinctEnc_distinctDisc_z128_setsize300_lr0.001_bs32_ref1.0_rw1.0_cp1.0_cn1.0_mp1.0_mn1.0',
+        'VAE0.01_distinctEnc_distinctDisc_z128_setsize400_lr0.001_bs32_ref1.0_rw1.0_cp1.0_cn1.0_mp1.0_mn1.0',
+        'VAE0.01_distinctEnc_distinctDisc_z128_setsize500_lr0.001_bs32_ref1.0_rw1.0_cp1.0_cn1.0_mp1.0_mn1.0',
+        'VAE0.01_distinctEnc_distinctDisc_z128_setsize1000_lr0.001_bs32_ref1.0_rw1.0_cp1.0_cn1.0_mp1.0_mn1.0',
+        # 'VAE0.01_distinctEnc_distinctDisc_z128_setsize5000_lr0.001_bs32_ref1.0_rw1.0_cp1.0_cn1.0_mp1.0_mn1.0',
     ]
 
     recon_type_list = [

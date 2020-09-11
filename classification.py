@@ -45,7 +45,8 @@ class Classifier(object):
             net = module.FCClassifier(446, output_dim=30)
 
         elif args.dataset in ['MNIST', 'Fashion-MNIST']:
-            net = module.ConvClassifier()
+            # net = module.ConvClassifier()
+            net = ResNet18(1)
 
         # print(net)
 
