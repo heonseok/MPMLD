@@ -1,3 +1,4 @@
+# %% 
 import os
 import numpy as np
 import pandas as pd
@@ -12,23 +13,33 @@ if not os.path.exists('Figs'):
 REPEAT = 5
 
 
-# -------------------------------------------------------------------------------------------------------------------- #
+# %% 
 def collate_reconstructions(dataset, description, model, recon_type_list):
     model_path = os.path.join(base_path, dataset, description, model, 'reconstruction')
 
-    plt.figure(1, figsize=(9, 6))
-    for recon_idx, recon_type in enumerate(recon_type_list):
-        for repeat_idx in range(REPEAT):
-            plt.subplot(len(recon_type_list), REPEAT, repeat_idx + recon_idx * REPEAT + 1)
-            plt.imshow(mpimg.imread(os.path.join(model_path, 'repeat' + str(repeat_idx), recon_type + '.png')))
-            plt.xticks([])
-            plt.yticks([])
+    # plt.figure(1, figsize=(20, 6))
+    fig, axes = plt.subplots(nrows = REPEAT, ncols=len(recon_type_list), figsize=(90,50))
+    for repeat_idx in range(REPEAT):
+        for recon_idx, recon_type in enumerate(recon_type_list):
+            # plt.subplot(len(recon_type_list), REPEAT, repeat_idx + recon_idx * REPEAT + 1)
+            # plt.subplot(len(recon_type_list), repeat_idx + recon_idx * REPEAT + 1, recon_idx)
+            ax = axes[repeat_idx][recon_idx]            
+            # plt.imshow(mpimg.imread(os.path.join(model_path, 'repeat' + str(repeat_idx), recon_type + '.png')))
+            ax.imshow(mpimg.imread(os.path.join(model_path, 'repeat' + str(repeat_idx), recon_type + '.png')))
 
-    plt.tight_layout(pad=0.1)
+            ax.set_xticks([])
+            ax.set_yticks([])
+            # plt.xticks([])
+            # plt.yticks([])
+            plt.tight_layout()
+
+    # plt.tight_layout(pad=0.1)
+    plt.tight_layout()
     img_dir = os.path.join('Figs', dataset, description, 'recon_collated')
     if not os.path.exists(img_dir):
         os.makedirs(img_dir)
-    img_path = os.path.join(img_dir, '{}.png'.format(model))
+    img_path = os.path.join(img_dir, '{}.jpeg'.format(model))
+    plt.show()
     plt.savefig(img_path)
     plt.close()
 
@@ -44,9 +55,9 @@ def collate_disentanglement_result(dataset, description, model):
         class_acc_dict = np.load(os.path.join(repeat_path, 'class_acc.npy'), allow_pickle=True).item()
         membership_acc_dict = np.load(os.path.join(repeat_path, 'membership_acc.npy'), allow_pickle=True).item()
         for z_type in ['pn', 'pp', 'np', 'nn']:
-            df = df.append({'disc_type': 'class', 'z_type': z_type, 'acc': class_acc_dict[z_type]},
+            df = df.append({'description': description, 'disc_type': 'class', 'z_type': z_type, 'acc': class_acc_dict[z_type]},
                            ignore_index=True)
-            df = df.append({'disc_type': 'membership', 'z_type': z_type, 'acc': membership_acc_dict[z_type]},
+            df = df.append({'description': description, 'disc_type': 'membership', 'z_type': z_type, 'acc': membership_acc_dict[z_type]},
                            ignore_index=True)
 
     sns.boxplot(x='disc_type', y='acc', hue='z_type', data=df)
@@ -57,11 +68,14 @@ def collate_disentanglement_result(dataset, description, model):
     if not os.path.exists(img_dir):
         os.makedirs(img_dir)
     img_path = os.path.join(img_dir, '{}.png'.format(model))
+    plt.show()
     plt.savefig(img_path)
     plt.close()
 
     drive_path = os.path.join('Research/MPMLD/', img_dir)
     os.system('rclone copy -P {} remote:{}'.format(img_path, drive_path))
+
+    return df 
 
 
 def collate_classification_result(dataset, description, model, recon_type_list):
@@ -72,7 +86,7 @@ def collate_classification_result(dataset, description, model, recon_type_list):
             repeat_path = os.path.join(model_path, recon_type, 'repeat' + str(repeat_idx), 'acc.npy')
             acc_dict = np.load(repeat_path, allow_pickle=True).item()
             for dataset_type in ['train', 'valid', 'test']:
-                df = df.append({'recon': recon_type, 'dataset': dataset_type, 'acc': acc_dict[dataset_type]},
+                df = df.append({'description': description, 'recon': recon_type, 'dataset': dataset_type, 'acc': acc_dict[dataset_type]},
                                ignore_index=True)
 
     sns.boxplot(x='recon', y='acc', hue='dataset', data=df)
@@ -83,11 +97,14 @@ def collate_classification_result(dataset, description, model, recon_type_list):
     if not os.path.exists(img_dir):
         os.makedirs(img_dir)
     img_path = os.path.join(img_dir, '{}.png'.format(model))
+    plt.show()
     plt.savefig(img_path)
     plt.close()
 
     drive_path = os.path.join('Research/MPMLD/', img_dir)
     os.system('rclone copy -P {} remote:{}'.format(img_path, drive_path))
+
+    return df 
 
 
 def collate_attack_result(dataset, description, model, recon_type_list):
@@ -103,7 +120,7 @@ def collate_attack_result(dataset, description, model, recon_type_list):
             for repeat_idx in range(REPEAT):
                 repeat_path = os.path.join(model_path, recon_type, attack_type, 'repeat' + str(repeat_idx), 'acc.npy')
                 acc_dict = np.load(repeat_path, allow_pickle=True).item()
-                df = df.append({'recon': recon_type, 'attack_type': attack_type, 'acc': acc_dict['test']},
+                df = df.append({'description':description, 'recon': recon_type, 'attack_type': attack_type, 'acc': acc_dict['test']},
                                ignore_index=True)
 
     sns.boxplot(x='recon', y='acc', hue='attack_type', data=df)
@@ -114,61 +131,54 @@ def collate_attack_result(dataset, description, model, recon_type_list):
     if not os.path.exists(img_dir):
         os.makedirs(img_dir)
     img_path = os.path.join(img_dir, '{}.png'.format(model))
+    plt.show()
     plt.savefig(img_path)
     plt.close()
 
     drive_path = os.path.join('Research/MPMLD/', img_dir)
     os.system('rclone copy -P {} remote:{}'.format(img_path, drive_path))
 
-
-# -------------------------------------------------------------------------------------------------------------------- #
-def main():
-    # dataset = 'SVHN'
-    dataset = 'MNIST'
-
-    description = '0825_4typesDisentanglement_small_recon'
-    model_list = [
-        # 'VAE0.01_distinctEnc_sharedDisc_z128_setsize5000_lr0.001_bs32_ref1.0_rw1.0_cp1.0_cn1.0_mp1.0_mn1.0',
-        'VAE0.01_distinctEnc_distinctDisc_z128_setsize100_lr0.001_bs32_ref1.0_rw1.0_cp1.0_cn1.0_mp1.0_mn1.0',
-        'VAE0.01_distinctEnc_distinctDisc_z128_setsize200_lr0.001_bs32_ref1.0_rw1.0_cp1.0_cn1.0_mp1.0_mn1.0',
-        'VAE0.01_distinctEnc_distinctDisc_z128_setsize300_lr0.001_bs32_ref1.0_rw1.0_cp1.0_cn1.0_mp1.0_mn1.0',
-        'VAE0.01_distinctEnc_distinctDisc_z128_setsize400_lr0.001_bs32_ref1.0_rw1.0_cp1.0_cn1.0_mp1.0_mn1.0',
-        'VAE0.01_distinctEnc_distinctDisc_z128_setsize500_lr0.001_bs32_ref1.0_rw1.0_cp1.0_cn1.0_mp1.0_mn1.0',
-        'VAE0.01_distinctEnc_distinctDisc_z128_setsize1000_lr0.001_bs32_ref1.0_rw1.0_cp1.0_cn1.0_mp1.0_mn1.0',
-        # 'VAE0.01_distinctEnc_distinctDisc_z128_setsize5000_lr0.001_bs32_ref1.0_rw1.0_cp1.0_cn1.0_mp1.0_mn1.0',
-    ]
-
-    recon_type_list = [
-        'pn_pp_np_nn',  # [1, 1, 1, 1]
-        'pn_pp_nn',  # [1, 1, 0, 1]
-        'pn_pp',  # [1, 1, 0, 0]
-        'pp_np',  # [0, 1, 1, 0]
-        'np_nn',  # [0, 0, 1, 1]
-        'pn',  # [1, 0, 0, 0]
-        'pp',  # [1, 0, 0, 0]
-        'np',  # [1, 0, 0, 0]
-        'nn',  # [1, 0, 0, 0]
-
-        # 'cb_mb',
-        # 'cb_mz',
-        # 'cz_mb',
-
-        # 'cb_mb_sb',
-        # 'cb_mb_sz',
-        # 'cb_mz_sb',
-        # 'cb_mz_sz',
-        # 'cz_mb_sb',
-        # 'cz_mb_sz',
-    ]
-    for model in model_list:
-        print(model)
-        collate_reconstructions(dataset, description, model, recon_type_list)
-        collate_disentanglement_result(dataset, description, model)
-        collate_classification_result(dataset, description, model, recon_type_list)
-        collate_attack_result(dataset, description, model, recon_type_list)
-
-    print('Finish!')
+    return df 
 
 
-if __name__ == '__main__':
-    main()
+# %%
+# dataset = 'SVHN'
+dataset = 'MNIST'
+
+description = '0825_4typesDisentanglement_small_recon'
+model_list = [
+    # 'VAE0.01_distinctEnc_sharedDisc_z128_setsize5000_lr0.001_bs32_ref1.0_rw1.0_cp1.0_cn1.0_mp1.0_mn1.0',
+    'VAE0.01_distinctEnc_distinctDisc_z128_setsize100_lr0.001_bs32_ref1.0_rw1.0_cp1.0_cn1.0_mp1.0_mn1.0',
+    # 'VAE0.01_distinctEnc_distinctDisc_z128_setsize200_lr0.001_bs32_ref1.0_rw1.0_cp1.0_cn1.0_mp1.0_mn1.0',
+    # 'VAE0.01_distinctEnc_distinctDisc_z128_setsize300_lr0.001_bs32_ref1.0_rw1.0_cp1.0_cn1.0_mp1.0_mn1.0',
+    # 'VAE0.01_distinctEnc_distinctDisc_z128_setsize400_lr0.001_bs32_ref1.0_rw1.0_cp1.0_cn1.0_mp1.0_mn1.0',
+    # 'VAE0.01_distinctEnc_distinctDisc_z128_setsize500_lr0.001_bs32_ref1.0_rw1.0_cp1.0_cn1.0_mp1.0_mn1.0',
+    # 'VAE0.01_distinctEnc_distinctDisc_z128_setsize1000_lr0.001_bs32_ref1.0_rw1.0_cp1.0_cn1.0_mp1.0_mn1.0',
+    # 'VAE0.01_distinctEnc_distinctDisc_z128_setsize5000_lr0.001_bs32_ref1.0_rw1.0_cp1.0_cn1.0_mp1.0_mn1.0',
+]
+
+recon_type_list = [
+    'pn_pp_np_nn',  # [1, 1, 1, 1]
+    'pn_pp_nn',  # [1, 1, 0, 1]
+    'pn_pp',  # [1, 1, 0, 0]
+    'pp_np',  # [0, 1, 1, 0]
+    'np_nn',  # [0, 0, 1, 1]
+    'pn',  # [1, 0, 0, 0]
+    'pp',  # [1, 0, 0, 0]
+    'np',  # [1, 0, 0, 0]
+    'nn',  # [1, 0, 0, 0]
+
+]
+
+for model in model_list:
+    print(model)
+    collate_reconstructions(dataset, description, model, recon_type_list)
+    # recon_df = collate_disentanglement_result(dataset, description, model)
+    # class_df = collate_classification_result(dataset, description, model, recon_type_list)
+    # attack_df = collate_attack_result(dataset, description, model, recon_type_list)
+
+print('Finish!')
+
+# %%
+recon_df
+recon_type_list
