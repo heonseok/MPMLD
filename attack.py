@@ -56,7 +56,7 @@ class Attacker(object):
 
         self.train_flag = False
 
-        self.criterion = nn.BCELoss()
+        self.criterion = nn.BCEWithLogitsLoss()
         self.optimizer = optim.SGD(net.parameters(), lr=args.attack_lr, momentum=0.9, weight_decay=5e-4)
 
     #########################

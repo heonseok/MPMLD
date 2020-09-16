@@ -13,7 +13,7 @@ from data import load_dataset
 import torch
 from torch.utils.data import Subset, ConcatDataset
 
-from reconstruction import DistinctReconstructor
+from reconstruction_rf import DistinctReconstructor
 from reconstruction_shared_disc import SharedReconstructor
 from classification import Classifier
 from attack import Attacker
@@ -23,10 +23,11 @@ parser = argparse.ArgumentParser()
 # -------------------------------------------------------------------------------------------------------------------- #
 # -------- Params -------- #
 # ---- Common ---- #
-parser.add_argument('--base_path', type=str, default='/mnt/disk1/heonseok/MPMLD')
+parser.add_argument('--base_path', type=str,
+                    default='/mnt/disk1/heonseok/MPMLD')
 parser.add_argument('--dataset', type=str, default='SVHN',
                     choices=['MNIST', 'Fashion-MNIST', 'SVHN', 'CIFAR-10', 'adult', 'location', ])
-parser.add_argument('--setsize', type=int, default=10000)
+parser.add_argument('--setsize', type=int, default=500)
 parser.add_argument('--early_stop', type=str2bool, default='1')
 parser.add_argument('--early_stop_observation_period', type=int, default=20)
 parser.add_argument('--gpu_id', type=int, default=3)
@@ -37,7 +38,8 @@ parser.add_argument('--use_rclone', type=str2bool, default='1')
 parser.add_argument('--test_batch_size', type=int, default=100)
 
 # ---- Reconstruction ---- #
-parser.add_argument('--reconstruction_model', type=str, default='VAE', choices=['AE', 'VAE'])
+parser.add_argument('--reconstruction_model', type=str,
+                    default='VAE', choices=['AE', 'VAE'])
 parser.add_argument('--beta', type=float, default=0.0001)
 parser.add_argument('--z_dim', type=int, default=64)
 parser.add_argument('--recon_lr', type=float, default=0.001)
@@ -49,9 +51,12 @@ parser.add_argument('--class_pos_weight', type=float, default='1')
 parser.add_argument('--class_neg_weight', type=float, default='1')
 parser.add_argument('--membership_pos_weight', type=float, default='1')
 parser.add_argument('--membership_neg_weight', type=float, default='1')
+parser.add_argument('--real_fake_weight', type=float, default='1')
+parser.add_argument('--small_recon_weight', type=float, default='0')
 parser.add_argument('--ref_ratio', type=float, default=1.0)
 
-parser.add_argument('--disentangle_with_reparameterization', type=str2bool, default='1')
+parser.add_argument('--disentangle_with_reparameterization',
+                    type=str2bool, default='1')
 
 # ---- Classification ---- #
 parser.add_argument('--classification_model', type=str, default='ResNet18',
@@ -66,11 +71,11 @@ parser.add_argument('--attack_train_batch_size', type=int, default=100)
 
 # -------------------------------------------------------------------------------------------------------------------- #
 # -------- Control flags -------- #
-parser.add_argument('--description', type=str, default='0825_4typesDisentanglement_small_recon')
-# parser.add_argument('--description', type=str, default='baseline')
+# parser.add_argument('--description', type=str, default='')
+parser.add_argument('--description', type=str, default='baseline')
 parser.add_argument('--repeat_start', type=int, default=0)
 parser.add_argument('--repeat_end', type=int, default=1)
-parser.add_argument('--share_discriminator', type=str2bool, default='1')
+parser.add_argument('--share_discriminator', type=str2bool, default='0')
 
 # ---- Reconstruction ---- #
 parser.add_argument('--share_encoder', type=str2bool, default='0')
@@ -83,7 +88,8 @@ parser.add_argument('--use_reconstructed_dataset', type=str2bool, default='1')
 
 parser.add_argument('--train_classifier', type=str2bool, default='0')
 parser.add_argument('--test_classifier', type=str2bool, default='0')
-parser.add_argument('--extract_classifier_features', type=str2bool, default='0')
+parser.add_argument('--extract_classifier_features',
+                    type=str2bool, default='0')
 
 # ---- Attack ---- #
 parser.add_argument('--train_attacker', type=str2bool, default='0')
@@ -115,22 +121,24 @@ for repeat_idx in range(args.repeat_start, args.repeat_end):
         disc_type = 'distinct'
         Reconstructor = DistinctReconstructor
 
-    args.reconstruction_name = os.path.join(
-        '{}_{}Enc_{}Disc_z{}_setsize{}_lr{}_bs{}_ref{}_rw{}_cp{}_cn{}_mp{}_mn{}'.format(args.reconstruction_model,
-                                                                                        encoder_type,
-                                                                                        disc_type,
-                                                                                        args.z_dim,
-                                                                                        args.setsize, args.recon_lr,
-                                                                                        args.recon_train_batch_size,
-                                                                                        args.ref_ratio,
-                                                                                        args.recon_weight,
-                                                                                        args.class_pos_weight,
-                                                                                        args.class_neg_weight,
-                                                                                        args.membership_pos_weight,
-                                                                                        args.membership_neg_weight,
-                                                                                        ))
+    args.reconstruction_name = '{}_{}Enc_{}Disc_z{}_setsize{}_lr{}_bs{}_ref{}_rw{}_rf{}_cp{}_cn{}_mp{}_mn{}_sr{}'.format(args.reconstruction_model,
+                                                                                                                         encoder_type,
+                                                                                                                         disc_type,
+                                                                                                                         args.z_dim,
+                                                                                                                         args.setsize, args.recon_lr,
+                                                                                                                         args.recon_train_batch_size,
+                                                                                                                         args.ref_ratio,
+                                                                                                                         args.recon_weight,
+                                                                                                                         args.real_fake_weight,
+                                                                                                                         args.class_pos_weight,
+                                                                                                                         args.class_neg_weight,
+                                                                                                                         args.membership_pos_weight,
+                                                                                                                         args.membership_neg_weight,
+                                                                                                                         args.small_recon_weight,
+                                                                                                                         )
 
-    args.recon_output_path = os.path.join(args.base_path, args.dataset, args.description, args.reconstruction_name)
+    args.recon_output_path = os.path.join(
+        args.base_path, args.dataset, args.description, args.reconstruction_name)
     args.raw_output_path = os.path.join(args.base_path, args.dataset, args.description,
                                         'raw_setsize{}'.format(args.setsize))
 
@@ -142,13 +150,15 @@ for repeat_idx in range(args.repeat_start, args.repeat_end):
         os.makedirs(args.data_path)
 
     args.model_path = os.path
-    args.reconstruction_path = os.path.join(args.recon_output_path, 'reconstruction/repeat{}'.format(repeat_idx))
+    args.reconstruction_path = os.path.join(
+        args.recon_output_path, 'reconstruction/repeat{}'.format(repeat_idx))
     print(args.reconstruction_path)
 
     # ---- Backup codes ---- #
     date = str(datetime.datetime.now())[:-16]
     time = str(datetime.datetime.now())[-15:-7]
-    backup_path = os.path.join('backup', date, time + ' ' + args.reconstruction_name)
+    backup_path = os.path.join(
+        'backup', date, time + ' ' + args.reconstruction_name)
     os.makedirs(backup_path)
     for file in os.listdir(os.getcwd()):
         if file.endswith('.py'):
@@ -164,7 +174,8 @@ for repeat_idx in range(args.repeat_start, args.repeat_end):
         sys.exit(1)
 
     if args.dataset in ['adult', 'location']:
-        args.encoder_input_dim = merged_dataset.__getitem__(0)[0].numpy().shape[0]
+        args.encoder_input_dim = merged_dataset.__getitem__(0)[
+            0].numpy().shape[0]
         if args.dataset == 'adult':
             args.class_num = 2
         elif args.dataset == 'location':
@@ -176,13 +187,17 @@ for repeat_idx in range(args.repeat_start, args.repeat_end):
     # Recon: Train, Class: Train, Attack: In(Train/Test)
     subset0 = Subset(merged_dataset, range(0, args.setsize))
     # Recon: Valid, Class: Valid, Attack: -
-    subset1 = Subset(merged_dataset, range(args.setsize, int(1.2 * args.setsize)))
+    subset1 = Subset(merged_dataset, range(
+        args.setsize, int(1.2 * args.setsize)))
     # Recon: Test, Class: Test, Attack: -
-    subset2 = Subset(merged_dataset, range(int(1.2 * args.setsize), int(1.4 * args.setsize)))
+    subset2 = Subset(merged_dataset, range(
+        int(1.2 * args.setsize), int(1.4 * args.setsize)))
     # Recon: -, Class: -,  Attack: Out(Train/Test) Todo: check valid
-    subset3 = Subset(merged_dataset, range(int(1.4 * args.setsize), int(2.4 * args.setsize)))
+    subset3 = Subset(merged_dataset, range(
+        int(1.4 * args.setsize), int(2.4 * args.setsize)))
     # Recon: Train (Reference), Class: -, Attack: -
-    subset4 = Subset(merged_dataset, range(int(2.4 * args.setsize), int((2.4 + args.ref_ratio) * args.setsize)))
+    subset4 = Subset(merged_dataset, range(
+        int(2.4 * args.setsize), int((2.4 + args.ref_ratio) * args.setsize)))
 
     class_datasets = {
         'train': subset0,
@@ -219,7 +234,8 @@ for repeat_idx in range(args.repeat_start, args.repeat_end):
         ref_dataset = subset4
         for _ in range(int(1 / args.ref_ratio) - 1):
             ref_dataset = ConcatDataset((ref_dataset, subset4))
-        reconstructor.train(class_datasets['train'], class_datasets['valid'], ref_dataset)
+        reconstructor.train(
+            class_datasets['train'], class_datasets['valid'], ref_dataset)
 
     if args.reconstruct_datasets:
         reconstructor = Reconstructor(args)
@@ -248,7 +264,8 @@ for repeat_idx in range(args.repeat_start, args.repeat_end):
         for img_idx, recon_type in enumerate(img_list):
             print(img_idx, recon_type)
             # print(str(1) + str(len(img_list)) + str(img_idx + 1))
-            ax[img_idx].imshow(mpimg.imread(os.path.join(args.reconstruction_path, recon_type)))
+            ax[img_idx].imshow(mpimg.imread(os.path.join(
+                args.reconstruction_path, recon_type)))
             ax[img_idx].set_title(recon_type)
             # plt.subplot(str(1) + str(len(img_list)) + str(img_idx + 1))
             # plt.imshow(mpimg.imread(os.path.join(args.reconstruction_path, recon_type)))
@@ -256,7 +273,8 @@ for repeat_idx in range(args.repeat_start, args.repeat_end):
             ax[img_idx].get_yaxis().set_ticks([])
 
         plt.tight_layout()
-        img_path = os.path.join(img_dir, '{}_repeat{}.png'.format(args.reconstruction_name, repeat_idx))
+        img_path = os.path.join(img_dir, '{}_repeat{}.png'.format(
+            args.reconstruction_name, repeat_idx))
         plt.savefig(img_path)
 
         if args.use_rclone:
@@ -278,15 +296,19 @@ for repeat_idx in range(args.repeat_start, args.repeat_end):
                 classifier = Classifier(args)
 
                 try:
-                    reconstructed_data_path = os.path.join(args.reconstruction_path, 'recon_{}.pt'.format(recon_type))
-                    recon_datasets = utils.build_reconstructed_datasets(reconstructed_data_path)
+                    reconstructed_data_path = os.path.join(
+                        args.reconstruction_path, 'recon_{}.pt'.format(recon_type))
+                    recon_datasets = utils.build_reconstructed_datasets(
+                        reconstructed_data_path)
                     class_datasets['train'] = recon_datasets['train']
                 except FileNotFoundError:
-                    print('There is no reconstructed data: ', args.reconstruction_path)
+                    print('There is no reconstructed data: ',
+                          args.reconstruction_path)
                     sys.exit(1)
 
                 if args.train_classifier:
-                    classifier.train(class_datasets['train'], class_datasets['valid'])
+                    classifier.train(
+                        class_datasets['train'], class_datasets['valid'])
 
                 if args.test_classifier:
                     classifier.test(class_datasets['test'])
@@ -307,14 +329,16 @@ for repeat_idx in range(args.repeat_start, args.repeat_end):
                     if not os.path.exists(args.attack_path):
                         os.makedirs(args.attack_path)
 
-                    inout_feature_sets = utils.build_inout_feature_sets(args.classification_path, attack_type)
+                    inout_feature_sets = utils.build_inout_feature_sets(
+                        args.classification_path, attack_type)
 
                     # for dataset_type, dataset in inout_feature_sets.items():
                     #     print('Inout {:<3} feature set: {}'.format(dataset_type, len(dataset)))
 
                     attacker = Attacker(args)
                     if args.train_attacker:
-                        attacker.train(inout_feature_sets['train'], inout_feature_sets['valid'])
+                        attacker.train(
+                            inout_feature_sets['train'], inout_feature_sets['valid'])
                     if args.test_attacker:
                         attacker.test(inout_feature_sets['test'])
             print()
@@ -348,14 +372,16 @@ for repeat_idx in range(args.repeat_start, args.repeat_end):
                 if not os.path.exists(args.attack_path):
                     os.makedirs(args.attack_path)
 
-                inout_feature_sets = utils.build_inout_feature_sets(args.classification_path, attack_type)
+                inout_feature_sets = utils.build_inout_feature_sets(
+                    args.classification_path, attack_type)
 
                 # for dataset_type, dataset in inout_feature_sets.items():
                 #     print('Inout {:<3} feature set: {}'.format(dataset_type, len(dataset)))
 
                 attacker = Attacker(args)
                 if args.train_attacker:
-                    attacker.train(inout_feature_sets['train'], inout_feature_sets['valid'])
+                    attacker.train(
+                        inout_feature_sets['train'], inout_feature_sets['valid'])
                 if args.test_attacker:
                     attacker.test(inout_feature_sets['test'])
         print()

@@ -3,6 +3,17 @@ import torch
 import torch.nn.init as init
 from torch.nn import functional as F
 
+def _get_norm_layer_2d(norm):
+    if norm == 'none':
+        return torchlib.Identity
+    elif norm == 'batch_norm':
+        return nn.BatchNorm2d
+    elif norm == 'instance_norm':
+        return functools.partial(nn.InstanceNorm2d, affine=True)
+    elif norm == 'layer_norm':
+        return lambda num_features: nn.GroupNorm(1, num_features)
+    else:
+        raise NotImplementedError
 
 def _init_layer(m):
     if isinstance(m, torch.nn.Conv2d) or isinstance(m, torch.nn.ConvTranspose2d):
@@ -47,7 +58,7 @@ class MIAttacker(nn.Module):
             # nn.LeakyReLU(0.2),
             nn.ReLU(),
             nn.Linear(int(input_dim / 2), 1),
-            nn.Sigmoid(),
+            # nn.Sigmoid(),
         )
         init_layers(self._modules)
 
@@ -90,7 +101,7 @@ class MembershipDiscriminator(nn.Module):
             nn.ReLU(),
             # nn.LeakyReLU(0.2),
             nn.Linear(32, output_dim),
-            nn.Sigmoid(),
+            # nn.Sigmoid(),
         )
         init_layers(self._modules)
 
@@ -166,16 +177,16 @@ class ConvClassifier(nn.Module):
         x = self.conv2(x)
         x = F.relu(x)
         x = F.max_pool2d(x, 2)
-        # x = self.dropout1(x)
-        x = torch.flatten(x, 1)
-        x = self.fc1(x)
-        x = F.relu(x)
-        # x = self.dropout2(x)
-        x = self.fc2(x)
-        # output = F.log_softmax(x, dim=1)
-        # return output
-        return x
 
+        self.net = nn.Sequential(*layers)
+
+        # 2: logit
+        self.d = nn.Sequential(nn.Conv2d(d, 1, kernel_size=4, stride=1, padding=0))
+
+    def forward(self, x):
+        lh = self.net(x)
+        d = self.d(lh)
+        return d, lh
 
 class VAEFCEncoder(nn.Module):
     def __init__(self, input_dim, latent_dim):
@@ -320,3 +331,48 @@ class VAEConvDecoder(nn.Module):
     def forward(self, x):
         # return self.main(self.upsample(x).relu().view(-1, 64, 7, 7))
         return self.main(x)
+
+
+# input noise dimension
+nz = 100
+# number of generator filters
+ngf = 64
+#number of discriminator filters
+ndf = 64
+
+nc = 3
+
+class Discriminator(nn.Module):
+    def __init__(self, ngpu=1):
+        super(Discriminator, self).__init__()
+        self.ngpu = ngpu
+        self.main = nn.Sequential(
+            # input is (nc) x 64 x 64
+            # nn.Conv2d(nc, ndf, 4, 2, 1, bias=False),
+            # nn.LeakyReLU(0.2, inplace=True),
+            # state size. (ndf) x 32 x 32
+            nn.Conv2d(3, ndf * 2, 4, 2, 1, bias=False),
+            nn.BatchNorm2d(ndf * 2),
+            nn.LeakyReLU(0.2, inplace=True),
+            # state size. (ndf*2) x 16 x 16
+            nn.Conv2d(ndf * 2, ndf * 4, 4, 2, 1, bias=False),
+            nn.BatchNorm2d(ndf * 4),
+            nn.LeakyReLU(0.2, inplace=True),
+            # state size. (ndf*4) x 8 x 8
+            nn.Conv2d(ndf * 4, ndf * 8, 4, 2, 1, bias=False),
+            nn.BatchNorm2d(ndf * 8),
+            nn.LeakyReLU(0.2, inplace=True),
+            # state size. (ndf*8) x 4 x 4
+            nn.Conv2d(ndf * 8, 1, 4, 1, 0, bias=False),
+            # nn.Sigmoid()
+        )
+
+        init_layers(self._modules)
+
+    def forward(self, input):
+        if input.is_cuda and self.ngpu > 1:
+            output = nn.parallel.data_parallel(self.main, input, range(self.ngpu))
+        else:
+            output = self.main(input)
+
+        return output.view(-1, 1).squeeze(1)
