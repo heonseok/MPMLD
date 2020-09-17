@@ -15,14 +15,15 @@ setsize_list = [
     # 200,
     # 300,
     # 400,
-    500,
+    # 500,
     # 1000,
     # 2000,
     # 4000,
     # 5000,
     # 5000,
     # 10000,
-    # 20000,
+    20000,
+    # 50000,
 ]
 
 z_dim_list = [
@@ -66,9 +67,9 @@ beta_list = [
 ]
 
 small_recon_weight_list =[
-    1,
-    0.1,
-    0.01,
+    # 1,
+    # 0.1,
+    # 0.01,
     0.001,
 ]
 
@@ -80,9 +81,9 @@ setup_dict = {
     'share_encoder': '0',
     'share_discriminator': '0',
     'recon_train_batch_size': 32,
-    'train_reconstructor': '1',
-    'reconstruct_datasets': '1',
-    'plot_recons': '1',
+    'train_reconstructor': '0',
+    'reconstruct_datasets': '0',
+    'plot_recons': '0',
 
     'use_reconstructed_dataset': '1',
     'disentangle_with_reparameterization': '1',
@@ -97,18 +98,19 @@ setup_dict = {
 
     # Attack
     'train_attacker': '0',
-    'test_attacker': '0',
+    'test_attacker': '1',
 
     # Common
-    'repeat_start': 1,
-    'repeat_end': 5,
+    'repeat_start': 0,
+    'repeat_end': 1,
     'epochs': 500,
     'early_stop': '1',
     'early_stop_observation_period': 20,
     'gpu_id': 3,
-    'print_training': '0',
+    'print_training': '1',
     # 'description': '0825_4typesDisentanglement_small_recon',
     'description': '0915',
+    'resume': '1',
 }
 
 for dataset in dataset_list:

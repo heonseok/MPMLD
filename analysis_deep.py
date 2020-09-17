@@ -140,14 +140,7 @@ dataset = 'SVHN'
 # description = '0825_4typesDisentanglement_small_recon'
 description = '0915'
 model_list = [
-    # 'VAE0.01_distinctEnc_sharedDisc_z128_setsize5000_lr0.001_bs32_ref1.0_rw1.0_cp1.0_cn1.0_mp1.0_mn1.0',
-    'VAE0.01_distinctEnc_distinctDisc_z128_setsize100_lr0.001_bs32_ref1.0_rw1.0_cp1.0_cn1.0_mp1.0_mn1.0',
-    # 'VAE0.01_distinctEnc_distinctDisc_z128_setsize200_lr0.001_bs32_ref1.0_rw1.0_cp1.0_cn1.0_mp1.0_mn1.0',
-    # 'VAE0.01_distinctEnc_distinctDisc_z128_setsize300_lr0.001_bs32_ref1.0_rw1.0_cp1.0_cn1.0_mp1.0_mn1.0',
-    # 'VAE0.01_distinctEnc_distinctDisc_z128_setsize400_lr0.001_bs32_ref1.0_rw1.0_cp1.0_cn1.0_mp1.0_mn1.0',
-    # 'VAE0.01_distinctEnc_distinctDisc_z128_setsize500_lr0.001_bs32_ref1.0_rw1.0_cp1.0_cn1.0_mp1.0_mn1.0',
-    # 'VAE0.01_distinctEnc_distinctDisc_z128_setsize1000_lr0.001_bs32_ref1.0_rw1.0_cp1.0_cn1.0_mp1.0_mn1.0',
-    # 'VAE0.01_distinctEnc_distinctDisc_z128_setsize5000_lr0.001_bs32_ref1.0_rw1.0_cp1.0_cn1.0_mp1.0_mn1.0',
+    'VAE0.01_distinctEnc_distinctDisc_z128_setsize500_lr0.001_bs32_ref1.0_rw1.0_rf1.0_cp1.0_cn1.0_mp1.0_mn1.0_sr0.001',
 ]
 
 recon_type_list = [
