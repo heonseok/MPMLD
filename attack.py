@@ -19,6 +19,7 @@ class Attacker(object):
         self.epochs = args.epochs
         self.early_stop = args.early_stop
         self.early_stop_observation_period = args.early_stop_observation_period
+        self.resume = args.resume
 
         self.attack_path = args.attack_path
         self.attack_type = args.attack_type
@@ -29,7 +30,8 @@ class Attacker(object):
             if args.dataset == 'adult':
                 net = MIAttacker(4)
             elif args.dataset in ['MNIST', 'Fashion-MNIST', 'CIFAR-10', 'SVHN']:
-                net = MIAttacker(20)
+                # net = MIAttacker(20)
+                net = MIAttacker(10)
             elif args.dataset == 'location':
                 net = MIAttacker(60)
         elif self.attack_type == 'white':
@@ -47,24 +49,21 @@ class Attacker(object):
         if self.device == 'cuda':
             cudnn.benchmark = True
 
-        if args.resume:
-            print('==> Resuming from checkpoint..')
-            try:
-                self.load()
-            except FileNotFoundError:
-                print('There is no pre-trained model; Train model from scratch')
 
         self.train_flag = False
 
-        self.criterion = nn.BCEWithLogitsLoss()
-        self.optimizer = optim.SGD(net.parameters(), lr=args.attack_lr, momentum=0.9, weight_decay=5e-4)
+        self.criterion = nn.BCELoss()
+        # self.criterion = nn.BCEWithLogitsLoss()
+        self.optimizer = optim.Adam(net.parameters(), lr=args.attack_lr, betas=(0.5, 0.999))
+        # self.optimizer = optim.SGD(net.parameters(), lr=args.attack_lr, momentum=0.9, weight_decay=5e-4)
 
     #########################
     # -- Base operations -- #
     #########################
     def load(self):
         # print('====> Loading checkpoint {}'.format(self.attack_path))
-        checkpoint = torch.load(os.path.join(self.attack_path, 'ckpt.pth'), map_location=self.device)
+        checkpoint = torch.load(os.path.join(
+            self.attack_path, 'ckpt.pth'), map_location=self.device)
         self.net.load_state_dict(checkpoint['net'])
         self.best_valid_acc = checkpoint['best_valid_acc']
         self.train_acc = checkpoint['train_acc']
@@ -73,6 +72,7 @@ class Attacker(object):
         self.start_epoch = checkpoint['epoch']
 
     def train_epoch(self, train_loader, epoch):
+
         self.net.train()
         train_loss = 0
         predicted = []
@@ -126,7 +126,7 @@ class Attacker(object):
         acc = metrics.accuracy_score(labels, np.round(predicted))
 
         if type == 'valid':
-            # print('Epoch: {:>3}, Train Acc: {:.2f}, Valid Acc: {:.2f}'.format(epoch, self.train_acc, acc))
+            print('Epoch: {:>3}, Train Acc: {:.2f}, Valid Acc: {:.2f}'.format(epoch, self.train_acc, acc))
             if acc > self.best_valid_acc:
                 # print('Saving..')
                 state = {
@@ -142,10 +142,10 @@ class Attacker(object):
                 self.early_stop_count = 0
             else:
                 self.early_stop_count += 1
-                # print('Early stop count: {}'.format(self.early_stop_count))
+                print('Early stop count: {}'.format(self.early_stop_count))
 
             if self.early_stop_count == self.early_stop_observation_period:
-                # print('Early stop count == {}; Terminate training'.format(self.early_stop_observation_period))
+                print('Early stop count == {}; Terminate training'.format(self.early_stop_observation_period))
                 self.train_flag = False
 
         elif type == 'test':
@@ -153,6 +153,14 @@ class Attacker(object):
 
     def train(self, train_set, valid_set=None):
         print('==> Start training {}'.format(self.attack_path))
+
+        if self.resume:
+            print('==> Resuming from checkpoint..')
+            try:
+                self.load()
+            except FileNotFoundError:
+                print('There is no pre-trained model; Train model from scratch')
+
         self.train_flag = True
         train_loader = torch.utils.data.DataLoader(train_set, batch_size=self.train_batch_size, shuffle=True,
                                                    num_workers=2)
@@ -160,6 +168,7 @@ class Attacker(object):
             valid_loader = torch.utils.data.DataLoader(valid_set, batch_size=self.test_batch_size, shuffle=True,
                                                        num_workers=2)
         for epoch in range(self.start_epoch, self.start_epoch + self.epochs):
+            print('Epoch: {}'.format(epoch))
             if self.train_flag:
                 self.train_epoch(train_loader, epoch)
                 if self.early_stop:
@@ -176,7 +185,8 @@ class Attacker(object):
             sys.exit(1)
         test_loader = torch.utils.data.DataLoader(test_set, batch_size=self.test_batch_size, shuffle=False,
                                                   num_workers=2)
-        test_acc, test_auroc = self.inference(test_loader, epoch=-1, type='test')
+        test_acc, test_auroc = self.inference(
+            test_loader, epoch=-1, type='test')
         acc_dict = {
             'train': self.train_acc,
             'valid': self.best_valid_acc,

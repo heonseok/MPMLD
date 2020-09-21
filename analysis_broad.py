@@ -80,6 +80,7 @@ small_recon_weight_list = [
 ]
 
 recon_type_list = [
+    # 'raw',
     'pn_pp_np_nn',  # [1, 1, 1, 1]
     'pn_pp_nn',  # [1, 1, 0, 1]
     'pn_pp',  # [1, 1, 0, 0]
@@ -111,6 +112,16 @@ def collate_recon_results(recon_path, recon_dict):
             df = df.append({**recon_dict, **acc_dict}, ignore_index=True)
     
     return df 
+
+def collate_class_results(class_path, class_dict):
+    df = pd.DataFrame()
+    for repeat_idx in range(5):
+        pass
+
+def collate_attack_results(class_path, class_dict):
+    df = pd.DataFrame()
+    for repeat_idx in range(5):
+        pass
 
 # %%
 recon_df = pd.DataFrame()
@@ -162,9 +173,6 @@ for dataset in dataset_list:
                                 }
                                 recon_path = os.path.join(base_path, dataset, description, reconstruction_name, 'reconstruction')
                                 recon_df = pd.concat([recon_df, collate_recon_results(recon_path, recon_dict)])
-                                print(recon_path)
-                                print(recon_df)
-
 
 
 

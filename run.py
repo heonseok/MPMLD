@@ -19,10 +19,9 @@ setsize_list = [
     # 1000,
     # 2000,
     # 4000,
-    # 5000,
-    # 5000,
+    5000,
     # 10000,
-    20000,
+    # 20000,
     # 50000,
 ]
 
@@ -51,26 +50,28 @@ recon_lr_list = [
 
 # recon, real_fake, class_pos, class_neg, membership_pos, membership_neg
 weight_list = [
-    [1, 1, 1, 1, 1, 1],
+    [1, 1, 0, 0, 0, 0],
+    # [1, 1, 1, 1, 1, 1],
 ]
 
 beta_list = [
-    # 0.0
+    0.0
     # 0.000001,
     # 0.00001,
     # 0.0001,
     # 0.001,
-    0.01,
+    # 0.01,
     # 0.05,
     # 0.1,
     # 1.0,
 ]
 
 small_recon_weight_list =[
-    # 1,
-    # 0.1,
+    0.0,
+    # 0.001,
     # 0.01,
-    0.001,
+    # 0.1,
+    # 1,
 ]
 
 
@@ -81,35 +82,36 @@ setup_dict = {
     'share_encoder': '0',
     'share_discriminator': '0',
     'recon_train_batch_size': 32,
-    'train_reconstructor': '0',
-    'reconstruct_datasets': '0',
-    'plot_recons': '0',
+    'train_reconstructor': '1',
+    'reconstruct_datasets': '1',
+    'plot_recons': '1',
 
     'use_reconstructed_dataset': '1',
     'disentangle_with_reparameterization': '1',
 
     # Classification
     'class_train_batch_size': 32,
-    'train_classifier': '0',
-    'test_classifier': '0',
-    'extract_classifier_features': '0',
+    'train_classifier': '1',
+    'test_classifier': '1',
+    'extract_classifier_features': '1',
     'classification_model': 'ResNet18',
     # 'classification_model': 'FCClassifier',
 
     # Attack
-    'train_attacker': '0',
+    'train_attacker': '1',
     'test_attacker': '1',
 
     # Common
     'repeat_start': 0,
-    'repeat_end': 1,
+    'repeat_end': 5,
     'epochs': 500,
     'early_stop': '1',
     'early_stop_observation_period': 20,
-    'gpu_id': 3,
-    'print_training': '1',
+    'gpu_id': 2,
+    'print_training': '0',
     # 'description': '0825_4typesDisentanglement_small_recon',
     'description': '0915',
+    # 'description': 'baseline',
     'resume': '1',
 }
 

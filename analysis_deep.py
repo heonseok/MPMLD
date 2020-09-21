@@ -73,13 +73,21 @@ def collate_disentanglement_result(dataset, description, model):
 def collate_classification_result(dataset, description, model, recon_type_list):
     model_path = os.path.join(base_path, dataset, description, model, 'classification', 'ResNet18_lr0.0001_bs32')
     df = pd.DataFrame()
+
     for recon_idx, recon_type in enumerate(recon_type_list):
         for repeat_idx in range(REPEAT):
-            repeat_path = os.path.join(model_path, recon_type, 'repeat' + str(repeat_idx), 'acc.npy')
+            if 'raw' in model:
+                repeat_path = os.path.join(model_path, 'repeat' + str(repeat_idx), 'acc.npy')
+                recon_type = 'raw'
+            else:
+                repeat_path = os.path.join(model_path, recon_type, 'repeat' + str(repeat_idx), 'acc.npy')
+
             acc_dict = np.load(repeat_path, allow_pickle=True).item()
             for dataset_type in ['train', 'valid', 'test']:
                 df = df.append({'description': description, 'recon': recon_type, 'dataset': dataset_type, 'acc': acc_dict[dataset_type]},
-                               ignore_index=True)
+                            ignore_index=True)
+        if 'raw' in model:
+            break
 
     sns.boxplot(x='recon', y='acc', hue='dataset', data=df)
     plt.ylim(0., 1.01)
@@ -89,8 +97,8 @@ def collate_classification_result(dataset, description, model, recon_type_list):
     if not os.path.exists(img_dir):
         os.makedirs(img_dir)
     img_path = os.path.join(img_dir, '{}.png'.format(model))
-    plt.show()
     plt.savefig(img_path)
+    plt.show()
     plt.close()
 
     drive_path = os.path.join('Research/MPMLD/', img_dir)
@@ -110,7 +118,11 @@ def collate_attack_result(dataset, description, model, recon_type_list):
     for recon_idx, recon_type in enumerate(recon_type_list):
         for attack_type in attack_type_list:
             for repeat_idx in range(REPEAT):
-                repeat_path = os.path.join(model_path, recon_type, attack_type, 'repeat' + str(repeat_idx), 'acc.npy')
+                if 'raw' in model:
+                    repeat_path = os.path.join(model_path, attack_type, 'repeat' + str(repeat_idx), 'acc.npy')
+                    recon_type = 'raw'
+                else:
+                    repeat_path = os.path.join(model_path, recon_type, attack_type, 'repeat' + str(repeat_idx), 'acc.npy')
                 acc_dict = np.load(repeat_path, allow_pickle=True).item()
                 df = df.append({'description':description, 'recon': recon_type, 'attack_type': attack_type, 'acc': acc_dict['test']},
                                ignore_index=True)
@@ -123,8 +135,8 @@ def collate_attack_result(dataset, description, model, recon_type_list):
     if not os.path.exists(img_dir):
         os.makedirs(img_dir)
     img_path = os.path.join(img_dir, '{}.png'.format(model))
-    plt.show()
     plt.savefig(img_path)
+    plt.show()
     plt.close()
 
     drive_path = os.path.join('Research/MPMLD/', img_dir)
@@ -140,7 +152,8 @@ dataset = 'SVHN'
 # description = '0825_4typesDisentanglement_small_recon'
 description = '0915'
 model_list = [
-    'VAE0.01_distinctEnc_distinctDisc_z128_setsize500_lr0.001_bs32_ref1.0_rw1.0_rf1.0_cp1.0_cn1.0_mp1.0_mn1.0_sr0.001',
+    # 'VAE0.01_distinctEnc_distinctDisc_z128_setsize5000_lr0.001_bs32_ref1.0_rw1.0_rf1.0_cp1.0_cn1.0_mp1.0_mn1.0_sr0.001',
+    'raw_setsize5000',
 ]
 
 recon_type_list = [
@@ -150,6 +163,7 @@ recon_type_list = [
     'pp_np',  # [0, 1, 1, 0]
     'np_nn',  # [0, 0, 1, 1]
     'pn',  # [1, 0, 0, 0]
+
     'pp',  # [1, 0, 0, 0]
     'np',  # [1, 0, 0, 0]
     'nn',  # [1, 0, 0, 0]
@@ -157,10 +171,13 @@ recon_type_list = [
 
 for model in model_list:
     print(model)
-    # collate_reconstructions(dataset, description, model, recon_type_list)
-    recon_df = collate_disentanglement_result(dataset, description, model)
+    if 'raw' not in model:
+        # collate_reconstructions(dataset, description, model, recon_type_list)
+        recon_df = collate_disentanglement_result(dataset, description, model)
     class_df = collate_classification_result(dataset, description, model, recon_type_list)
     attack_df = collate_attack_result(dataset, description, model, recon_type_list)
 
 print('Finish!')
 
+
+# %%

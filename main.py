@@ -27,11 +27,11 @@ parser.add_argument('--base_path', type=str,
                     default='/mnt/disk1/heonseok/MPMLD')
 parser.add_argument('--dataset', type=str, default='SVHN',
                     choices=['MNIST', 'Fashion-MNIST', 'SVHN', 'CIFAR-10', 'adult', 'location', ])
-parser.add_argument('--setsize', type=int, default=500)
+parser.add_argument('--setsize', type=int, default=5000)
 parser.add_argument('--early_stop', type=str2bool, default='1')
 parser.add_argument('--early_stop_observation_period', type=int, default=20)
 parser.add_argument('--gpu_id', type=int, default=3)
-parser.add_argument('--epochs', type=int, default=500)
+parser.add_argument('--epochs', type=int, default=100)
 parser.add_argument('--resume', type=str2bool, default='0')
 parser.add_argument('--print_training', type=str2bool, default='1')
 parser.add_argument('--use_rclone', type=str2bool, default='1')
@@ -66,25 +66,25 @@ parser.add_argument('--class_lr', type=float, default=0.0001)
 parser.add_argument('--class_train_batch_size', type=int, default=32)
 
 # -------- Attack -------- #
-parser.add_argument('--attack_lr', type=float, default=0.01)
-parser.add_argument('--attack_train_batch_size', type=int, default=100)
+parser.add_argument('--attack_lr', type=float, default=0.001)
+parser.add_argument('--attack_train_batch_size', type=int, default=32)
 
 # -------------------------------------------------------------------------------------------------------------------- #
 # -------- Control flags -------- #
-# parser.add_argument('--description', type=str, default='')
-parser.add_argument('--description', type=str, default='baseline')
+parser.add_argument('--description', type=str, default='0915')
+# parser.add_argument('--description', type=str, default='baseline')
 parser.add_argument('--repeat_start', type=int, default=0)
-parser.add_argument('--repeat_end', type=int, default=1)
+parser.add_argument('--repeat_end', type=int, default=5)
 parser.add_argument('--share_discriminator', type=str2bool, default='0')
 
 # ---- Reconstruction ---- #
 parser.add_argument('--share_encoder', type=str2bool, default='0')
-parser.add_argument('--train_reconstructor', type=str2bool, default='1')
-parser.add_argument('--reconstruct_datasets', type=str2bool, default='1')
-parser.add_argument('--plot_recons', type=str2bool, default='1')
+parser.add_argument('--train_reconstructor', type=str2bool, default='0')
+parser.add_argument('--reconstruct_datasets', type=str2bool, default='0')
+parser.add_argument('--plot_recons', type=str2bool, default='0')
 
 # ---- Classification ---- #
-parser.add_argument('--use_reconstructed_dataset', type=str2bool, default='1')
+parser.add_argument('--use_reconstructed_dataset', type=str2bool, default='0')
 
 parser.add_argument('--train_classifier', type=str2bool, default='0')
 parser.add_argument('--test_classifier', type=str2bool, default='0')
@@ -92,8 +92,8 @@ parser.add_argument('--extract_classifier_features',
                     type=str2bool, default='0')
 
 # ---- Attack ---- #
-parser.add_argument('--train_attacker', type=str2bool, default='0')
-parser.add_argument('--test_attacker', type=str2bool, default='0')
+parser.add_argument('--train_attacker', type=str2bool, default='1')
+parser.add_argument('--test_attacker', type=str2bool, default='1')
 
 # ---- ---- #
 # parser.add_argument('--test_with_raw_classifier', type=str2bool, default='0')
@@ -372,16 +372,14 @@ for repeat_idx in range(args.repeat_start, args.repeat_end):
                 if not os.path.exists(args.attack_path):
                     os.makedirs(args.attack_path)
 
-                inout_feature_sets = utils.build_inout_feature_sets(
-                    args.classification_path, attack_type)
+                inout_feature_sets = utils.build_inout_feature_sets(args.classification_path, attack_type)
 
                 # for dataset_type, dataset in inout_feature_sets.items():
                 #     print('Inout {:<3} feature set: {}'.format(dataset_type, len(dataset)))
 
                 attacker = Attacker(args)
                 if args.train_attacker:
-                    attacker.train(
-                        inout_feature_sets['train'], inout_feature_sets['valid'])
+                    attacker.train(inout_feature_sets['train'], inout_feature_sets['valid'])
                 if args.test_attacker:
                     attacker.test(inout_feature_sets['test'])
         print()

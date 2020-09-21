@@ -3,6 +3,7 @@ import torch
 import torch.nn.init as init
 from torch.nn import functional as F
 
+
 def _get_norm_layer_2d(norm):
     if norm == 'none':
         return torchlib.Identity
@@ -14,6 +15,7 @@ def _get_norm_layer_2d(norm):
         return lambda num_features: nn.GroupNorm(1, num_features)
     else:
         raise NotImplementedError
+
 
 def _init_layer(m):
     if isinstance(m, torch.nn.Conv2d) or isinstance(m, torch.nn.ConvTranspose2d):
@@ -44,26 +46,64 @@ class Unsqueeze3D(nn.Module):
         x = x.unsqueeze(-1)
         return x
 
+# class MIAttacker(nn.Module):
+#     def __init__(self, input_dim):
+#         super().__init__()
+
+#         self.net = nn.Sequential(
+#             # nn.Linear(input_dim, 128),
+#             # nn.BatchNorm1d(128),
+#             # nn.LeakyReLU(0.2),
+#             nn.Linear(input_dim, int(input_dim / 2)),
+#             nn.BatchNorm1d(int(input_dim / 2)),
+#             # nn.LeakyReLU(0.2),
+#             nn.ReLU(),
+#             nn.Linear(int(input_dim / 2), 1),
+#             nn.Sigmoid(),
+#         )
+#         init_layers(self._modules)
+
+#     def forward(self, x):
+#         return self.net(x)
 
 class MIAttacker(nn.Module):
     def __init__(self, input_dim):
         super().__init__()
+        self.input_dim = input_dim
+
+        self.features = nn.Sequential(
+            nn.Linear(input_dim, 1024),
+            nn.ReLU(),
+            nn.Linear(1024, 512),
+            nn.ReLU(),
+            nn.Linear(512, 64),
+            nn.ReLU(),
+        )
+
+        self.labels = nn.Sequential(
+            nn.Linear(input_dim, 512),
+            nn.ReLU(),
+            nn.Linear(512, 64),
+            nn.ReLU(),
+        )
 
         self.net = nn.Sequential(
-            # nn.Linear(input_dim, 128),
-            # nn.BatchNorm1d(128),
-            # nn.LeakyReLU(0.2),
-            nn.Linear(input_dim, int(input_dim / 2)),
-            nn.BatchNorm1d(int(input_dim / 2)),
-            # nn.LeakyReLU(0.2),
+            nn.Linear(128, 256),
             nn.ReLU(),
-            nn.Linear(int(input_dim / 2), 1),
-            # nn.Sigmoid(),
+            nn.Linear(256, 64),
+            nn.ReLU(),
+            nn.Linear(64, 1),
+            nn.Sigmoid(),
         )
+
         init_layers(self._modules)
 
-    def forward(self, x):
-        return self.net(x)
+    def forward(self, x_):
+        x = x_[:, 0:self.input_dim]
+        y = x_[:, self.input_dim:2*self.input_dim]
+        x = self.features(x)
+        y = self.labels(y)
+        return self.net(torch.cat((x, y), dim=1))
 
 
 class ClassDiscriminator(nn.Module):
@@ -181,12 +221,14 @@ class ConvClassifier(nn.Module):
         self.net = nn.Sequential(*layers)
 
         # 2: logit
-        self.d = nn.Sequential(nn.Conv2d(d, 1, kernel_size=4, stride=1, padding=0))
+        self.d = nn.Sequential(
+            nn.Conv2d(d, 1, kernel_size=4, stride=1, padding=0))
 
     def forward(self, x):
         lh = self.net(x)
         d = self.d(lh)
         return d, lh
+
 
 class VAEFCEncoder(nn.Module):
     def __init__(self, input_dim, latent_dim):
@@ -322,7 +364,8 @@ class VAEConvDecoder(nn.Module):
             # nn.Sigmoid(),
             # nn.Tanh(),
             # nn.LeakyReLU(0.2),
-            nn.ConvTranspose2d(256, num_channels, kernel_size=4, stride=2, padding=1),
+            nn.ConvTranspose2d(256, num_channels,
+                               kernel_size=4, stride=2, padding=1),
             # nn.sigmoid()
         )
 
@@ -337,10 +380,11 @@ class VAEConvDecoder(nn.Module):
 nz = 100
 # number of generator filters
 ngf = 64
-#number of discriminator filters
+# number of discriminator filters
 ndf = 64
 
 nc = 3
+
 
 class Discriminator(nn.Module):
     def __init__(self, ngpu=1):
@@ -371,7 +415,8 @@ class Discriminator(nn.Module):
 
     def forward(self, input):
         if input.is_cuda and self.ngpu > 1:
-            output = nn.parallel.data_parallel(self.main, input, range(self.ngpu))
+            output = nn.parallel.data_parallel(
+                self.main, input, range(self.ngpu))
         else:
             output = self.main(input)
 

@@ -15,7 +15,8 @@ from sklearn import metrics
 
 def get_mean_and_std(dataset):
     '''Compute the mean and std value of dataset.'''
-    dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=True, num_workers=2)
+    dataloader = torch.utils.data.DataLoader(
+        dataset, batch_size=1, shuffle=True, num_workers=2)
     mean = torch.zeros(3)
     std = torch.zeros(3)
     print('==> Computing mean and std..')
@@ -139,10 +140,12 @@ def str2bool(s):
 def classify_membership(data_in, data_out):
     data_concat = np.concatenate((data_in, data_out))
     sorted_idx = np.argsort(data_concat)
-    inout_truth = np.concatenate((np.ones_like(data_in), np.zeros_like(data_out)))
+    inout_truth = np.concatenate(
+        (np.ones_like(data_in), np.zeros_like(data_out)))
     inout_truth_sorted = inout_truth[sorted_idx]
 
-    inout_pred = np.concatenate((np.ones_like(data_out), np.zeros_like(data_in)))
+    inout_pred = np.concatenate(
+        (np.ones_like(data_out), np.zeros_like(data_in)))
 
     acc = metrics.accuracy_score(inout_truth_sorted, inout_pred)
     auroc = metrics.roc_auc_score(inout_truth_sorted, inout_pred)
@@ -170,7 +173,8 @@ def concat_datasets(in_dataset, out_dataset, start, end):
 
 
 def statistical_attack(cls_path, attack_path):
-    features = np.load(os.path.join(cls_path, 'features.npy'), allow_pickle=True).item()
+    features = np.load(os.path.join(cls_path, 'features.npy'),
+                       allow_pickle=True).item()
 
     print('==> Statistical attack')
     in_entropy = entropy(features['in']['preds'], base=2, axis=1)
@@ -181,6 +185,15 @@ def statistical_attack(cls_path, attack_path):
 
     print('Statistical attack accuracy : {:.2f}'.format(acc))
     # todo: sort by confidence score
+
+
+def build_reconstructed_datasets(reconstruction_path):
+    recon_datasets_ = torch.load(reconstruction_path)
+    recon_datasets = {}
+    for dataset_type, dataset in recon_datasets_.items():
+        recon_datasets[dataset_type] = CustomDataset(
+            dataset['recons'], dataset['labels'])
+    return recon_datasets
 
 
 def build_inout_features(features, attack_type):
@@ -199,7 +212,8 @@ def build_inout_features(features, attack_type):
 
 
 def build_inout_feature_sets(classification_path, attack_type):
-    features = np.load(os.path.join(classification_path, 'features.npy'), allow_pickle=True).item()
+    features = np.load(os.path.join(classification_path,
+                                    'features.npy'), allow_pickle=True).item()
 
     in_features = build_inout_features(features['in'], attack_type)
     out_features = build_inout_features(features['out'], attack_type)
@@ -213,11 +227,3 @@ def build_inout_feature_sets(classification_path, attack_type):
         'test': concat_datasets(in_feature_set, out_feature_set, 0.85, 1.0),
     }
     return inout_feature_sets
-
-
-def build_reconstructed_datasets(reconstruction_path):
-    recon_datasets_ = torch.load(reconstruction_path)
-    recon_datasets = {}
-    for dataset_type, dataset in recon_datasets_.items():
-        recon_datasets[dataset_type] = CustomDataset(dataset['recons'], dataset['labels'])
-    return recon_datasets
