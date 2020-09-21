@@ -106,6 +106,28 @@ class MIAttacker(nn.Module):
         return self.net(torch.cat((x, y), dim=1))
 
 
+class ConvMIAttacker(nn.Module):
+    def __init__(self):
+        super().__init__()
+
+        self.features = nn.Sequential(
+
+        )
+        self.labels = nn.Sequential(
+
+        )
+        self.net = nn.Sequential(
+
+        )
+
+        init_layers(self._modules)
+
+    def forward(self, x, y):
+        
+        pass
+
+
+
 class ClassDiscriminator(nn.Module):
     def __init__(self, input_dim, output_dim):
         super().__init__()

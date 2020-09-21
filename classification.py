@@ -206,7 +206,7 @@ class Classifier(object):
     # ---- For MIA ---- #
     #####################
     def extract_features(self, dataset_dict):
-        # print('==> Extract features')
+        print('==> Start: Extract features')
         try:
             self.load()
         except FileNotFoundError:
@@ -218,59 +218,112 @@ class Classifier(object):
 
         features_dict = {}
         for dataset_type, dataset in dataset_dict.items():
-            loader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False, num_workers=2)
-            # loader = torch.utils.data.DataLoader(dataset, batch_size=self.test_batch_size, shuffle=False, num_workers=2)
+            # loader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False, num_workers=2)
+            loader = torch.utils.data.DataLoader(dataset, batch_size=self.test_batch_size, shuffle=False, num_workers=2)
             logits = []
             prediction_scores = []
             labels = []
+            response_list = []
             # print('====> Extract features from {} dataset'.format(dataset_type))
             # with torch.no_grad():
             for batch_idx, (inputs, targets) in enumerate(loader):
                 inputs, targets = inputs.to(self.device), targets.to(self.device)
                 logits_ = self.net(inputs)
-                # prediction_scores_batch = outputs.cpu().numpy()
-                # print(outputs[0])
+
                 logits_batch = logits_.cpu().detach().numpy()
                 prediction_scores_batch = torch.softmax(logits_, dim=1).cpu().detach().numpy()
                 labels_batch = targets.cpu().detach().numpy()
 
-                # out_list = self.net.extract_features(inputs)
-                #
-                # print(out_list)
-                # print(out_list.shape)
-                # sys.exit(1)
-                # print(x1.shape)
-                # print(x2.shape)
-                # print(x3.shape)
-                # sys.exit(1)
-
-                # loss = self.criterion(outputs, targets)
-                # print(loss)
-                # loss.backward()
-
-                # print(self.net.fc2.weight)
-                # print(self.net.fc2.weight.grad)
-                # print(self.net.fc2.weight.grad.shape)
-
-                # print('Prediction score:', prediction_scores_batch.shape)
-                # print('Label:', labels_batch.shape)
-                # print('Gradient:', self.net.fc2.weight.grad.shape)
-                # sys.exit(1)
-
+                response_list_batch = self.net.extract_features(inputs)
+            
                 if len(prediction_scores) == 0:
                     logits = logits_batch
                     prediction_scores = prediction_scores_batch
                     labels = labels_batch
+                    for response_idx, response in enumerate(response_list_batch):
+                        # response_list[response_idx] = response.cpu().detach().numpy()
+                        response_list.append(response.cpu().detach().numpy())
                 else:
                     logits = np.vstack((logits, logits_batch))
                     prediction_scores = np.vstack((prediction_scores, prediction_scores_batch))
-                    labels = np.concatenate((labels, labels_batch))
-
-            # print(prediction_scores.shape)
-            # print(labels.shape)
+                    labels = np.vstack((labels, labels_batch))
+                    for response_idx, response in enumerate(response_list_batch):
+                        response_list[response_idx] = np.vstack((response_list[response_idx], response.cpu().detach().numpy()))
+                    
             features_dict[dataset_type] = {
                 'logits': logits,
                 'preds': prediction_scores,
                 'labels': labels,
+                'responses': response_list
             }
         np.save(os.path.join(self.classification_path, 'features.npy'), features_dict)
+        # torch.save(features_dict, os.path.join(self.classification_path, 'features.pt'))
+        print('==> Done: Extract features')
+
+    # def extract_features(self, dataset_dict):
+    #     # print('==> Extract features')
+    #     try:
+    #         self.load()
+    #     except FileNotFoundError:
+    #         print('There is no pre-trained model; First, train the classifier.')
+    #         sys.exit(1)
+    #     self.net.eval()
+
+    #     # print(self.net)
+
+    #     features_dict = {}
+    #     for dataset_type, dataset in dataset_dict.items():
+    #         loader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False, num_workers=2)
+    #         # loader = torch.utils.data.DataLoader(dataset, batch_size=self.test_batch_size, shuffle=False, num_workers=2)
+    #         logits = []
+    #         prediction_scores = []
+    #         labels = []
+    #         # print('====> Extract features from {} dataset'.format(dataset_type))
+    #         # with torch.no_grad():
+    #         for batch_idx, (inputs, targets) in enumerate(loader):
+    #             inputs, targets = inputs.to(self.device), targets.to(self.device)
+    #             logits_ = self.net(inputs)
+    #             # prediction_scores_batch = outputs.cpu().numpy()
+    #             # print(outputs[0])
+    #             logits_batch = logits_.cpu().detach().numpy()
+    #             prediction_scores_batch = torch.softmax(logits_, dim=1).cpu().detach().numpy()
+    #             labels_batch = targets.cpu().detach().numpy()
+
+    #             response_list = self.net.extract_features(inputs)
+    #             print(response_list)
+    #             for response in response_list:
+    #                 print(response.shape)
+    #             sys.exit(1)
+
+
+    #             # ---- Attempts for gradient-based MIA ---- # 
+    #             # loss = self.criterion(outputs, targets)
+    #             # print(loss)
+    #             # loss.backward()
+
+    #             # print(self.net.fc2.weight)
+    #             # print(self.net.fc2.weight.grad)
+    #             # print(self.net.fc2.weight.grad.shape)
+
+    #             # print('Prediction score:', prediction_scores_batch.shape)
+    #             # print('Label:', labels_batch.shape)
+    #             # print('Gradient:', self.net.fc2.weight.grad.shape)
+    #             # sys.exit(1)
+
+    #             if len(prediction_scores) == 0:
+    #                 logits = logits_batch
+    #                 prediction_scores = prediction_scores_batch
+    #                 labels = labels_batch
+    #             else:
+    #                 logits = np.vstack((logits, logits_batch))
+    #                 prediction_scores = np.vstack((prediction_scores, prediction_scores_batch))
+    #                 labels = np.concatenate((labels, labels_batch))
+
+    #         # print(prediction_scores.shape)
+    #         # print(labels.shape)
+    #         features_dict[dataset_type] = {
+    #             'logits': logits,
+    #             'preds': prediction_scores,
+    #             'labels': labels,
+    #         }
+    #     np.save(os.path.join(self.classification_path, 'features.npy'), features_dict)
