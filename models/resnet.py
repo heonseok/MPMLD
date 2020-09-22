@@ -110,15 +110,12 @@ class ResNet(nn.Module):
         x4 = self.layer3(x3)
         x5 = self.layer4(x4)
         x6 = F.avg_pool2d(x5, 4)
-        response_list = [
+        activation_list = [
             # x1, x2, x3,
             # x4, 
             x5, x6,
         ]
-        # for idx, response in enumerate(response_list):
-        #     # response_list[idx] = response.view(response.size(0), -1)
-        #     response_list[idx] = response.cpu()
-        return response_list
+        return activation_list
 
 
 def ResNet18(n_channel=3):

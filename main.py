@@ -136,10 +136,8 @@ for repeat_idx in range(args.repeat_start, args.repeat_end):
                                                                                                                          args.small_recon_weight,
                                                                                                                          )
 
-    args.recon_output_path = os.path.join(
-        args.base_path, args.dataset, args.description, args.reconstruction_name)
-    args.raw_output_path = os.path.join(args.base_path, args.dataset, args.description,
-                                        'raw_setsize{}'.format(args.setsize))
+    args.recon_output_path = os.path.join( args.base_path, args.dataset, args.description, args.reconstruction_name)
+    args.raw_output_path = os.path.join(args.base_path, args.dataset, args.description, 'raw_setsize{}'.format(args.setsize))
 
     if not os.path.exists(args.recon_output_path):
         os.makedirs(args.recon_output_path)
@@ -151,7 +149,7 @@ for repeat_idx in range(args.repeat_start, args.repeat_end):
     args.model_path = os.path
     args.reconstruction_path = os.path.join(
         args.recon_output_path, 'reconstruction/repeat{}'.format(repeat_idx))
-    print(args.reconstruction_path)
+    # print(args.reconstruction_path)
 
     # ---- Backup codes ---- #
     date = str(datetime.datetime.now())[:-16]
@@ -222,8 +220,8 @@ for repeat_idx in range(args.repeat_start, args.repeat_end):
     ]
 
     attack_type_list = [
-        'black',
-        # 'white',
+        # 'black',
+        'white',
     ]
 
     # ---------------------------------------------------------------------------------------------------------------- #

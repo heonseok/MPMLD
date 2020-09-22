@@ -111,7 +111,7 @@ def collate_attack_result(dataset, description, model, recon_type_list):
     model_path = os.path.join(base_path, dataset, description, model, 'attack', 'ResNet18_lr0.0001_bs32')
     attack_type_list = [
         'black',
-        # 'white',
+        'white',
     ]
 
     df = pd.DataFrame()
@@ -150,13 +150,13 @@ dataset = 'SVHN'
 # dataset = 'MNIST'
 
 # description = '0825_4typesDisentanglement_small_recon'
-# description = '0915'
-description = '0921'
+description = '0915'
+# description = '0921'
 model_list = [
     # 'VAE0.0_distinctEnc_distinctDisc_z128_setsize5000_lr0.001_bs32_ref1.0_rw1.0_rf1.0_cp0.0_cn0.0_mp0.0_mn0.0_sr0.0',
     # 'VAE0.01_distinctEnc_distinctDisc_z128_setsize5000_lr0.001_bs32_ref1.0_rw1.0_rf1.0_cp0.0_cn0.0_mp0.0_mn0.0_sr0.0',
-    'VAE0.01_distinctEnc_distinctDisc_z128_setsize5000_lr0.001_bs32_ref1.0_rw1.0_rf1.0_cp1.0_cn1.0_mp1.0_mn1.0_sr0.0',
-    # 'raw_setsize5000',
+    # 'VAE0.01_distinctEnc_distinctDisc_z128_setsize5000_lr0.001_bs32_ref1.0_rw1.0_rf1.0_cp1.0_cn1.0_mp1.0_mn1.0_sr0.0',
+    'raw_setsize5000',
 ]
 
 recon_type_list = [

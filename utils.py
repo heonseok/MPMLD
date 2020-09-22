@@ -216,8 +216,11 @@ def build_inout_features(total_responses, attack_type):
     if attack_type == 'black':
         responses = torch.Tensor(total_responses['preds'])
     elif attack_type == 'white':
-        # 1) activation, gradient
-        pass
+        activations = total_responses['activations']
+        # for act in activations:
+        #     print(act.shape)
+        # sys.exit(1)
+        responses = torch.Tensor(activations[1])
 
     return responses, labels_onehot
 

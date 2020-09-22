@@ -37,6 +37,7 @@ class Attacker(object):
         elif self.attack_type == 'white':
             if args.dataset in ['MNIST', 'Fashion-MNIST', 'CIFAR-10', 'SVHN']:
                 net = ConvMIAttacker()
+                # net = MIAttacker(10)
         
 
         self.start_epoch = 0
@@ -80,8 +81,14 @@ class Attacker(object):
         labels = []
         for batch_idx, (features, class_labels, membership_labels) in enumerate(train_loader):
             features, class_labels, membership_labels = features.to(self.device), class_labels.to(self.device), membership_labels.to(self.device)
+
+            # print(features.shape, class_labels.shape, membership_labels.shape)
+
             self.optimizer.zero_grad()
+            
+            features = features.view(features.size(0), -1) # hard coded
             outputs = self.net(features, class_labels)
+
             loss = self.criterion(outputs.squeeze(), membership_labels)
             loss.backward()
             self.optimizer.step()
@@ -109,6 +116,7 @@ class Attacker(object):
         with torch.no_grad():
             for batch_idx, (features, class_labels, membership_labels) in enumerate(loader):
                 features, class_labels, membership_labels = features.to(self.device), class_labels.to(self.device), membership_labels.to(self.device)
+                features = features.view(features.size(0), -1) # hard coded
                 outputs = self.net(features, class_labels)
                 loss = self.criterion(outputs.squeeze(), membership_labels)
 

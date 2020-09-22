@@ -165,49 +165,9 @@ class MIAttacker(nn.Module):
         y = self.labels(y)
         return self.net(torch.cat((x, y), dim=1))
 
-# # For black-box attack
-# class MIAttacker(nn.Module):
-#     def __init__(self, class_dim):
-#         super().__init__()
-#         self.class_dim = class_dim
-
-#         self.features = nn.Sequential(
-#             nn.Linear(class_dim, 1024),
-#             nn.ReLU(),
-#             nn.Linear(1024, 512),
-#             nn.ReLU(),
-#             nn.Linear(512, 64),
-#             nn.ReLU(),
-#         )
-
-#         self.labels = nn.Sequential(
-#             nn.Linear(class_dim, 512),
-#             nn.ReLU(),
-#             nn.Linear(512, 64),
-#             nn.ReLU(),
-#         )
-
-#         self.net = nn.Sequential(
-#             nn.Linear(128, 256),
-#             nn.ReLU(),
-#             nn.Linear(256, 64),
-#             nn.ReLU(),
-#             nn.Linear(64, 1),
-#             nn.Sigmoid(),
-#         )
-
-#         init_layers(self._modules)
-
-#     def forward(self, x_):
-#         x = x_[:, 0:self.class_dim]
-#         y = x_[:, self.class_dim:2*self.class_dim]
-#         x = self.features(x)
-#         y = self.labels(y)
-#         return self.net(torch.cat((x, y), dim=1))
-
-# For white-box attack
+# For white-box attack : depth 1 hard coding
 class ConvMIAttacker(nn.Module):
-    def __init__(self, input_dim, class_dim, depth):
+    def __init__(self, input_dim=512, class_dim=10, depth=1):
         super().__init__()
 
         self.input_dim = input_dim
@@ -215,6 +175,12 @@ class ConvMIAttacker(nn.Module):
 
         # depth-dependent implementation
         self.features = nn.Sequential(
+            nn.Linear(input_dim, 1024),
+            nn.ReLU(),
+            nn.Linear(1024, 512),
+            nn.ReLU(),
+            nn.Linear(512, 64),
+            nn.ReLU(),
         )
 
         self.labels = nn.Sequential(
@@ -234,9 +200,7 @@ class ConvMIAttacker(nn.Module):
 
         init_layers(self._modules)
 
-    def forward(self, x_):
-        x = x_[:, 0:self.input_dim]
-        y = x_[:, self.input_dim:self.input_dim+self.class_dim]
+    def forward(self, x, y):
         x = self.features(x)
         y = self.labels(y)
         return self.net(torch.cat((x, y), dim=1))
@@ -522,7 +486,6 @@ ngf = 64
 ndf = 64
 
 nc = 3
-
 
 class Discriminator(nn.Module):
     def __init__(self, ngpu=1):
