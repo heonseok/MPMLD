@@ -246,7 +246,8 @@ class Classifier(object):
                 else:
                     logits = np.vstack((logits, logits_batch))
                     prediction_scores = np.vstack((prediction_scores, prediction_scores_batch))
-                    labels = np.vstack((labels, labels_batch))
+                    # labels = np.vstack((labels, labels_batch))
+                    labels = np.concatenate((labels, labels_batch))
                     for response_idx, response in enumerate(response_list_batch):
                         response_list[response_idx] = np.vstack((response_list[response_idx], response.cpu().detach().numpy()))
                     
@@ -289,13 +290,7 @@ class Classifier(object):
     #             prediction_scores_batch = torch.softmax(logits_, dim=1).cpu().detach().numpy()
     #             labels_batch = targets.cpu().detach().numpy()
 
-    #             response_list = self.net.extract_features(inputs)
-    #             print(response_list)
-    #             for response in response_list:
-    #                 print(response.shape)
-    #             sys.exit(1)
-
-
+    #             # response_list = self.net.extract_features(inputs)
     #             # ---- Attempts for gradient-based MIA ---- # 
     #             # loss = self.criterion(outputs, targets)
     #             # print(loss)

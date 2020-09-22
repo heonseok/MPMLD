@@ -30,7 +30,7 @@ parser.add_argument('--dataset', type=str, default='SVHN',
 parser.add_argument('--setsize', type=int, default=5000)
 parser.add_argument('--early_stop', type=str2bool, default='1')
 parser.add_argument('--early_stop_observation_period', type=int, default=20)
-parser.add_argument('--gpu_id', type=int, default=3)
+parser.add_argument('--gpu_id', type=int, default=2)
 parser.add_argument('--epochs', type=int, default=100)
 parser.add_argument('--resume', type=str2bool, default='0')
 parser.add_argument('--print_training', type=str2bool, default='1')

@@ -64,10 +64,14 @@ class DistinctReconstructor(object):
         self.class_discs = dict()
         self.membership_discs = dict()
         for encoder_name in self.encoder_name_list:
-            self.class_discs[encoder_name] = module.ClassDiscriminator(
+            # self.class_discs[encoder_name] = module.ClassDiscriminator(
+            #     self.base_z_dim, args.class_num)
+            # self.membership_discs[encoder_name] = module.MembershipDiscriminator(
+            #     self.base_z_dim + args.class_num, 1)
+            self.class_discs[encoder_name] = module.ClassDiscriminatorImproved(
                 self.base_z_dim, args.class_num)
-            self.membership_discs[encoder_name] = module.MembershipDiscriminator(
-                self.base_z_dim + args.class_num, 1)
+            self.membership_discs[encoder_name] = module.MembershipDiscriminatorImproved(
+                self.base_z_dim, args.class_num)
         self.rf_disc = module.Discriminator()
 
         # Optimizer

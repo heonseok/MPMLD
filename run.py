@@ -50,17 +50,17 @@ recon_lr_list = [
 
 # recon, real_fake, class_pos, class_neg, membership_pos, membership_neg
 weight_list = [
-    [1, 1, 0, 0, 0, 0],
-    # [1, 1, 1, 1, 1, 1],
+    # [1, 1, 0, 0, 0, 0],
+    [1, 1, 1, 1, 1, 1],
 ]
 
 beta_list = [
-    0.0
+    # 0.0
     # 0.000001,
     # 0.00001,
     # 0.0001,
     # 0.001,
-    # 0.01,
+    0.01,
     # 0.05,
     # 0.1,
     # 1.0,

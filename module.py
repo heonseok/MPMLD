@@ -66,13 +66,16 @@ class Unsqueeze3D(nn.Module):
 #     def forward(self, x):
 #         return self.net(x)
 
-class MIAttacker(nn.Module):
-    def __init__(self, input_dim):
+class MembershipDiscriminatorImproved(nn.Module):
+    def __init__(self, z_dim, class_dim):
         super().__init__()
-        self.input_dim = input_dim
+        self.z_dim = z_dim
+        self.class_dim = class_dim
+
+        print('Improved Membership Discriminator')
 
         self.features = nn.Sequential(
-            nn.Linear(input_dim, 1024),
+            nn.Linear(z_dim, 1024),
             nn.ReLU(),
             nn.Linear(1024, 512),
             nn.ReLU(),
@@ -81,7 +84,7 @@ class MIAttacker(nn.Module):
         )
 
         self.labels = nn.Sequential(
-            nn.Linear(input_dim, 512),
+            nn.Linear(class_dim, 512),
             nn.ReLU(),
             nn.Linear(512, 64),
             nn.ReLU(),
@@ -99,32 +102,145 @@ class MIAttacker(nn.Module):
         init_layers(self._modules)
 
     def forward(self, x_):
-        x = x_[:, 0:self.input_dim]
-        y = x_[:, self.input_dim:2*self.input_dim]
+        x = x_[:, :self.z_dim]
+        y = x_[:, self.z_dim:self.z_dim + self.class_dim]
+
         x = self.features(x)
         y = self.labels(y)
         return self.net(torch.cat((x, y), dim=1))
 
-
-class ConvMIAttacker(nn.Module):
-    def __init__(self):
+class ClassDiscriminatorImproved(nn.Module):
+    def __init__(self, z_dim, class_dim):
         super().__init__()
 
-        self.features = nn.Sequential(
-
-        )
-        self.labels = nn.Sequential(
-
-        )
         self.net = nn.Sequential(
+            nn.Linear(z_dim, 1024),
+            nn.ReLU(),
+            nn.Linear(1024, 512),
+            nn.ReLU(),
+            nn.Linear(512, 64),
+            nn.ReLU(),
+            nn.Linear(64, class_dim),
+        )
+        init_layers(self._modules)
 
+    def forward(self, x):
+        return self.net(x)
+
+# For black-box attack
+class MIAttacker(nn.Module):
+    def __init__(self, class_dim):
+        super().__init__()
+        self.class_dim = class_dim
+
+        self.features = nn.Sequential(
+            nn.Linear(class_dim, 1024),
+            nn.ReLU(),
+            nn.Linear(1024, 512),
+            nn.ReLU(),
+            nn.Linear(512, 64),
+            nn.ReLU(),
+        )
+
+        self.labels = nn.Sequential(
+            nn.Linear(class_dim, 512),
+            nn.ReLU(),
+            nn.Linear(512, 64),
+            nn.ReLU(),
+        )
+
+        self.net = nn.Sequential(
+            nn.Linear(128, 256),
+            nn.ReLU(),
+            nn.Linear(256, 64),
+            nn.ReLU(),
+            nn.Linear(64, 1),
+            nn.Sigmoid(),
         )
 
         init_layers(self._modules)
 
     def forward(self, x, y):
-        
-        pass
+        x = self.features(x)
+        y = self.labels(y)
+        return self.net(torch.cat((x, y), dim=1))
+
+# # For black-box attack
+# class MIAttacker(nn.Module):
+#     def __init__(self, class_dim):
+#         super().__init__()
+#         self.class_dim = class_dim
+
+#         self.features = nn.Sequential(
+#             nn.Linear(class_dim, 1024),
+#             nn.ReLU(),
+#             nn.Linear(1024, 512),
+#             nn.ReLU(),
+#             nn.Linear(512, 64),
+#             nn.ReLU(),
+#         )
+
+#         self.labels = nn.Sequential(
+#             nn.Linear(class_dim, 512),
+#             nn.ReLU(),
+#             nn.Linear(512, 64),
+#             nn.ReLU(),
+#         )
+
+#         self.net = nn.Sequential(
+#             nn.Linear(128, 256),
+#             nn.ReLU(),
+#             nn.Linear(256, 64),
+#             nn.ReLU(),
+#             nn.Linear(64, 1),
+#             nn.Sigmoid(),
+#         )
+
+#         init_layers(self._modules)
+
+#     def forward(self, x_):
+#         x = x_[:, 0:self.class_dim]
+#         y = x_[:, self.class_dim:2*self.class_dim]
+#         x = self.features(x)
+#         y = self.labels(y)
+#         return self.net(torch.cat((x, y), dim=1))
+
+# For white-box attack
+class ConvMIAttacker(nn.Module):
+    def __init__(self, input_dim, class_dim, depth):
+        super().__init__()
+
+        self.input_dim = input_dim
+        self.class_dim = class_dim
+
+        # depth-dependent implementation
+        self.features = nn.Sequential(
+        )
+
+        self.labels = nn.Sequential(
+            nn.Linear(class_dim, 512),
+            nn.ReLU(),
+            nn.Linear(512, 64),
+            nn.ReLU(),
+        )
+        self.net = nn.Sequential(
+            nn.Linear(128, 256),
+            nn.ReLU(),
+            nn.Linear(256, 64),
+            nn.ReLU(),
+            nn.Linear(64, 1),
+            nn.Sigmoid(),
+        )
+
+        init_layers(self._modules)
+
+    def forward(self, x_):
+        x = x_[:, 0:self.input_dim]
+        y = x_[:, self.input_dim:self.input_dim+self.class_dim]
+        x = self.features(x)
+        y = self.labels(y)
+        return self.net(torch.cat((x, y), dim=1))
+
 
 
 
@@ -152,6 +268,7 @@ class ClassDiscriminator(nn.Module):
 class MembershipDiscriminator(nn.Module):
     def __init__(self, input_dim, output_dim):
         super().__init__()
+        print('Membership Discriminator')
 
         self.net = nn.Sequential(
             nn.Linear(input_dim, 128),
@@ -169,7 +286,6 @@ class MembershipDiscriminator(nn.Module):
 
     def forward(self, x):
         return self.net(x)
-
 
 class FCClassifier(nn.Module):
     def __init__(self, input_dim, output_dim):

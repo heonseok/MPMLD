@@ -164,6 +164,19 @@ class CustomDataset(Dataset):
     def __getitem__(self, idx):
         return self.data[idx], self.targets[idx]
 
+class MIDataset(Dataset):
+    def __init__(self, responses, class_labels, membership_labels):
+        self.responses = responses
+        self.class_labels = class_labels
+        self.membership_labels = membership_labels
+
+    def __len__(self):
+        return len(self.responses)
+
+    def __getitem__(self, idx):
+        return self.responses[idx], self.class_labels[idx], self.membership_labels[idx]
+
+
 
 def concat_datasets(in_dataset, out_dataset, start, end):
     return ConcatDataset([
@@ -196,30 +209,27 @@ def build_reconstructed_datasets(reconstruction_path):
     return recon_datasets
 
 
-def build_inout_features(features, attack_type):
-    preds = torch.Tensor(features['preds'])
-    labels = features['labels']
-    labels_onehot = torch.zeros((len(labels), len(np.unique(labels)))).scatter_(1, torch.LongTensor(labels).reshape(
-        (-1, 1)), 1)
+def build_inout_features(total_responses, attack_type):
+    labels = total_responses['labels']
+    labels_onehot = torch.zeros((len(labels), len(np.unique(labels)))).scatter_(1, torch.LongTensor(labels).reshape( (-1, 1)), 1)
 
     if attack_type == 'black':
-        inout_features = torch.cat((preds, labels_onehot), axis=1)
+        responses = torch.Tensor(total_responses['preds'])
     elif attack_type == 'white':
-        # 1) gradient, hidden output,
+        # 1) activation, gradient
         pass
 
-    return inout_features
-
+    return responses, labels_onehot
 
 def build_inout_feature_sets(classification_path, attack_type):
     features = np.load(os.path.join(classification_path,
                                     'features.npy'), allow_pickle=True).item()
+    
+    in_features, in_class_labels = build_inout_features(features['in'], attack_type)
+    out_features, out_class_labels = build_inout_features(features['out'], attack_type)
 
-    in_features = build_inout_features(features['in'], attack_type)
-    out_features = build_inout_features(features['out'], attack_type)
-
-    in_feature_set = CustomDataset(in_features, torch.ones(in_features.shape[0]))
-    out_feature_set = CustomDataset(out_features, torch.zeros(out_features.shape[0]))
+    in_feature_set = MIDataset(in_features, in_class_labels, torch.ones(in_features.shape[0]))
+    out_feature_set = MIDataset(out_features, out_class_labels, torch.zeros(out_features.shape[0]))
 
     inout_feature_sets = {
         'train': concat_datasets(in_feature_set, out_feature_set, 0, 0.7),

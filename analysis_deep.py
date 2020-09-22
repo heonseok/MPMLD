@@ -31,8 +31,8 @@ def collate_reconstructions(dataset, description, model, recon_type_list):
     if not os.path.exists(img_dir):
         os.makedirs(img_dir)
     img_path = os.path.join(img_dir, '{}.jpeg'.format(model))
-    plt.show()
     plt.savefig(img_path)
+    plt.show()
     plt.close()
 
     drive_path = os.path.join('Research/MPMLD/', img_dir)
@@ -60,8 +60,8 @@ def collate_disentanglement_result(dataset, description, model):
     if not os.path.exists(img_dir):
         os.makedirs(img_dir)
     img_path = os.path.join(img_dir, '{}.png'.format(model))
-    plt.show()
     plt.savefig(img_path)
+    plt.show()
     plt.close()
 
     drive_path = os.path.join('Research/MPMLD/', img_dir)
@@ -150,23 +150,26 @@ dataset = 'SVHN'
 # dataset = 'MNIST'
 
 # description = '0825_4typesDisentanglement_small_recon'
-description = '0915'
+# description = '0915'
+description = '0921'
 model_list = [
-    # 'VAE0.01_distinctEnc_distinctDisc_z128_setsize5000_lr0.001_bs32_ref1.0_rw1.0_rf1.0_cp1.0_cn1.0_mp1.0_mn1.0_sr0.001',
-    'raw_setsize5000',
+    # 'VAE0.0_distinctEnc_distinctDisc_z128_setsize5000_lr0.001_bs32_ref1.0_rw1.0_rf1.0_cp0.0_cn0.0_mp0.0_mn0.0_sr0.0',
+    # 'VAE0.01_distinctEnc_distinctDisc_z128_setsize5000_lr0.001_bs32_ref1.0_rw1.0_rf1.0_cp0.0_cn0.0_mp0.0_mn0.0_sr0.0',
+    'VAE0.01_distinctEnc_distinctDisc_z128_setsize5000_lr0.001_bs32_ref1.0_rw1.0_rf1.0_cp1.0_cn1.0_mp1.0_mn1.0_sr0.0',
+    # 'raw_setsize5000',
 ]
 
 recon_type_list = [
     'pn_pp_np_nn',  # [1, 1, 1, 1]
-    'pn_pp_nn',  # [1, 1, 0, 1]
-    'pn_pp',  # [1, 1, 0, 0]
-    'pp_np',  # [0, 1, 1, 0]
-    'np_nn',  # [0, 0, 1, 1]
-    'pn',  # [1, 0, 0, 0]
+    # 'pn_pp_nn',  # [1, 1, 0, 1]
+    # 'pn_pp',  # [1, 1, 0, 0]
+    # 'pp_np',  # [0, 1, 1, 0]
+    # 'np_nn',  # [0, 0, 1, 1]
+    # 'pn',  # [1, 0, 0, 0]
 
-    'pp',  # [1, 0, 0, 0]
-    'np',  # [1, 0, 0, 0]
-    'nn',  # [1, 0, 0, 0]
+    # 'pp',  # [1, 0, 0, 0]
+    # 'np',  # [1, 0, 0, 0]
+    # 'nn',  # [1, 0, 0, 0]
 ]
 
 for model in model_list:

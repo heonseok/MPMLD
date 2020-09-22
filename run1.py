@@ -50,8 +50,8 @@ recon_lr_list = [
 
 # recon, real_fake, class_pos, class_neg, membership_pos, membership_neg
 weight_list = [
-    [1, 1, 0, 0, 0, 0],
-    # [1, 1, 1, 1, 1, 1],
+    # [1, 1, 0, 0, 0, 0],
+    [1, 1, 1, 1, 1, 1],
 ]
 
 beta_list = [
@@ -82,7 +82,7 @@ setup_dict = {
     'share_encoder': '0',
     'share_discriminator': '0',
     'recon_train_batch_size': 32,
-    'train_reconstructor': '1',
+    'train_reconstructor': '0',
     'reconstruct_datasets': '1',
     'plot_recons': '1',
 
@@ -110,7 +110,7 @@ setup_dict = {
     'gpu_id': 3,
     'print_training': '0',
     # 'description': '0825_4typesDisentanglement_small_recon',
-    'description': '0915',
+    'description': '0921',
     # 'description': 'baseline',
     'resume': '1',
 }

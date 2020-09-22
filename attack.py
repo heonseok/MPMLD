@@ -8,7 +8,7 @@ import torch.backends.cudnn as cudnn
 
 from torch.utils.data import ConcatDataset
 import torch.nn as nn
-from module import MIAttacker
+from module import MIAttacker, ConvMIAttacker
 from sklearn import metrics
 
 
@@ -35,7 +35,9 @@ class Attacker(object):
             elif args.dataset == 'location':
                 net = MIAttacker(60)
         elif self.attack_type == 'white':
-            pass
+            if args.dataset in ['MNIST', 'Fashion-MNIST', 'CIFAR-10', 'SVHN']:
+                net = ConvMIAttacker()
+        
 
         self.start_epoch = 0
         self.best_valid_acc = 0
@@ -48,7 +50,6 @@ class Attacker(object):
         self.net = net.to(self.device)
         if self.device == 'cuda':
             cudnn.benchmark = True
-
 
         self.train_flag = False
 
@@ -77,18 +78,18 @@ class Attacker(object):
         train_loss = 0
         predicted = []
         labels = []
-        for batch_idx, (inputs, targets) in enumerate(train_loader):
-            inputs, targets = inputs.to(self.device), targets.to(self.device)
+        for batch_idx, (features, class_labels, membership_labels) in enumerate(train_loader):
+            features, class_labels, membership_labels = features.to(self.device), class_labels.to(self.device), membership_labels.to(self.device)
             self.optimizer.zero_grad()
-            outputs = self.net(inputs)
-            loss = self.criterion(outputs.squeeze(), targets)
+            outputs = self.net(features, class_labels)
+            loss = self.criterion(outputs.squeeze(), membership_labels)
             loss.backward()
             self.optimizer.step()
 
             train_loss += loss.item()
 
             predicted_batch = outputs.cpu().detach().squeeze().numpy()
-            labels_batch = targets.cpu().detach().numpy()
+            labels_batch = membership_labels.cpu().detach().numpy()
 
             if batch_idx == 0:
                 predicted = predicted_batch
@@ -106,14 +107,14 @@ class Attacker(object):
         predicted = []
         labels = []
         with torch.no_grad():
-            for batch_idx, (inputs, targets) in enumerate(loader):
-                inputs, targets = inputs.to(self.device), targets.to(self.device)
-                outputs = self.net(inputs)
-                loss = self.criterion(outputs.squeeze(), targets)
+            for batch_idx, (features, class_labels, membership_labels) in enumerate(loader):
+                features, class_labels, membership_labels = features.to(self.device), class_labels.to(self.device), membership_labels.to(self.device)
+                outputs = self.net(features, class_labels)
+                loss = self.criterion(outputs.squeeze(), membership_labels)
 
                 test_loss += loss.item()
                 predicted_batch = outputs.cpu().detach().squeeze().numpy()
-                labels_batch = targets.cpu().detach().numpy()
+                labels_batch = membership_labels.cpu().detach().numpy()
 
                 if batch_idx == 0:
                     predicted = predicted_batch
