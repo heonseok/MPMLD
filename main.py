@@ -82,6 +82,7 @@ parser.add_argument('--share_encoder', type=str2bool, default='0')
 parser.add_argument('--train_reconstructor', type=str2bool, default='0')
 parser.add_argument('--reconstruct_datasets', type=str2bool, default='0')
 parser.add_argument('--plot_recons', type=str2bool, default='0')
+parser.add_argument('--early_stop_recon', type=str2bool, default='0')
 
 # ---- Classification ---- #
 parser.add_argument('--use_reconstructed_dataset', type=str2bool, default='0')
@@ -209,18 +210,19 @@ for repeat_idx in range(args.repeat_start, args.repeat_end):
     # ---- Combination ---- #
     reconstruction_type_list = [
         'pn_pp_np_nn',  # [1, 1, 1, 1]
-        # 'pn_pp_nn',  # [1, 1, 0, 1]
-        # 'pn_pp',  # [1, 1, 0, 0]
-        # 'pp_np',  # [0, 1, 1, 0]
-        # 'np_nn',  # [0, 0, 1, 1]
-        # 'pn',  # [1, 0, 0, 0]
-        # 'pp',  # [1, 0, 0, 0]
-        # 'np',  # [1, 0, 0, 0]
-        # 'nn',  # [1, 0, 0, 0]
+        'pn_pp_nn',  # [1, 1, 0, 1]
+        'pn_pp',  # [1, 1, 0, 0]
+        'pn_nn', # [1, 0, 0, 1],
+        'pp_np',  # [0, 1, 1, 0]
+        'np_nn',  # [0, 0, 1, 1]
+        'pn',  # [1, 0, 0, 0]
+        'pp',  # [1, 0, 0, 0]
+        'np',  # [1, 0, 0, 0]
+        'nn',  # [1, 0, 0, 0]
     ]
 
     attack_type_list = [
-        # 'black',
+        'black',
         'white',
     ]
 

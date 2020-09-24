@@ -24,7 +24,7 @@ class DistinctReconstructor(object):
         self.train_batch_size = args.recon_train_batch_size
         self.test_batch_size = args.test_batch_size
         self.epochs = args.epochs
-        self.early_stop = args.early_stop
+        self.early_stop = args.early_stop_recon
         self.early_stop_observation_period = args.early_stop_observation_period
         self.use_scheduler = False
         self.print_training = args.print_training
@@ -33,6 +33,8 @@ class DistinctReconstructor(object):
         self.share_encoder = args.share_encoder
         self.train_flag = False
         self.resume = args.resume
+
+        self.save_step_size = 20
 
         self.small_recon_weight = args.small_recon_weight
         self.z_dim = args.z_dim
@@ -140,13 +142,20 @@ class DistinctReconstructor(object):
         if 'cuda' in str(self.device):
             cudnn.benchmark = True
 
-
     #########################
     # -- Base operations -- #
     #########################
-    def load(self):
-        checkpoint = torch.load(os.path.join(
-            self.reconstruction_path, 'ckpt.pth'), map_location=self.device)
+
+    def load(self, epoch):
+        # print('Epoch : {:03d}'.format(epoch))
+
+        if not self.early_stop:
+            checkpoint = torch.load(os.path.join(
+                self.reconstruction_path, 'ckpt{:03d}.pth'.format(epoch+1)), map_location=self.device)
+        else:
+            checkpoint = torch.load(os.path.join(
+                self.reconstruction_path, 'ckpt.pth'), map_location=self.device)
+
         for encoder_name in self.encoder_name_list:
             self.encoders[encoder_name].load_state_dict(
                 checkpoint['enc_' + encoder_name])
@@ -157,7 +166,8 @@ class DistinctReconstructor(object):
             self.decoder.load_state_dict(checkpoint['dec'])
 
         self.start_epoch = checkpoint['epoch']
-        print('====> Load checkpoint {} (Epoch: {})'.format(self.reconstruction_path, self.start_epoch))
+        print('====> Load checkpoint {} (Epoch: {})'.format(
+            self.reconstruction_path, self.start_epoch+1))
 
     def train_epoch(self, train_ref_loader, epoch):
         for encoder_name in self.encoder_name_list:
@@ -454,7 +464,8 @@ class DistinctReconstructor(object):
                     state['membership_disc_' +
                           encoder_name] = self.membership_discs[encoder_name].state_dict()
 
-                torch.save(state, os.path.join(self.reconstruction_path, 'ckpt.pth'))
+                torch.save(state, os.path.join(
+                    self.reconstruction_path, 'ckpt.pth'))
                 self.best_valid_loss = loss
                 self.early_stop_count = 0
                 self.best_class_acc_dict = self.class_acc_dict
@@ -466,6 +477,8 @@ class DistinctReconstructor(object):
                                      'membership_acc.npy'), self.best_membership_acc_dict)
                 vutils.save_image(recons, os.path.join(
                     self.reconstruction_path, '{}.png'.format(epoch)), nrow=10)
+                np.save(os.path.join(self.reconstruction_path,
+                                     'last_epoch.npy'), epoch)
 
             else:
                 self.early_stop_count += 1
@@ -486,7 +499,10 @@ class DistinctReconstructor(object):
         if self.resume:
             print('==> Resuming from checkpoint..')
             try:
-                self.load()
+                last_epoch = np.load(os.path.join(
+                    self.reconstruction_path, 'last_epoch.npy'))
+                # print(last_epoch)
+                self.load(last_epoch)
             except FileNotFoundError:
                 print('There is no pre-trained model; Train model from scratch')
 
@@ -494,6 +510,7 @@ class DistinctReconstructor(object):
         if self.early_stop:
             valid_loader = DataLoader(
                 valid_set, batch_size=self.test_batch_size, shuffle=True, num_workers=2)
+
         for epoch in range(self.start_epoch, self.start_epoch + self.epochs):
             permutated_idx = np.random.permutation(ref_set.__len__())
             ref_set = Subset(ref_set, permutated_idx)
@@ -507,6 +524,40 @@ class DistinctReconstructor(object):
                     self.scheduler_dec.step()
                 if self.early_stop:
                     self.inference(valid_loader, epoch, inference_type='valid')
+
+                else:
+                    if (epoch+1) % self.save_step_size == 0:
+                        print('Save at {}'.format(epoch+1))
+
+                        state = {
+                            # 'best_valid_loss': loss,
+                            'epoch': epoch,
+                        }
+
+                        for encoder_name in self.encoder_name_list:
+                            state['enc_' + encoder_name] = self.encoders[encoder_name].state_dict()
+                            state['dec'] = self.decoder.state_dict()
+                            state['class_disc_' +
+                                  encoder_name] = self.class_discs[encoder_name].state_dict()
+                            state['membership_disc_' +
+                                  encoder_name] = self.membership_discs[encoder_name].state_dict()
+
+                        torch.save(state, os.path.join(
+                            self.reconstruction_path, 'ckpt{:03d}.pth'.format(epoch+1)))
+                        # self.best_valid_loss = loss
+                        # self.early_stop_count = 0
+                        self.best_class_acc_dict = self.class_acc_dict
+                        self.best_membership_acc_dict = self.membership_acc_dict
+
+                        np.save(os.path.join(self.reconstruction_path,
+                                             'class_acc{:03d}.npy'.format(epoch+1)), self.best_class_acc_dict)
+                        np.save(os.path.join(self.reconstruction_path,
+                                             'membership_acc{:03d}.npy'.format(epoch+1)), self.best_membership_acc_dict)
+                        np.save(os.path.join(self.reconstruction_path,
+                                             'last_epoch.npy'), epoch)
+                        # vutils.save_image(recons, os.path.join(
+                        #     self.reconstruction_path, '{}.png'.format(epoch)), nrow=10)
+
             else:
                 break
 
@@ -514,24 +565,11 @@ class DistinctReconstructor(object):
         pass
 
     def reconstruct(self, dataset_dict, recon_type_list):
-        try:
-            self.load()
-        except FileNotFoundError:
-            print('There is no pre-trained model; First, train a reconstructor.')
-            sys.exit(1)
-        for encoder_name in self.encoder_name_list:
-            self.encoders[encoder_name].eval()
-            self.class_discs[encoder_name].eval()
-            self.membership_discs[encoder_name].eval()
-        self.decoder.eval()
-
-        mse_list = []
-        recon_dict = dict()
-
         recon_flag = {
             'pn_pp_np_nn': [1, 1, 1, 1],
             'pn_pp_nn': [1, 1, 0, 1],
             'pn_pp': [1, 1, 0, 0],
+            'pn_nn': [1, 0, 0, 1],
             'pp_np': [0, 1, 1, 0],
             'np_nn': [0, 0, 1, 1],
             'pn': [1, 0, 0, 0],
@@ -540,67 +578,105 @@ class DistinctReconstructor(object):
             'nn': [0, 0, 0, 1],
         }
 
-        for recon_idx, recon_type in enumerate(recon_type_list):
-            recon_datasets_dict = {}
+        if self.early_stop:
+            last_epoch = np.load(os.path.join(
+                self.reconstruction_path, 'last_epoch.npy'))
+            epoch_list = [last_epoch]
+        else:
+            epoch_list = range(self.save_step_size-1,
+                               self.epochs, self.save_step_size)
 
-            for dataset_type, dataset in dataset_dict.items():
-                loader = DataLoader(
-                    dataset, batch_size=self.test_batch_size, shuffle=False, num_workers=2)
-                raws = []
-                recons = []
-                labels = []
-                with torch.no_grad():
-                    for batch_idx, (inputs, targets) in enumerate(loader):
-                        inputs = inputs.to(self.device)
+        for epoch in epoch_list:
+            try:
+                self.load(epoch)
+            except FileNotFoundError:
+                print('There is no pre-trained model; First, train a reconstructor.')
+                sys.exit(1)
+            for encoder_name in self.encoder_name_list:
+                self.encoders[encoder_name].eval()
+                self.class_discs[encoder_name].eval()
+                self.membership_discs[encoder_name].eval()
+            self.decoder.eval()
 
-                        mu = torch.zeros(
-                            (inputs.shape[0], self.z_dim)).to(self.device)
-                        logvar = torch.zeros(
-                            (inputs.shape[0], self.z_dim)).to(self.device)
-                        for encoder_idx, encoder_name in enumerate(self.encoder_name_list):
-                            mu_, logvar_ = self.encoders[encoder_name](inputs)
-                            if recon_flag[recon_type][encoder_idx] == 1:
-                                mu[:, self.z_idx[encoder_name]] = mu_[
-                                    :, self.z_idx[encoder_name]]
-                                logvar[:, self.z_idx[encoder_name]] = logvar_[
-                                    :, self.z_idx[encoder_name]]
+            mse_list = []
+            recon_dict = dict()
 
-                        z = mu
+            for recon_idx, recon_type in enumerate(recon_type_list):
+                recon_datasets_dict = {}
 
-                        recons_batch = self.decoder(z).cpu()
-                        labels_batch = targets
+                for dataset_type, dataset in dataset_dict.items():
+                    loader = DataLoader(
+                        dataset, batch_size=self.test_batch_size, shuffle=False, num_workers=2)
+                    raws = []
+                    recons = []
+                    labels = []
+                    with torch.no_grad():
+                        for batch_idx, (inputs, targets) in enumerate(loader):
+                            inputs = inputs.to(self.device)
 
-                        if len(recons) == 0:
-                            raws = inputs.cpu()
-                            recons = recons_batch
-                            labels = labels_batch
+                            mu = torch.zeros(
+                                (inputs.shape[0], self.z_dim)).to(self.device)
+                            logvar = torch.zeros(
+                                (inputs.shape[0], self.z_dim)).to(self.device)
+                            for encoder_idx, encoder_name in enumerate(self.encoder_name_list):
+                                mu_, logvar_ = self.encoders[encoder_name](
+                                    inputs)
+                                if recon_flag[recon_type][encoder_idx] == 1:
+                                    mu[:, self.z_idx[encoder_name]] = mu_[
+                                        :, self.z_idx[encoder_name]]
+                                    logvar[:, self.z_idx[encoder_name]] = logvar_[
+                                        :, self.z_idx[encoder_name]]
 
-                            if dataset_type == 'train':
-                                vutils.save_image(recons, os.path.join(self.reconstruction_path,
-                                                                       '{}.png'.format(recon_type)), nrow=10)
-                                recon_dict[recon_type] = recons
+                            z = mu
 
-                                if recon_idx == 0:
-                                    vutils.save_image(raws, os.path.join(
-                                        self.reconstruction_path, 'raw.png'), nrow=10)
+                            recons_batch = self.decoder(z).cpu()
+                            labels_batch = targets
 
-                        else:
-                            raws = torch.cat((raws, inputs.cpu()), axis=0)
-                            recons = torch.cat((recons, recons_batch), axis=0)
-                            labels = torch.cat((labels, labels_batch), axis=0)
+                            if len(recons) == 0:
+                                raws = inputs.cpu()
+                                recons = recons_batch
+                                labels = labels_batch
 
-                recon_datasets_dict[dataset_type] = {
-                    'recons': recons,
-                    'labels': labels,
-                }
+                                if dataset_type == 'train':
+                                    if not self.early_stop:
+                                        vutils.save_image(recons, os.path.join(self.reconstruction_path,
+                                                                            '{}{:03d}.png'.format(recon_type, epoch+1)), nrow=10)
+                                    else:
+                                        vutils.save_image(recons, os.path.join(self.reconstruction_path,
+                                                                            '{}.png'.format(recon_type)), nrow=10)
+                                    recon_dict[recon_type] = recons
 
-                mse_list.append(F.mse_loss(recons, raws).item())
+                                    if recon_idx == 0:
+                                        vutils.save_image(raws, os.path.join(
+                                            self.reconstruction_path, 'raw.png'), nrow=10)
 
-            # todo : refactor dict to CustomDataset
-            torch.save(recon_datasets_dict,
-                       os.path.join(self.reconstruction_path, 'recon_{}.pt'.format(recon_type)))
+                            else:
+                                raws = torch.cat((raws, inputs.cpu()), axis=0)
+                                recons = torch.cat(
+                                    (recons, recons_batch), axis=0)
+                                labels = torch.cat(
+                                    (labels, labels_batch), axis=0)
 
-        np.save(os.path.join(self.reconstruction_path, 'mse.npy'), mse_list)
+                    recon_datasets_dict[dataset_type] = {
+                        'recons': recons,
+                        'labels': labels,
+                    }
+
+                    mse_list.append(F.mse_loss(recons, raws).item())
+
+                # todo : refactor dict to CustomDataset
+                if not self.early_stop:
+                    torch.save(recon_datasets_dict,
+                               os.path.join(self.reconstruction_path, 'recon_{}{:03d}.pt'.format(recon_type, epoch+1)))
+                else:
+                    torch.save(recon_datasets_dict,
+                               os.path.join(self.reconstruction_path, 'recon_{}.pt'.format(recon_type)))
+            if not self.early_stop:
+                np.save(os.path.join(self.reconstruction_path,
+                                     'mse{:03d}.npy'.format(epoch+1)), mse_list)
+            else:
+                np.save(os.path.join(
+                    self.reconstruction_path, 'mse.npy'), mse_list)
 
     @staticmethod
     def reparameterize(mu, logvar):
