@@ -102,7 +102,7 @@ class MembershipDiscriminatorImproved(nn.Module):
         init_layers(self._modules)
 
     def forward(self, x_):
-        x = x_[:, :self.z_dim]
+        x = x_[:, 0:self.z_dim]
         y = x_[:, self.z_dim:self.z_dim + self.class_dim]
 
         x = self.features(x)

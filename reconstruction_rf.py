@@ -411,6 +411,8 @@ class DistinctReconstructor(object):
             membership_loss = membership_weight * \
                 self.membership_loss(mem_pred, torch.ones_like(mem_pred))
 
+            # print(membership_loss.item())
+
             recons = self.decoder(z_dec)
             recon_loss, _, _ = self.recon_loss(recons, x, mu_dec, logvar_dec)
 

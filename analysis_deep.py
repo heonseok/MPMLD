@@ -10,7 +10,7 @@ base_path = os.path.join('/mnt/disk1/heonseok/MPMLD')
 if not os.path.exists('Figs'):
     os.mkdir('Figs')
 
-REPEAT = 5
+REPEAT = 1 
 unit_length = 10
 
 # %%
@@ -173,11 +173,17 @@ dataset = 'SVHN'
 
 # description = '0825_4typesDisentanglement_small_recon'
 # description = '0915'
-description = '0921'
+description = '0924'
 model_list = [
     # 'VAE0.0_distinctEnc_distinctDisc_z128_setsize5000_lr0.001_bs32_ref1.0_rw1.0_rf1.0_cp0.0_cn0.0_mp0.0_mn0.0_sr0.0',
     # 'VAE0.01_distinctEnc_distinctDisc_z128_setsize5000_lr0.001_bs32_ref1.0_rw1.0_rf1.0_cp0.0_cn0.0_mp0.0_mn0.0_sr0.0',
     'VAE0.01_distinctEnc_distinctDisc_z128_setsize5000_lr0.001_bs32_ref1.0_rw1.0_rf1.0_cp1.0_cn1.0_mp1.0_mn1.0_sr0.0',
+
+    # 'VAE0.01_distinctEnc_distinctDisc_z128_setsize5000_lr0.001_bs32_ref1.0_rw1.0_rf1.0_cp0.5_cn0.5_mp1.0_mn1.0_sr0.0',
+    # 'VAE0.01_distinctEnc_distinctDisc_z128_setsize5000_lr0.001_bs32_ref1.0_rw1.0_rf1.0_cp1.0_cn1.0_mp2.0_mn2.0_sr0.0',
+
+    # 'VAE0.01_distinctEnc_distinctDisc_z128_setsize5000_lr0.001_bs32_ref1.0_rw1.0_rf1.0_cp1.0_cn1.0_mp1.0_mn1.0_sr0.001',
+    # 'VAE0.01_distinctEnc_distinctDisc_z128_setsize5000_lr0.001_bs32_ref1.0_rw1.0_rf1.0_cp1.0_cn1.0_mp1.0_mn1.0_sr0.01',
     # 'raw_setsize5000',
 ]
 
@@ -197,10 +203,10 @@ recon_type_list = [
 for model in model_list:
     print(model)
     if 'raw' not in model:
-        # collate_reconstructions(dataset, description, model, recon_type_list)
+        collate_reconstructions(dataset, description, model, recon_type_list)
         recon_df = collate_disentanglement_result(dataset, description, model)
-    class_df = collate_classification_result(dataset, description, model, recon_type_list)
-    attack_df = collate_attack_result(dataset, description, model, recon_type_list)
+    # class_df = collate_classification_result(dataset, description, model, recon_type_list)
+    # attack_df = collate_attack_result(dataset, description, model, recon_type_list)
 
 print('Finish!')
 
