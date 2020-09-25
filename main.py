@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 
 import utils
-from data import load_dataset
+from data import load_dataset, load_non_iid_dataset
 
 import torch
 from torch.utils.data import Subset, ConcatDataset
@@ -36,6 +36,7 @@ parser.add_argument('--resume', type=str2bool, default='0')
 parser.add_argument('--print_training', type=str2bool, default='1')
 parser.add_argument('--use_rclone', type=str2bool, default='1')
 parser.add_argument('--test_batch_size', type=int, default=100)
+parser.add_argument('--non_iid_scenario', type=str2bool, default='0')
 
 # ---- Reconstruction ---- #
 parser.add_argument('--reconstruction_model', type=str,
@@ -89,7 +90,8 @@ parser.add_argument('--use_reconstructed_dataset', type=str2bool, default='0')
 
 parser.add_argument('--train_classifier', type=str2bool, default='0')
 parser.add_argument('--test_classifier', type=str2bool, default='0')
-parser.add_argument('--extract_classifier_features', type=str2bool, default='1')
+parser.add_argument('--extract_classifier_features',
+                    type=str2bool, default='1')
 
 # ---- Attack ---- #
 parser.add_argument('--train_attacker', type=str2bool, default='1')
@@ -137,8 +139,10 @@ for repeat_idx in range(args.repeat_start, args.repeat_end):
                                                                                                                          args.small_recon_weight,
                                                                                                                          )
 
-    args.recon_output_path = os.path.join( args.base_path, args.dataset, args.description, args.reconstruction_name)
-    args.raw_output_path = os.path.join(args.base_path, args.dataset, args.description, 'raw_setsize{}'.format(args.setsize))
+    args.recon_output_path = os.path.join(
+        args.base_path, args.dataset, args.description, args.reconstruction_name)
+    args.raw_output_path = os.path.join(
+        args.base_path, args.dataset, args.description, 'raw_setsize{}'.format(args.setsize))
 
     if not os.path.exists(args.recon_output_path):
         os.makedirs(args.recon_output_path)
@@ -164,16 +168,19 @@ for repeat_idx in range(args.repeat_start, args.repeat_end):
 
     # ---------------------------------------------------------------------------------------------------------------- #
     # ---- Dataset ---- #
-    merged_dataset = load_dataset(args.dataset, args.data_path)
-    print(merged_dataset.__len__())
+    if args.non_iid_scenario:
+        # in: non-target color, out: target color
+        in_dataset, out_dataset = load_non_iid_dataset(args.dataset, args.data_path)
+    else:
+        merged_dataset = load_dataset(args.dataset, args.data_path)
+        print(merged_dataset.__len__())
 
-    if args.setsize * 2.4 > len(merged_dataset):
-        print('Setsize * 2.4 > len(merged_dataset); Terminate program')
-        sys.exit(1)
+        if args.setsize * 2.4 > len(merged_dataset):
+            print('Setsize * 2.4 > len(merged_dataset); Terminate program')
+            sys.exit(1)
 
     if args.dataset in ['adult', 'location']:
-        args.encoder_input_dim = merged_dataset.__getitem__(0)[
-            0].numpy().shape[0]
+        args.encoder_input_dim = merged_dataset.__getitem__(0)[0].numpy().shape[0]
         if args.dataset == 'adult':
             args.class_num = 2
         elif args.dataset == 'location':
@@ -182,20 +189,32 @@ for repeat_idx in range(args.repeat_start, args.repeat_end):
     elif args.dataset in ['MNIST', 'Fashion-MNIST', 'SVHN', 'CIFAR-10']:
         args.class_num = 10
 
-    # Recon: Train, Class: Train, Attack: In(Train/Test)
-    subset0 = Subset(merged_dataset, range(0, args.setsize))
-    # Recon: Valid, Class: Valid, Attack: -
-    subset1 = Subset(merged_dataset, range(
-        args.setsize, int(1.2 * args.setsize)))
-    # Recon: Test, Class: Test, Attack: -
-    subset2 = Subset(merged_dataset, range(
-        int(1.2 * args.setsize), int(1.4 * args.setsize)))
-    # Recon: -, Class: -,  Attack: Out(Train/Test) Todo: check valid
-    subset3 = Subset(merged_dataset, range(
-        int(1.4 * args.setsize), int(2.4 * args.setsize)))
-    # Recon: Train (Reference), Class: -, Attack: -
-    subset4 = Subset(merged_dataset, range(
-        int(2.4 * args.setsize), int((2.4 + args.ref_ratio) * args.setsize)))
+
+    # todo : refactor for non-iid scenario
+
+
+    if not args.non_iid_scenario:
+        # Recon: Train, Class: Train, Attack: In(Train/Test)
+        subset0 = Subset(merged_dataset, range(0, args.setsize))
+        # Recon: Valid, Class: Valid, Attack: -
+        subset1 = Subset(merged_dataset, range(args.setsize, int(1.2 * args.setsize)))
+        # Recon: Test, Class: Test, Attack: -
+        subset2 = Subset(merged_dataset, range(int(1.2 * args.setsize), int(1.4 * args.setsize)))
+        # Recon: -, Class: -,  Attack: Out(Train/Test) Todo: check valid
+        subset3 = Subset(merged_dataset, range(int(1.4 * args.setsize), int(2.4 * args.setsize)))
+        # Recon: Train (Reference), Class: -, Attack: -
+        subset4 = Subset(merged_dataset, range(int(2.4 * args.setsize), int((2.4 + args.ref_ratio) * args.setsize)))
+    else:
+        # Recon: Train, Class: Train, Attack: In(Train/Test)
+        subset0 = Subset(in_dataset, range(0, args.setsize))
+        # Recon: Valid, Class: Valid, Attack: -
+        subset1 = Subset(in_dataset, range(args.setsize, int(1.2 * args.setsize)))
+        # Recon: Test, Class: Test, Attack: -
+        subset2 = Subset(in_dataset, range(int(1.2 * args.setsize), int(1.4 * args.setsize)))
+        # Recon: -, Class: -,  Attack: Out(Train/Test) Todo: check valid
+        subset3 = Subset(out_dataset, range(0, args.setsize))
+        # Recon: Train (Reference), Class: -, Attack: -
+        subset4 = Subset(out_dataset, range(int(1.0 * args.setsize), int((1.0 + args.ref_ratio) * args.setsize)))
 
     class_datasets = {
         'train': subset0,
@@ -212,7 +231,7 @@ for repeat_idx in range(args.repeat_start, args.repeat_end):
         'pn_pp_np_nn',  # [1, 1, 1, 1]
         'pn_pp_nn',  # [1, 1, 0, 1]
         'pn_pp',  # [1, 1, 0, 0]
-        'pn_nn', # [1, 0, 0, 1],
+        'pn_nn',  # [1, 0, 0, 1],
         'pp_np',  # [0, 1, 1, 0]
         'np_nn',  # [0, 0, 1, 1]
         'pn',  # [1, 0, 0, 0]
@@ -371,14 +390,16 @@ for repeat_idx in range(args.repeat_start, args.repeat_end):
                 if not os.path.exists(args.attack_path):
                     os.makedirs(args.attack_path)
 
-                inout_feature_sets = utils.build_inout_feature_sets(args.classification_path, attack_type)
+                inout_feature_sets = utils.build_inout_feature_sets(
+                    args.classification_path, attack_type)
 
                 # for dataset_type, dataset in inout_feature_sets.items():
                 #     print('Inout {:<3} feature set: {}'.format(dataset_type, len(dataset)))
 
                 attacker = Attacker(args)
                 if args.train_attacker:
-                    attacker.train(inout_feature_sets['train'], inout_feature_sets['valid'])
+                    attacker.train(
+                        inout_feature_sets['train'], inout_feature_sets['valid'])
                 if args.test_attacker:
                     attacker.test(inout_feature_sets['test'])
         print()

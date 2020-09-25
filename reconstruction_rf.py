@@ -70,10 +70,8 @@ class DistinctReconstructor(object):
             #     self.base_z_dim, args.class_num)
             # self.membership_discs[encoder_name] = module.MembershipDiscriminator(
             #     self.base_z_dim + args.class_num, 1)
-            self.class_discs[encoder_name] = module.ClassDiscriminatorImproved(
-                self.base_z_dim, args.class_num)
-            self.membership_discs[encoder_name] = module.MembershipDiscriminatorImproved(
-                self.base_z_dim, args.class_num)
+            self.class_discs[encoder_name] = module.ClassDiscriminatorImproved(self.base_z_dim, args.class_num)
+            self.membership_discs[encoder_name] = module.MembershipDiscriminatorImproved(self.base_z_dim, args.class_num)
         self.rf_disc = module.Discriminator()
 
         # Optimizer
@@ -410,8 +408,6 @@ class DistinctReconstructor(object):
             mem_pred = self.membership_discs[encoder_name](z)
             membership_loss = membership_weight * \
                 self.membership_loss(mem_pred, torch.ones_like(mem_pred))
-
-            # print(membership_loss.item())
 
             recons = self.decoder(z_dec)
             recon_loss, _, _ = self.recon_loss(recons, x, mu_dec, logvar_dec)
