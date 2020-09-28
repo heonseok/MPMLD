@@ -83,7 +83,7 @@ setup_dict = {
     # Reconstruction
     'share_encoder': '0',
     'share_discriminator': '0',
-    'early_stop_recon': '1',
+    'early_stop_recon': '0',
     'adversarial_loss_mode': 'wgan-gp',
 
     'recon_train_batch_size': 32,
@@ -113,10 +113,10 @@ setup_dict = {
     'epochs': 100,
     'early_stop': '1',
     'early_stop_observation_period': 20,
-    'gpu_id': 1,
+    'gpu_id': 0,
     'print_training': '1',
     # 'description': '0825_4typesDisentanglement_small_recon',
-    'description': 'non_iid_blue_wgan',
+    'description': 'non_iid_no_es_blue_wgan',
     # 'description': 'baseline',
     'resume': '0',
     'non_iid_scenario': '1',

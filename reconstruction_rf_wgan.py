@@ -11,6 +11,8 @@ from torch.optim.lr_scheduler import StepLR
 from torch.nn import functional as F
 import torchvision.utils as vutils
 from torch.utils.data import Subset, DataLoader
+from torch.autograd import Variable
+import torch.autograd as autograd
 
 
 # Distinct Encoders + Distinct Discriminators
@@ -33,6 +35,8 @@ class DistinctReconstructor(object):
         self.share_encoder = args.share_encoder
         self.train_flag = False
         self.resume = args.resume
+        self.adversarial_loss_mode = args.adversarial_loss_mode
+        self.gradient_penalty_weight = args.gradient_penalty_weight
 
         self.save_step_size = 20
 
@@ -95,7 +99,8 @@ class DistinctReconstructor(object):
         self.recon_loss = self.get_loss_function()
         self.class_loss = nn.CrossEntropyLoss(reduction='sum')
         self.membership_loss = nn.BCEWithLogitsLoss(reduction='sum')
-        self.rf_loss = nn.BCEWithLogitsLoss(reduction='sum')
+        self.bce_loss = nn.BCEWithLogitsLoss(reduction='sum')
+        # self.rf_loss = nn.BCEWithLogitsLoss(reduction='sum')
 
         self.weights = {
             'recon': args.recon_weight,
@@ -251,10 +256,13 @@ class DistinctReconstructor(object):
 
         # real_logit = self.rf_disc(x)
         fake_logit = self.rf_disc(recons)
-        rf_loss = self.rf_loss(fake_logit, torch.ones_like(fake_logit))
 
-        loss = self.weights['recon'] * recon_loss + \
-            self.weights['real_fake'] * rf_loss
+        if self.adversarial_loss_mode == 'gan':
+            rf_loss = self.bce_loss(fake_logit, torch.ones_like(fake_logit))
+        elif 'wgan' in self.adversarial_loss_mode:
+            rf_loss = -torch.sum(fake_logit)
+
+        loss = self.weights['recon'] * recon_loss + self.weights['real_fake'] * rf_loss
 
         loss.backward()
 
@@ -272,16 +280,20 @@ class DistinctReconstructor(object):
         for encoder_idx, encoder_name in enumerate(self.encoder_name_list):
             mu_, logvar_ = self.encoders[encoder_name](x)
             mu[:, self.z_idx[encoder_name]] = mu_[:, self.z_idx[encoder_name]]
-            logvar[:, self.z_idx[encoder_name]] = logvar_[
-                :, self.z_idx[encoder_name]]
+            logvar[:, self.z_idx[encoder_name]] = logvar_[:, self.z_idx[encoder_name]]
 
         z = self.reparameterize(mu, logvar)
         recons = self.decoder(z)
 
         real_logit = self.rf_disc(x)
         fake_logit = self.rf_disc(recons)
-        rf_loss = self.rf_loss(real_logit, torch.ones_like(
-            real_logit)) + self.rf_loss(fake_logit, torch.zeros_like(fake_logit))
+        if self.adversarial_loss_mode == 'gan':
+            rf_loss = self.bce_loss(real_logit, torch.ones_like(real_logit)) + self.bce_loss(fake_logit, torch.zeros_like(fake_logit))
+        elif self.adversarial_loss_mode == 'wgan':
+            rf_loss = - torch.sum(real_logit) + torch.sum(fake_logit)
+        elif self.adversarial_loss_mode == 'wgan-gp':
+            rf_loss = - torch.sum(real_logit) + torch.sum(fake_logit)
+            rf_loss += self.gradient_penalty_weight * compute_gradient_penalty(self.rf_disc, x.data, recons.data)
 
         loss = self.weights['real_fake'] * rf_loss
 
@@ -413,7 +425,10 @@ class DistinctReconstructor(object):
             recon_loss, _, _ = self.recon_loss(recons, x, mu_dec, logvar_dec)
 
             fake_logit = self.rf_disc(recons)
-            rf_loss = self.rf_loss(fake_logit, torch.ones_like(fake_logit))
+            if self.adversarial_loss_mode == 'gan':
+                rf_loss = self.rf_loss(fake_logit, torch.ones_like(fake_logit))
+            elif 'wgan' in self.adversarial_loss_mode:
+                rf_loss = -torch.sum(fake_logit)
 
             loss = class_loss + membership_loss + \
                 self.small_recon_weight * (recon_loss + rf_loss)
@@ -550,7 +565,7 @@ class DistinctReconstructor(object):
                         np.save(os.path.join(self.reconstruction_path, 'class_acc{:03d}.npy'.format(epoch+1)), self.class_acc_dict)
                         np.save(os.path.join(self.reconstruction_path, 'membership_acc{:03d}.npy'.format(epoch+1)), self.membership_acc_dict)
                         np.save(os.path.join(self.reconstruction_path, 'last_epoch.npy'), epoch)
-                        # vutils.save_image(recons, os.path.join(self.reconstruction_path, '{}.png'.format(epoch)), nrow=10)
+                        vutils.save_image(recons, os.path.join(self.reconstruction_path, '{}.png'.format(epoch)), nrow=10)
 
             else:
                 break
@@ -704,3 +719,43 @@ class DistinctReconstructor(object):
             return MSE + self.beta * KLD, MSE, KLD
 
         return loss_function
+
+
+    # def real_loss(self, logit):            
+    #     if self.adversarial_loss_mode == 'gan':                                
+    #         return self.bce_loss(logit, torch.one_like(logit))
+    #     elif self.adversarial_loss_mode == 'wgan':
+    #         return logit
+    #     elif self.adversarial_loss_mode == 'wgan-gp':
+    #         pass
+
+
+Tensor = torch.cuda.FloatTensor 
+def compute_gradient_penalty(D, real_samples, fake_samples):
+    """Calculates the gradient penalty loss for WGAN GP"""
+    # Random weight term for interpolation between real and fake samples
+    # real_samples = real_samples.squeeze()
+    # fake_samples = fake_samples.squeeze()
+
+    alpha = Tensor(np.random.random((real_samples.size(0), 1, 1, 1)))
+    # Get random interpolation between real and fake samples
+    interpolates = (alpha * real_samples + ((1 - alpha) * fake_samples)).requires_grad_(True)
+    d_interpolates = D(interpolates)
+    fake = Variable(Tensor(real_samples.shape[0], 1).fill_(1.0), requires_grad=False)
+    # Get gradient w.r.t. interpolates
+
+    # print(d_interpolates.shape)
+    # print(interpolates.shape)
+    # print(fake.shape)
+    fake = fake.squeeze()
+    gradients = autograd.grad(
+        outputs=d_interpolates,
+        inputs=interpolates,
+        grad_outputs=fake,
+        create_graph=True,
+        retain_graph=True,
+        only_inputs=True,
+    )[0]
+    gradients = gradients.view(gradients.size(0), -1)
+    gradient_penalty = ((gradients.norm(2, dim=1) - 1) ** 2).mean()
+    return gradient_penalty

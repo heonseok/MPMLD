@@ -13,8 +13,7 @@ from data import load_dataset, load_non_iid_dataset
 import torch
 from torch.utils.data import Subset, ConcatDataset
 
-from reconstruction_rf import DistinctReconstructor
-from reconstruction_shared_disc import SharedReconstructor
+from reconstruction_rf_wgan import DistinctReconstructor
 from classification import Classifier
 from attack import Attacker
 
@@ -37,6 +36,8 @@ parser.add_argument('--print_training', type=str2bool, default='1')
 parser.add_argument('--use_rclone', type=str2bool, default='1')
 parser.add_argument('--test_batch_size', type=int, default=100)
 parser.add_argument('--non_iid_scenario', type=str2bool, default='0')
+parser.add_argument('--adversarial_loss_mode', type=str, default='gan', choices=['gan', 'wgan', 'wgan-gp'])
+parser.add_argument('--gradient_penalty_weight', type=float, default=10.0)
 
 # ---- Reconstruction ---- #
 parser.add_argument('--reconstruction_model', type=str,
@@ -266,7 +267,6 @@ for repeat_idx in range(args.repeat_start, args.repeat_end):
         # plot --> rclone
 
     if args.plot_recons:
-        # img_path = '{}_{}_{}_{}.png'.format(args.dataset, args.description, args.reconstruction_name, repeat_idx)
         img_dir = os.path.join('Figs', args.dataset, args.description)
         if not os.path.exists(img_dir):
             os.makedirs(img_dir)
@@ -275,24 +275,17 @@ for repeat_idx in range(args.repeat_start, args.repeat_end):
         for recon_type in reconstruction_type_list:
             img_list.append(recon_type + '.png')
 
-        # plt.figure(1, figsize=(10, 4))
         fig, ax = plt.subplots(1, len(img_list), figsize=(20, 2))
-        # fig, ax = plt.subplots(1, len(img_list))
 
         for img_idx, recon_type in enumerate(img_list):
             print(img_idx, recon_type)
-            # print(str(1) + str(len(img_list)) + str(img_idx + 1))
-            ax[img_idx].imshow(mpimg.imread(os.path.join(
-                args.reconstruction_path, recon_type)))
+            ax[img_idx].imshow(mpimg.imread(os.path.join(args.reconstruction_path, recon_type)))
             ax[img_idx].set_title(recon_type)
-            # plt.subplot(str(1) + str(len(img_list)) + str(img_idx + 1))
-            # plt.imshow(mpimg.imread(os.path.join(args.reconstruction_path, recon_type)))
             ax[img_idx].get_xaxis().set_ticks([])
             ax[img_idx].get_yaxis().set_ticks([])
 
         plt.tight_layout()
-        img_path = os.path.join(img_dir, '{}_repeat{}.png'.format(
-            args.reconstruction_name, repeat_idx))
+        img_path = os.path.join(img_dir, '{}_repeat{}.png'.format(args.reconstruction_name, repeat_idx))
         plt.savefig(img_path)
 
         if args.use_rclone:

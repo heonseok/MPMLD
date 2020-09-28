@@ -81,7 +81,7 @@ def load_non_iid_dataset(dataset, data_path):
     else:
         pass
 
-    return dataset_non_target_color, dataset_target_color 
+    return dataset_target_color, dataset_non_target_color 
 
 def split_imgs_by_color(dataset, target_color_channel):
     
