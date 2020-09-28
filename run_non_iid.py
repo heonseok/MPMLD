@@ -116,7 +116,7 @@ setup_dict = {
     'gpu_id': 1,
     'print_training': '1',
     # 'description': '0825_4typesDisentanglement_small_recon',
-    'description': 'non_iid_blue_wgan',
+    'description': 'non_iid_blue_wgan_update',
     # 'description': 'baseline',
     'resume': '0',
     'non_iid_scenario': '1',
