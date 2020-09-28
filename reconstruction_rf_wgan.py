@@ -565,7 +565,7 @@ class DistinctReconstructor(object):
                         np.save(os.path.join(self.reconstruction_path, 'class_acc{:03d}.npy'.format(epoch+1)), self.class_acc_dict)
                         np.save(os.path.join(self.reconstruction_path, 'membership_acc{:03d}.npy'.format(epoch+1)), self.membership_acc_dict)
                         np.save(os.path.join(self.reconstruction_path, 'last_epoch.npy'), epoch)
-                        vutils.save_image(recons, os.path.join(self.reconstruction_path, '{}.png'.format(epoch)), nrow=10)
+                        # vutils.save_image(recons, os.path.join(self.reconstruction_path, '{}.png'.format(epoch)), nrow=10)
 
             else:
                 break

@@ -118,7 +118,7 @@ setup_dict = {
     # 'description': '0825_4typesDisentanglement_small_recon',
     'description': 'non_iid_no_es_blue_wgan',
     # 'description': 'baseline',
-    'resume': '0',
+    'resume': '1',
     'non_iid_scenario': '1',
 }
 
