@@ -22,10 +22,8 @@ parser = argparse.ArgumentParser()
 # -------------------------------------------------------------------------------------------------------------------- #
 # -------- Params -------- #
 # ---- Common ---- #
-parser.add_argument('--base_path', type=str,
-                    default='/mnt/disk1/heonseok/MPMLD')
-parser.add_argument('--dataset', type=str, default='SVHN',
-                    choices=['MNIST', 'Fashion-MNIST', 'SVHN', 'CIFAR-10', 'adult', 'location', ])
+parser.add_argument('--base_path', type=str, default='/mnt/disk1/heonseok/MPMLD')
+parser.add_argument('--dataset', type=str, default='SVHN', choices=['MNIST', 'Fashion-MNIST', 'SVHN', 'CIFAR-10', 'adult', 'location', ])
 parser.add_argument('--setsize', type=int, default=5000)
 parser.add_argument('--early_stop', type=str2bool, default='1')
 parser.add_argument('--early_stop_observation_period', type=int, default=20)
@@ -57,13 +55,11 @@ parser.add_argument('--real_fake_weight', type=float, default='1')
 parser.add_argument('--small_recon_weight', type=float, default='0')
 parser.add_argument('--ref_ratio', type=float, default=1.0)
 
-parser.add_argument('--disentangle_with_reparameterization',
-                    type=str2bool, default='1')
+parser.add_argument('--disentangle_with_reparameterization', type=str2bool, default='1')
 
 # ---- Classification ---- #
 parser.add_argument('--classification_model', type=str, default='ResNet18',
-                    choices=['FCClassifier', 'ConvClassifier', 'VGG19', 'ResNet18', 'ResNet50', 'ResNet101',
-                             'DenseNet121'])
+                    choices=['FCClassifier', 'ConvClassifier', 'VGG19', 'ResNet18', 'ResNet50', 'ResNet101', 'DenseNet121'])
 parser.add_argument('--class_lr', type=float, default=0.0001)
 parser.add_argument('--class_train_batch_size', type=int, default=32)
 
@@ -91,8 +87,7 @@ parser.add_argument('--use_reconstructed_dataset', type=str2bool, default='0')
 
 parser.add_argument('--train_classifier', type=str2bool, default='0')
 parser.add_argument('--test_classifier', type=str2bool, default='0')
-parser.add_argument('--extract_classifier_features',
-                    type=str2bool, default='1')
+parser.add_argument('--extract_classifier_features', type=str2bool, default='1')
 
 # ---- Attack ---- #
 parser.add_argument('--train_attacker', type=str2bool, default='1')
@@ -307,14 +302,11 @@ for repeat_idx in range(args.repeat_start, args.repeat_end):
                 classifier = Classifier(args)
 
                 try:
-                    reconstructed_data_path = os.path.join(
-                        args.reconstruction_path, 'recon_{}.pt'.format(recon_type))
-                    recon_datasets = utils.build_reconstructed_datasets(
-                        reconstructed_data_path)
+                    reconstructed_data_path = os.path.join(args.reconstruction_path, 'recon_{}.pt'.format(recon_type))
+                    recon_datasets = utils.build_reconstructed_datasets(reconstructed_data_path)
                     class_datasets['train'] = recon_datasets['train']
                 except FileNotFoundError:
-                    print('There is no reconstructed data: ',
-                          args.reconstruction_path)
+                    print('There is no reconstructed data: ', args.reconstruction_path)
                     sys.exit(1)
 
                 if args.train_classifier:
@@ -335,21 +327,18 @@ for repeat_idx in range(args.repeat_start, args.repeat_end):
             if args.train_attacker or args.test_attacker:
                 for attack_type in attack_type_list:
                     args.attack_type = attack_type
-                    args.attack_path = os.path.join(args.recon_output_path, 'attack', args.classification_name,
-                                                    recon_type, attack_type, 'repeat{}'.format(repeat_idx))
+                    args.attack_path = os.path.join(args.recon_output_path, 'attack', args.classification_name, recon_type, attack_type, 'repeat{}'.format(repeat_idx))
                     if not os.path.exists(args.attack_path):
                         os.makedirs(args.attack_path)
 
-                    inout_feature_sets = utils.build_inout_feature_sets(
-                        args.classification_path, attack_type)
+                    inout_feature_sets = utils.build_inout_feature_sets( args.classification_path, attack_type)
 
                     # for dataset_type, dataset in inout_feature_sets.items():
                     #     print('Inout {:<3} feature set: {}'.format(dataset_type, len(dataset)))
 
                     attacker = Attacker(args)
                     if args.train_attacker:
-                        attacker.train(
-                            inout_feature_sets['train'], inout_feature_sets['valid'])
+                        attacker.train(inout_feature_sets['train'], inout_feature_sets['valid'])
                     if args.test_attacker:
                         attacker.test(inout_feature_sets['test'])
             print()
@@ -391,8 +380,7 @@ for repeat_idx in range(args.repeat_start, args.repeat_end):
 
                 attacker = Attacker(args)
                 if args.train_attacker:
-                    attacker.train(
-                        inout_feature_sets['train'], inout_feature_sets['valid'])
+                    attacker.train(inout_feature_sets['train'], inout_feature_sets['valid'])
                 if args.test_attacker:
                     attacker.test(inout_feature_sets['test'])
         print()

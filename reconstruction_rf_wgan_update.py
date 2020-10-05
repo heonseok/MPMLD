@@ -7,7 +7,7 @@ import torch.backends.cudnn as cudnn
 import sys
 import os
 import data
-from torch.optim.lr_scheduler import StepLR
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torch.nn import functional as F
 import torchvision.utils as vutils
 from torch.utils.data import Subset, DataLoader
@@ -38,6 +38,7 @@ class DistinctReconstructor(object):
         self.adversarial_loss_mode = args.adversarial_loss_mode
         self.gradient_penalty_weight = args.gradient_penalty_weight
 
+        self.disentanglement_start_epoch = 0
         self.save_step_size = 20
 
         self.small_recon_weight = args.small_recon_weight
@@ -61,8 +62,7 @@ class DistinctReconstructor(object):
                 self.num_channels = 3
 
             for encoder_name in self.encoder_name_list:
-                self.encoders[encoder_name] = module.VAEConvEncoder(
-                    self.z_dim, self.num_channels)
+                self.encoders[encoder_name] = module.VAEConvEncoder(self.z_dim, self.num_channels)
 
             self.decoder = module.VAEConvDecoder(self.z_dim, self.num_channels)
 
@@ -83,17 +83,24 @@ class DistinctReconstructor(object):
         self.class_discs_opt = dict()
         self.membership_discs_opt = dict()
         for encoder_name in self.encoder_name_list:
-            self.encoders_opt[encoder_name] = optim.Adam(self.encoders[encoder_name].parameters(), lr=args.recon_lr,
-                                                         betas=(0.5, 0.999))
-            self.class_discs_opt[encoder_name] = optim.Adam(self.class_discs[encoder_name].parameters(),
-                                                            lr=args.disc_lr, betas=(0.5, 0.999))
-            self.membership_discs_opt[encoder_name] = optim.Adam(self.membership_discs[encoder_name].parameters(),
-                                                                 lr=args.disc_lr, betas=(0.5, 0.999))
+            self.encoders_opt[encoder_name] = optim.Adam(self.encoders[encoder_name].parameters(), lr=args.recon_lr, betas=(0.5, 0.999))
+            self.class_discs_opt[encoder_name] = optim.Adam(self.class_discs[encoder_name].parameters(), lr=args.disc_lr, betas=(0.5, 0.999))
+            self.membership_discs_opt[encoder_name] = optim.Adam(self.membership_discs[encoder_name].parameters(), lr=args.disc_lr, betas=(0.5, 0.999))
 
-        self.decoder_opt = optim.Adam(
-            self.decoder.parameters(), lr=args.recon_lr, betas=(0.5, 0.999))
-        self.rf_disc_opt = optim.Adam(
-            self.rf_disc.parameters(), lr=args.recon_lr, betas=(0.5, 0.999))
+        self.decoder_opt = optim.Adam(self.decoder.parameters(), lr=args.recon_lr, betas=(0.5, 0.999))
+        self.rf_disc_opt = optim.Adam(self.rf_disc.parameters(), lr=args.recon_lr, betas=(0.5, 0.999))
+
+        # Scheduler 
+        self.encoders_opt_scheduler = dict()
+        self.class_discs_opt_scheduler = dict()
+        self.membership_discs_opt_scheduler = dict()
+        for encoder_name in self.encoder_name_list:
+            self.encoders_opt_scheduler[encoder_name] = ReduceLROnPlateau(self.encoders_opt[encoder_name], 'min')
+            self.class_discs_opt_scheduler[encoder_name] = ReduceLROnPlateau(self.class_discs_opt[encoder_name], 'min')
+            self.membership_discs_opt_scheduler[encoder_name] = ReduceLROnPlateau(self.membership_discs_opt[encoder_name], 'min')
+
+        self.decoder_opt_scheduler = ReduceLROnPlateau(self.decoder_opt, 'min')
+        self.rf_disc_opt_scheduler = ReduceLROnPlateau(self.rf_disc_opt, 'min')
 
         # Loss
         self.vae_loss = self.get_loss_function()
@@ -114,19 +121,13 @@ class DistinctReconstructor(object):
         # To device
         self.device = torch.device("cuda:{}".format(args.gpu_id))
         for encoder_name in self.encoder_name_list:
-            self.encoders[encoder_name] = self.encoders[encoder_name].to(
-                self.device)
-            self.class_discs[encoder_name] = self.class_discs[encoder_name].to(
-                self.device)
-            self.membership_discs[encoder_name] = self.membership_discs[encoder_name].to(
-                self.device)
+            self.encoders[encoder_name] = self.encoders[encoder_name].to(self.device)
+            self.class_discs[encoder_name] = self.class_discs[encoder_name].to(self.device)
+            self.membership_discs[encoder_name] = self.membership_discs[encoder_name].to(self.device)
         self.decoder = self.decoder.to(self.device)
         self.rf_disc = self.rf_disc.to(self.device)
 
-        self.disentangle = (
-            self.weights['class_pos'] + self.weights['class_neg'] +
-            self.weights['membership_pos']
-            + self.weights['membership_neg'] > 0)
+        self.disentangle = (self.weights['class_pos'] + self.weights['class_neg'] + self.weights['membership_pos'] + self.weights['membership_neg'] > 0)
 
         self.start_epoch = 0
         self.best_valid_loss = float("inf")
@@ -153,24 +154,18 @@ class DistinctReconstructor(object):
         # print('Epoch : {:03d}'.format(epoch))
 
         if not self.early_stop:
-            checkpoint = torch.load(os.path.join(
-                self.reconstruction_path, 'ckpt{:03d}.pth'.format(epoch+1)), map_location=self.device)
+            checkpoint = torch.load(os.path.join(self.reconstruction_path, 'ckpt{:03d}.pth'.format(epoch+1)), map_location=self.device)
         else:
-            checkpoint = torch.load(os.path.join(
-                self.reconstruction_path, 'ckpt.pth'), map_location=self.device)
+            checkpoint = torch.load(os.path.join(self.reconstruction_path, 'ckpt.pth'), map_location=self.device)
 
         for encoder_name in self.encoder_name_list:
-            self.encoders[encoder_name].load_state_dict(
-                checkpoint['enc_' + encoder_name])
-            self.class_discs[encoder_name].load_state_dict(
-                checkpoint['class_disc_' + encoder_name])
-            self.membership_discs[encoder_name].load_state_dict(
-                checkpoint['membership_disc_' + encoder_name])
+            self.encoders[encoder_name].load_state_dict(checkpoint['enc_' + encoder_name])
+            self.class_discs[encoder_name].load_state_dict(checkpoint['class_disc_' + encoder_name])
+            self.membership_discs[encoder_name].load_state_dict(checkpoint['membership_disc_' + encoder_name])
             self.decoder.load_state_dict(checkpoint['dec'])
 
         self.start_epoch = checkpoint['epoch']
-        print('====> Load checkpoint {} (Epoch: {})'.format(
-            self.reconstruction_path, self.start_epoch+1))
+        print('====> Load checkpoint {} (Epoch: {})'.format(self.reconstruction_path, self.start_epoch+1))
 
     def train_epoch(self, train_ref_loader, epoch):
         for encoder_name in self.encoder_name_list:
@@ -199,8 +194,7 @@ class DistinctReconstructor(object):
 
             # ---- Discriminators ---- #
             for encoder_name in self.encoder_name_list:
-                correct, loss = self.train_class_discriminator(
-                    encoder_name, x, y)
+                correct, loss = self.train_class_discriminator(encoder_name, x, y)
                 corrects['class'][encoder_name] += correct
                 losses['class'][encoder_name] += loss
 
@@ -210,7 +204,7 @@ class DistinctReconstructor(object):
 
             # ---- Reconstruction (Encoder & Decoder & RF discriminator) ---- #
             # recon_loss, MSE, KLD = self.train_reconstructor(x)
-            recon_loss, MSE, KLD = self.train_encoders(x,y)
+            recon_loss, MSE, KLD = self.train_encoders(x, y, epoch)
             self.train_decoder(x)
             losses['MSE'] += MSE
             losses['KLD'] += KLD
@@ -223,34 +217,32 @@ class DistinctReconstructor(object):
 
         for encoder_name in self.encoder_name_list:
             self.class_acc_dict[encoder_name] = corrects['class'][encoder_name] / total
-            self.membership_acc_dict[encoder_name] = corrects['membership'][encoder_name] / (
-                2 * total)
+            self.membership_acc_dict[encoder_name] = corrects['membership'][encoder_name] / (2 * total)
 
         if self.print_training:
             class_acc = 'class) '
             membership_acc = 'membership) '
             for encoder_name in self.encoder_name_list:
-                class_acc += '{}: {:.4f}, '.format(
-                    encoder_name, self.class_acc_dict[encoder_name])
-                membership_acc += '{}: {:.4f}, '.format(
-                    encoder_name, self.membership_acc_dict[encoder_name])
+                class_acc += '{}: {:.4f}, '.format(encoder_name, self.class_acc_dict[encoder_name])
+                membership_acc += '{}: {:.4f}, '.format(encoder_name, self.membership_acc_dict[encoder_name])
             print('Epoch: {:>3},'.format(epoch), class_acc, membership_acc)
 
-    def train_encoders(self, x, y):
-        targets_onehot = torch.zeros((len(y), self.class_num)).to(self.device)
-        targets_onehot = targets_onehot.scatter_(1, y.reshape((-1, 1)), 1)
+    def train_encoders(self, x, y, epoch):
+        # targets_onehot = torch.zeros((len(y), self.class_num)).to(self.device)
+        # targets_onehot = targets_onehot.scatter_(1, y.reshape((-1, 1)), 1)
 
-        for encoder_name in self.encoder_name_list:
+        total_loss = 0
+
+        for encoder_idx, encoder_name in enumerate(self.encoder_name_list):
             self.encoders_opt[encoder_name].zero_grad()
 
             mu = torch.zeros((x.shape[0], self.z_dim)).to(self.device)
             logvar = torch.zeros((x.shape[0], self.z_dim)).to(self.device)
 
-            for encoder_idx, encoder_name in enumerate(self.encoder_name_list):
-                mu_, logvar_ = self.encoders[encoder_name](x)
-                mu[:, self.z_idx[encoder_name]] = mu_[:, self.z_idx[encoder_name]]
-                logvar[:, self.z_idx[encoder_name]] = logvar_[
-                    :, self.z_idx[encoder_name]]
+            for encoder_name_ in self.encoder_name_list:
+                mu_, logvar_ = self.encoders[encoder_name_](x)
+                mu[:, self.z_idx[encoder_name_]] = mu_[:, self.z_idx[encoder_name_]]
+                logvar[:, self.z_idx[encoder_name_]] = logvar_[:, self.z_idx[encoder_name_]]
 
             z = self.reparameterize(mu, logvar)
 
@@ -265,68 +257,132 @@ class DistinctReconstructor(object):
             elif 'wgan' in self.adversarial_loss_mode:
                 rf_loss = -torch.sum(fake_logit)
 
-            recon_loss = self.weights['recon'] * vae_loss + self.weights['real_fake'] * rf_loss
+            loss = self.weights['recon'] * vae_loss + self.weights['real_fake'] * rf_loss
+            if encoder_idx == len(self.encoder_name_list) - 1:
+                total_loss += loss
 
-            if encoder_name[0] == 'p':
-                class_weight = 1. * self.weights['class_pos']
-            elif encoder_name[0] == 'n':
-                class_weight = -1. * self.weights['class_neg']
+            if epoch > self.disentanglement_start_epoch - 1:
+                self.encoders_opt[encoder_name].zero_grad()
 
-            if encoder_name[1] == 'p':
-                membership_weight = 1. * self.weights['membership_pos']
-            elif encoder_name[1] == 'n':
-                membership_weight = -1. * self.weights['membership_neg']
+                # # print('Disentnaglement')
+                # if encoder_name[0] == 'p':
+                #     class_weight = 1. * self.weights['class_pos']
+                # elif encoder_name[0] == 'n':
+                #     class_weight = -1. * self.weights['class_neg']
 
-            self.encoders_opt[encoder_name].zero_grad()
+                # if encoder_name[1] == 'p':
+                #     membership_weight = 1. * self.weights['membership_pos']
+                # elif encoder_name[1] == 'n':
+                #     membership_weight = -1. * self.weights['membership_neg']
 
-            mu_, logvar_ = self.encoders[encoder_name](x)
-            mu = mu_[:, self.z_idx[encoder_name]]
-            logvar = logvar_[:, self.z_idx[encoder_name]]
 
-            # mu_dec = torch.zeros_like(mu_)
-            # logvar_dec = torch.zeros_like(logvar_)
+                # mu_, logvar_ = self.encoders[encoder_name](x)
+                # mu = mu_[:, self.z_idx[encoder_name]]
+                # logvar = logvar_[:, self.z_idx[encoder_name]]
 
-            # mu_dec[:, self.z_idx[encoder_name]] = mu
-            # logvar_dec[:, self.z_idx[encoder_name]] = logvar
+                # # mu_dec = torch.zeros_like(mu_)
+                # # logvar_dec = torch.zeros_like(logvar_)
 
-            # z_dec = self.reparameterize(mu_dec, logvar_dec)
+                # # mu_dec[:, self.z_idx[encoder_name]] = mu
+                # # logvar_dec[:, self.z_idx[encoder_name]] = logvar
 
-            z = self.reparameterize(mu, logvar)
-            class_pred = self.class_discs[encoder_name](z)
-            class_loss = class_weight * self.class_loss(class_pred, y)
+                # # z_dec = self.reparameterize(mu_dec, logvar_dec)
 
-            z = torch.cat((z, targets_onehot), dim=1)
-            mem_pred = self.membership_discs[encoder_name](z)
-            membership_loss = membership_weight * self.membership_loss(mem_pred, torch.ones_like(mem_pred))
+                # z = self.reparameterize(mu, logvar)
+                # class_pred = self.class_discs[encoder_name](z)
+                # class_loss = class_weight * self.class_loss(class_pred, y)
 
-            # recons = self.decoder(z_dec)
-            # small_recon_loss, _, _ = self.vae_loss(recons, x, mu_dec, logvar_dec)
+                # z = torch.cat((z, targets_onehot), dim=1)
+                # mem_pred = self.membership_discs[encoder_name](z)
+                # # todo: wgan like loss? 
+                # membership_loss = membership_weight * self.membership_loss(mem_pred, torch.ones_like(mem_pred))
 
-            # fake_logit = self.rf_disc(recons)
-            # if self.adversarial_loss_mode == 'gan':
-            #     rf_loss = self.rf_loss(fake_logit, torch.ones_like(fake_logit))
-            # elif 'wgan' in self.adversarial_loss_mode:
-            #     rf_loss = -torch.sum(fake_logit)
+                # # recons = self.decoder(z_dec)
+                # # small_recon_loss, _, _ = self.vae_loss(recons, x, mu_dec, logvar_dec)
 
-            loss = class_loss + membership_loss + recon_loss
+                # # fake_logit = self.rf_disc(recons)
+                # # if self.adversarial_loss_mode == 'gan':
+                # #     rf_loss = self.rf_loss(fake_logit, torch.ones_like(fake_logit))
+                # # elif 'wgan' in self.adversarial_loss_mode:
+                # #     rf_loss = -torch.sum(fake_logit)
+
+                class_loss = self.calculate_class_loss(encoder_name, x, y)
+                membership_loss = self.calculate_membership_loss(encoder_name, x, y)
+
+                total_loss += class_loss + membership_loss
+                loss = class_loss + membership_loss + loss
             # loss = class_loss + membership_loss + self.small_recon_weight * (recon_loss + rf_loss)
+
             loss.backward()
             self.encoders_opt[encoder_name].step()
 
         # self.decoder_opt.step()
-        return loss.item(), MSE.item(), KLD.item()
+        return total_loss.item(), MSE.item(), KLD.item()
+
+    def calculate_class_loss(self, encoder_name, x, y):
+        if encoder_name[0] == 'p':
+            class_weight = 1. * self.weights['class_pos']
+        elif encoder_name[0] == 'n':
+            class_weight = -1. * self.weights['class_neg']
+
+        mu_, logvar_ = self.encoders[encoder_name](x)
+        mu = mu_[:, self.z_idx[encoder_name]]
+        logvar = logvar_[:, self.z_idx[encoder_name]]
+
+        # mu_dec = torch.zeros_like(mu_)
+        # logvar_dec = torch.zeros_like(logvar_)
+
+        # mu_dec[:, self.z_idx[encoder_name]] = mu
+        # logvar_dec[:, self.z_idx[encoder_name]] = logvar
+
+        # z_dec = self.reparameterize(mu_dec, logvar_dec)
+
+        z = self.reparameterize(mu, logvar)
+        class_pred = self.class_discs[encoder_name](z)
+        class_loss = class_weight * self.class_loss(class_pred, y)
+
+        return class_loss
+
+    def calculate_membership_loss(self, encoder_name, x, y):
+        targets_onehot = torch.zeros((len(y), self.class_num)).to(self.device)
+        targets_onehot = targets_onehot.scatter_(1, y.reshape((-1, 1)), 1)
+
+        if encoder_name[1] == 'p':
+            membership_weight = 1. * self.weights['membership_pos']
+        elif encoder_name[1] == 'n':
+            membership_weight = -1. * self.weights['membership_neg']
+
+        self.encoders_opt[encoder_name].zero_grad()
+
+        mu_, logvar_ = self.encoders[encoder_name](x)
+        mu = mu_[:, self.z_idx[encoder_name]]
+        logvar = logvar_[:, self.z_idx[encoder_name]]
+
+        # mu_dec = torch.zeros_like(mu_)
+        # logvar_dec = torch.zeros_like(logvar_)
+
+        # mu_dec[:, self.z_idx[encoder_name]] = mu
+        # logvar_dec[:, self.z_idx[encoder_name]] = logvar
+
+        # z_dec = self.reparameterize(mu_dec, logvar_dec)
+
+        z = self.reparameterize(mu, logvar)
+        z = torch.cat((z, targets_onehot), dim=1)
+        mem_pred = self.membership_discs[encoder_name](z)
+        membership_loss = membership_weight * self.membership_loss(mem_pred, torch.ones_like(mem_pred))
+
+        return membership_loss
+
 
     def train_decoder(self, x):
-        for encoder_name in self.encoder_name_list:
-            self.decoder_opt.zero_grad()
+        self.decoder_opt.zero_grad()
 
         mu = torch.zeros((x.shape[0], self.z_dim)).to(self.device)
         logvar = torch.zeros((x.shape[0], self.z_dim)).to(self.device)
         for encoder_idx, encoder_name in enumerate(self.encoder_name_list):
             mu_, logvar_ = self.encoders[encoder_name](x)
             mu[:, self.z_idx[encoder_name]] = mu_[:, self.z_idx[encoder_name]]
-            logvar[:, self.z_idx[encoder_name]] = logvar_[
-                :, self.z_idx[encoder_name]]
+            logvar[:, self.z_idx[encoder_name]] = logvar_[:, self.z_idx[encoder_name]]
 
         z = self.reparameterize(mu, logvar)
 
@@ -436,10 +492,8 @@ class DistinctReconstructor(object):
         logvar = logvar_[:, self.z_idx[encoder_name]]
         z_ref = self.reparameterize(mu, logvar)
 
-        targets_ref_onehot = torch.zeros(
-            (len(y_ref), self.class_num)).to(self.device)
-        targets_ref_onehot = targets_ref_onehot.scatter_(
-            1, y_ref.reshape((-1, 1)), 1)
+        targets_ref_onehot = torch.zeros((len(y_ref), self.class_num)).to(self.device)
+        targets_ref_onehot = targets_ref_onehot.scatter_(1, y_ref.reshape((-1, 1)), 1)
         z_ref = torch.cat((z_ref, targets_ref_onehot), dim=1)
         pred_ref = self.membership_discs[encoder_name](z_ref)
         out_loss = self.membership_loss(pred_ref, torch.zeros_like(pred_ref))
@@ -451,8 +505,7 @@ class DistinctReconstructor(object):
         pred = pred.cpu().detach().numpy().squeeze(axis=1)
         pred_ref = pred_ref.cpu().detach().numpy().squeeze(axis=1)
         pred_concat = np.concatenate((pred, pred_ref))
-        inout_concat = np.concatenate(
-            (np.ones_like(pred), np.zeros_like(pred_ref)))
+        inout_concat = np.concatenate((np.ones_like(pred), np.zeros_like(pred_ref)))
 
         return np.sum(inout_concat == np.round(pred_concat)), membership_loss.item()
 
@@ -491,8 +544,7 @@ class DistinctReconstructor(object):
 
             z = torch.cat((z, targets_onehot), dim=1)
             mem_pred = self.membership_discs[encoder_name](z)
-            membership_loss = membership_weight * \
-                self.membership_loss(mem_pred, torch.ones_like(mem_pred))
+            membership_loss = membership_weight * self.membership_loss(mem_pred, torch.ones_like(mem_pred))
 
             recons = self.decoder(z_dec)
             recon_loss, _, _ = self.recon_loss(recons, x, mu_dec, logvar_dec)
@@ -503,8 +555,7 @@ class DistinctReconstructor(object):
             elif 'wgan' in self.adversarial_loss_mode:
                 rf_loss = -torch.sum(fake_logit)
 
-            loss = class_loss + membership_loss + \
-                self.small_recon_weight * (recon_loss + rf_loss)
+            loss = class_loss + membership_loss + self.small_recon_weight * (recon_loss + rf_loss)
             loss.backward()
             self.encoders_opt[encoder_name].step()
 
@@ -524,13 +575,13 @@ class DistinctReconstructor(object):
                 logvar = torch.zeros((x.shape[0], self.z_dim)).to(self.device)
                 for encoder_idx, encoder_name in enumerate(self.encoder_name_list):
                     mu_, logvar_ = self.encoders[encoder_name](x)
-                    mu[:, self.z_idx[encoder_name]] = mu_[
-                        :, self.z_idx[encoder_name]]
-                    logvar[:, self.z_idx[encoder_name]] = logvar_[
-                        :, self.z_idx[encoder_name]]
+                    mu[:, self.z_idx[encoder_name]] = mu_[ :, self.z_idx[encoder_name]]
+                    logvar[:, self.z_idx[encoder_name]] = logvar_[:, self.z_idx[encoder_name]]
+
+                    loss += self.calculate_class_loss(encoder_name, x, y).item()
+                    loss += self.calculate_membership_loss(encoder_name, x, y).item()
 
                 z = self.reparameterize(mu, logvar)
-
                 recons = self.decoder(z)
                 recon_loss, MSE, KLD = self.vae_loss(recons, x, mu, logvar)
                 loss += recon_loss.item()
@@ -545,26 +596,19 @@ class DistinctReconstructor(object):
                 for encoder_name in self.encoder_name_list:
                     state['enc_' + encoder_name] = self.encoders[encoder_name].state_dict()
                     state['dec'] = self.decoder.state_dict()
-                    state['class_disc_' +
-                          encoder_name] = self.class_discs[encoder_name].state_dict()
-                    state['membership_disc_' +
-                          encoder_name] = self.membership_discs[encoder_name].state_dict()
+                    state['class_disc_' + encoder_name] = self.class_discs[encoder_name].state_dict()
+                    state['membership_disc_' + encoder_name] = self.membership_discs[encoder_name].state_dict()
 
-                torch.save(state, os.path.join(
-                    self.reconstruction_path, 'ckpt.pth'))
+                torch.save(state, os.path.join( self.reconstruction_path, 'ckpt.pth'))
                 self.best_valid_loss = loss
                 self.early_stop_count = 0
                 self.best_class_acc_dict = self.class_acc_dict
                 self.best_membership_acc_dict = self.membership_acc_dict
 
-                np.save(os.path.join(self.reconstruction_path,
-                                     'class_acc.npy'), self.best_class_acc_dict)
-                np.save(os.path.join(self.reconstruction_path,
-                                     'membership_acc.npy'), self.best_membership_acc_dict)
-                vutils.save_image(recons, os.path.join(
-                    self.reconstruction_path, '{}.png'.format(epoch)), nrow=10)
-                np.save(os.path.join(self.reconstruction_path,
-                                     'last_epoch.npy'), epoch)
+                np.save(os.path.join(self.reconstruction_path, 'class_acc.npy'), self.best_class_acc_dict)
+                np.save(os.path.join(self.reconstruction_path, 'membership_acc.npy'), self.best_membership_acc_dict)
+                vutils.save_image(recons, os.path.join( self.reconstruction_path, '{}.png'.format(epoch)), nrow=10)
+                np.save(os.path.join(self.reconstruction_path, 'last_epoch.npy'), epoch)
 
             else:
                 self.early_stop_count += 1
@@ -575,9 +619,10 @@ class DistinctReconstructor(object):
                 print(self.best_class_acc_dict)
                 print(self.best_membership_acc_dict)
                 if self.print_training:
-                    print('Early stop count == {}; Terminate training\n'.format(
-                        self.early_stop_observation_period))
+                    print('Early stop count == {}; Terminate training\n'.format( self.early_stop_observation_period))
                 self.train_flag = False
+            
+            return loss
 
     def train(self, train_set, valid_set=None, ref_set=None):
         print('==> Start training {}'.format(self.reconstruction_path))
@@ -585,8 +630,7 @@ class DistinctReconstructor(object):
         if self.resume:
             print('==> Resuming from checkpoint..')
             try:
-                last_epoch = np.load(os.path.join(
-                    self.reconstruction_path, 'last_epoch.npy'))
+                last_epoch = np.load(os.path.join(self.reconstruction_path, 'last_epoch.npy'))
                 # print(last_epoch)
                 self.load(last_epoch)
             except FileNotFoundError:
@@ -594,23 +638,27 @@ class DistinctReconstructor(object):
 
         self.train_flag = True
         if self.early_stop:
-            valid_loader = DataLoader(
-                valid_set, batch_size=self.test_batch_size, shuffle=True, num_workers=2)
+            valid_loader = DataLoader(valid_set, batch_size=self.test_batch_size, shuffle=True, num_workers=2)
 
         for epoch in range(self.start_epoch, self.start_epoch + self.epochs):
             permutated_idx = np.random.permutation(ref_set.__len__())
             ref_set = Subset(ref_set, permutated_idx)
             train_ref_set = data.DoubleDataset(train_set, ref_set)
-            train_ref_loader = DataLoader(
-                train_ref_set, batch_size=self.train_batch_size, shuffle=True, num_workers=2)
+            train_ref_loader = DataLoader(train_ref_set, batch_size=self.train_batch_size, shuffle=True, num_workers=2)
             if self.train_flag:
                 self.train_epoch(train_ref_loader, epoch)
-                if self.use_scheduler:
-                    self.scheduler_enc.step()
-                    self.scheduler_dec.step()
+                # if self.use_scheduler:
+                #     self.scheduler_enc.step()
+                #     self.scheduler_dec.step()
 
                 if self.early_stop:
-                    self.inference(valid_loader, epoch, inference_type='valid')
+                    val_loss = self.inference(valid_loader, epoch, inference_type='valid')
+                    for encoder_name in self.encoder_name_list:
+                        self.encoders_opt_scheduler[encoder_name].step(val_loss)
+                        self.class_discs_opt_scheduler[encoder_name].step(val_loss)
+                        self.membership_discs_opt_scheduler[encoder_name].step(val_loss)
+                    self.decoder_opt_scheduler.step(val_loss)
+                    self.rf_disc_opt_scheduler.step(val_loss)
 
                 else:
                     if (epoch+1) % self.save_step_size == 0:
@@ -624,10 +672,8 @@ class DistinctReconstructor(object):
                         for encoder_name in self.encoder_name_list:
                             state['enc_' + encoder_name] = self.encoders[encoder_name].state_dict()
                             state['dec'] = self.decoder.state_dict()
-                            state['class_disc_' +
-                                  encoder_name] = self.class_discs[encoder_name].state_dict()
-                            state['membership_disc_' +
-                                  encoder_name] = self.membership_discs[encoder_name].state_dict()
+                            state['class_disc_' + encoder_name] = self.class_discs[encoder_name].state_dict()
+                            state['membership_disc_' + encoder_name] = self.membership_discs[encoder_name].state_dict()
 
                         torch.save(state, os.path.join(self.reconstruction_path, 'ckpt{:03d}.pth'.format(epoch+1)))
                         # self.best_valid_loss = loss
@@ -696,18 +742,13 @@ class DistinctReconstructor(object):
                         for batch_idx, (inputs, targets) in enumerate(loader):
                             inputs = inputs.to(self.device)
 
-                            mu = torch.zeros(
-                                (inputs.shape[0], self.z_dim)).to(self.device)
-                            logvar = torch.zeros(
-                                (inputs.shape[0], self.z_dim)).to(self.device)
+                            mu = torch.zeros((inputs.shape[0], self.z_dim)).to(self.device)
+                            logvar = torch.zeros((inputs.shape[0], self.z_dim)).to(self.device)
                             for encoder_idx, encoder_name in enumerate(self.encoder_name_list):
-                                mu_, logvar_ = self.encoders[encoder_name](
-                                    inputs)
+                                mu_, logvar_ = self.encoders[encoder_name](inputs)
                                 if recon_flag[recon_type][encoder_idx] == 1:
-                                    mu[:, self.z_idx[encoder_name]] = mu_[
-                                        :, self.z_idx[encoder_name]]
-                                    logvar[:, self.z_idx[encoder_name]] = logvar_[
-                                        :, self.z_idx[encoder_name]]
+                                    mu[:, self.z_idx[encoder_name]] = mu_[:, self.z_idx[encoder_name]]
+                                    logvar[:, self.z_idx[encoder_name]] = logvar_[:, self.z_idx[encoder_name]]
 
                             z = mu
 
@@ -721,23 +762,18 @@ class DistinctReconstructor(object):
 
                                 if dataset_type == 'train':
                                     if not self.early_stop:
-                                        vutils.save_image(recons, os.path.join(self.reconstruction_path,
-                                                                            '{}{:03d}.png'.format(recon_type, epoch+1)), nrow=10)
+                                        vutils.save_image(recons, os.path.join(self.reconstruction_path, '{}{:03d}.png'.format(recon_type, epoch+1)), nrow=10)
                                     else:
-                                        vutils.save_image(recons, os.path.join(self.reconstruction_path,
-                                                                            '{}.png'.format(recon_type)), nrow=10)
+                                        vutils.save_image(recons, os.path.join(self.reconstruction_path, '{}.png'.format(recon_type)), nrow=10)
                                     recon_dict[recon_type] = recons
 
                                     if recon_idx == 0:
-                                        vutils.save_image(raws, os.path.join(
-                                            self.reconstruction_path, 'raw.png'), nrow=10)
+                                        vutils.save_image(raws, os.path.join( self.reconstruction_path, 'raw.png'), nrow=10)
 
                             else:
                                 raws = torch.cat((raws, inputs.cpu()), axis=0)
-                                recons = torch.cat(
-                                    (recons, recons_batch), axis=0)
-                                labels = torch.cat(
-                                    (labels, labels_batch), axis=0)
+                                recons = torch.cat((recons, recons_batch), axis=0)
+                                labels = torch.cat((labels, labels_batch), axis=0)
 
                     recon_datasets_dict[dataset_type] = {
                         'recons': recons,
@@ -748,17 +784,13 @@ class DistinctReconstructor(object):
 
                 # todo : refactor dict to CustomDataset
                 if not self.early_stop:
-                    torch.save(recon_datasets_dict,
-                               os.path.join(self.reconstruction_path, 'recon_{}{:03d}.pt'.format(recon_type, epoch+1)))
+                    torch.save(recon_datasets_dict, os.path.join(self.reconstruction_path, 'recon_{}{:03d}.pt'.format(recon_type, epoch+1)))
                 else:
-                    torch.save(recon_datasets_dict,
-                               os.path.join(self.reconstruction_path, 'recon_{}.pt'.format(recon_type)))
+                    torch.save(recon_datasets_dict, os.path.join(self.reconstruction_path, 'recon_{}.pt'.format(recon_type)))
             if not self.early_stop:
-                np.save(os.path.join(self.reconstruction_path,
-                                     'mse{:03d}.npy'.format(epoch+1)), mse_list)
+                np.save(os.path.join(self.reconstruction_path, 'mse{:03d}.npy'.format(epoch+1)), mse_list)
             else:
-                np.save(os.path.join(
-                    self.reconstruction_path, 'mse.npy'), mse_list)
+                np.save(os.path.join( self.reconstruction_path, 'mse.npy'), mse_list)
 
     @staticmethod
     def reparameterize(mu, logvar):
