@@ -42,8 +42,8 @@ ref_ratio_list = [
 ]
 
 recon_lr_list = [
-    0.0001,
-    # 0.001,
+    # 0.0001,
+    0.001,
     # 0.01,
     # 0.1,
 ]
@@ -52,7 +52,7 @@ recon_lr_list = [
 weight_list = [
     # [1, 1, 0, 0, 0, 0],
     # [1, 0, 1, 1, 1, 1],
-    [1, 0, 1, 0, 1, 0],
+    [1, 1, 1, 1, 1, 1],
     # [1, 1, 1, 1, 2, 2],
     # [1, 1, 0.5, 0.5, 1, 1],
 ]
@@ -108,17 +108,18 @@ setup_dict = {
     'test_attacker': '0',
 
     # Common
-    'repeat_start': 1,
-    'repeat_end': 5,
+    'repeat_start': 0,
+    'repeat_end': 1,
     
     'epochs': 100,
     'early_stop': '1',
-    'early_stop_observation_period': 20,
+    'early_stop_observation_period': 10,
     'gpu_id': 0,
     'print_training': '1',
     # 'description': '0825_4typesDisentanglement_small_recon',
-    'description': 'non_iid_strong_blue_wgan_update_total_loss',
+    # 'description': 'non_iid_strong_blue_wgan_update_total_loss',
     # 'description': 'baseline',
+    'description': '1006debug',
     'resume': '0',
     'non_iid_scenario': '1',
 }

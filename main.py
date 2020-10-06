@@ -43,7 +43,7 @@ parser.add_argument('--reconstruction_model', type=str,
 parser.add_argument('--beta', type=float, default=0.0001)
 parser.add_argument('--z_dim', type=int, default=64)
 parser.add_argument('--recon_lr', type=float, default=0.001)
-parser.add_argument('--disc_lr', type=float, default=0.001)
+# parser.add_argument('--disc_lr', type=float, default=0.001)
 parser.add_argument('--recon_train_batch_size', type=int, default=32)
 
 parser.add_argument('--recon_weight', type=float, default='1')
