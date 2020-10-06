@@ -10,7 +10,8 @@ import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 import torchvision.utils as vutils
 
-BLUE_AVG = np.int64(130560)
+THIRD_QUANTILE = np.int64(130560) * 1.5
+MEDIAN = np.int64(130560)
 
 def load_non_iid_dataset(dataset, data_path):
     print('==> Preparing non-iid data..')
@@ -26,8 +27,8 @@ def load_non_iid_dataset(dataset, data_path):
             # transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
         ])
 
-        trainset = torchvision.datasets.SVHN( root=data_path, split='train', download=True, transform=transform_train)
-        testset = torchvision.datasets.SVHN( root=data_path, split='test', download=True, transform=transform_test)
+        trainset = torchvision.datasets.SVHN(root=data_path, split='train', download=True, transform=transform_train)
+        testset = torchvision.datasets.SVHN(root=data_path, split='test', download=True, transform=transform_test)
 
         # 2 : blue 
         trainset_target_color, trainset_non_target_color = split_imgs_by_color(trainset, 2)
@@ -89,10 +90,14 @@ def split_imgs_by_color(dataset, target_color_channel):
     for i in range(dataset.data.shape[0]):
         target_color_sum_list.append(np.sum(dataset.data[i, target_color_channel, :, :]))
 
-    target_color_bool = (target_color_sum_list > BLUE_AVG)
+    # target_color_bool = (target_color_sum_list > BLUE_AVG)
+    # target_color_idx = [i for i, elem in enumerate(target_color_bool) if elem]
+    # non_target_color_idx = [i for i, elem in enumerate(target_color_bool) if not elem]
 
+    target_color_bool = (target_color_sum_list > THIRD_QUANTILE)
+    non_target_color_bool = (target_color_sum_list < MEDIAN)
     target_color_idx = [i for i, elem in enumerate(target_color_bool) if elem]
-    non_target_color_idx = [i for i, elem in enumerate(target_color_bool) if not elem]
+    non_target_color_idx = [i for i, elem in enumerate(non_target_color_bool) if elem]
 
     dataset_target_color = Subset(dataset, target_color_idx)
     dataset_non_target_color = Subset(dataset, non_target_color_idx)
