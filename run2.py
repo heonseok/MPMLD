@@ -51,6 +51,7 @@ recon_lr_list = [
 # recon, real_fake, class_pos, class_neg, membership_pos, membership_neg
 weight_list = [
     # [1, 1, 0, 0, 0, 0],
+    # [1, 0, 1, 1, 1, 1],
     [1, 1, 1, 1, 1, 1],
     # [1, 1, 1, 1, 2, 2],
     # [1, 1, 0.5, 0.5, 1, 1],
@@ -83,7 +84,7 @@ setup_dict = {
     # Reconstruction
     'share_encoder': '0',
     'share_discriminator': '0',
-    'early_stop_recon': '0',
+    'early_stop_recon': '1',
     'adversarial_loss_mode': 'wgan-gp',
 
     'recon_train_batch_size': 32,
@@ -110,16 +111,17 @@ setup_dict = {
     'repeat_start': 0,
     'repeat_end': 1,
     
-    'epochs': 100,
+    'epochs': 1000,
     'early_stop': '1',
-    'early_stop_observation_period': 20,
-    'gpu_id': 0,
+    'early_stop_observation_period': 10,
+    'gpu_id': 2,
     'print_training': '1',
     # 'description': '0825_4typesDisentanglement_small_recon',
-    'description': 'non_iid_no_es_blue_wgan',
+    # 'description': 'non_iid_strong_blue_wgan_update_total_loss',
     # 'description': 'baseline',
-    'resume': '1',
-    'non_iid_scenario': '1',
+    'description': '1006debug',
+    'resume': '0',
+    'non_iid_scenario': '0',
 }
 
 for dataset in dataset_list:

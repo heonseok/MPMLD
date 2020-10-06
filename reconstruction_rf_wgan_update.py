@@ -36,6 +36,8 @@ class DistinctReconstructor(object):
         self.resume = args.resume
         self.adversarial_loss_mode = args.adversarial_loss_mode
         self.gradient_penalty_weight = args.gradient_penalty_weight
+        self.reduction = 'sum'
+        # self.reduction = 'mean'
 
         self.disentanglement_start_epoch = 0
         self.save_step_size = 20
@@ -100,9 +102,9 @@ class DistinctReconstructor(object):
 
         # Loss
         self.vae_loss = self.get_loss_function()
-        self.class_loss = nn.CrossEntropyLoss(reduction='sum')
-        self.membership_loss = nn.BCEWithLogitsLoss(reduction='sum')
-        self.bce_loss = nn.BCEWithLogitsLoss(reduction='sum')
+        self.class_loss = nn.CrossEntropyLoss(reduction=self.reduction)
+        self.membership_loss = nn.BCEWithLogitsLoss(reduction=self.reduction)
+        self.bce_loss = nn.BCEWithLogitsLoss(reduction=self.reduction)
 
         self.weights = {
             'recon': args.recon_weight,
@@ -453,6 +455,7 @@ class DistinctReconstructor(object):
             self.rf_disc_opt_scheduler.step(loss)
 
             if loss < self.best_valid_loss:
+                print(loss, self.best_valid_loss)
                 state = {
                     'best_valid_loss': loss,
                     'epoch': epoch,
@@ -464,16 +467,19 @@ class DistinctReconstructor(object):
                     state['class_disc_' + encoder_name] = self.class_discs[encoder_name].state_dict()
                     state['membership_disc_' + encoder_name] = self.membership_discs[encoder_name].state_dict()
 
-                torch.save(state, os.path.join( self.reconstruction_path, 'ckpt.pth'))
+                torch.save(state, os.path.join(self.reconstruction_path, 'ckpt.pth'))
                 self.best_valid_loss = loss
                 self.early_stop_count = 0
-                self.best_class_acc_dict = self.class_acc_dict
-                self.best_membership_acc_dict = self.membership_acc_dict
+                self.best_class_acc_dict = self.class_acc_dict.copy()
+                self.best_membership_acc_dict = self.membership_acc_dict.copy()
 
                 np.save(os.path.join(self.reconstruction_path, 'class_acc.npy'), self.best_class_acc_dict)
                 np.save(os.path.join(self.reconstruction_path, 'membership_acc.npy'), self.best_membership_acc_dict)
                 vutils.save_image(recons, os.path.join( self.reconstruction_path, '{}.png'.format(epoch)), nrow=10)
                 np.save(os.path.join(self.reconstruction_path, 'last_epoch.npy'), epoch)
+
+                print(self.best_class_acc_dict)
+                print(self.best_membership_acc_dict)
 
             else:
                 self.early_stop_count += 1
@@ -483,14 +489,16 @@ class DistinctReconstructor(object):
             if self.early_stop_count == self.early_stop_observation_period:
                 print(self.best_class_acc_dict)
                 print(self.best_membership_acc_dict)
+                self.early_stop_count = 0
+                self.early_stop_count_total += 1
+
+                if self.early_stop_count_total == self.EARLY_STOP_COUNT_TOTAL_MAX:
+                    self.train_flag = False
+
                 if self.print_training:
                     # print('Early stop count == {}; Terminate training\n'.format( self.early_stop_observation_period))
                     print('Loading best ckpt')
                 self.load() 
-                self.early_stop_count = 0
-                self.early_stop_count_total += 1
-                if self.early_stop_count_total == self.EARLY_STOP_COUNT_TOTAL_MAX:
-                    self.train_flag = False
             
             return loss
 
@@ -575,12 +583,10 @@ class DistinctReconstructor(object):
         }
 
         if self.early_stop:
-            last_epoch = np.load(os.path.join(
-                self.reconstruction_path, 'last_epoch.npy'))
+            last_epoch = np.load(os.path.join(self.reconstruction_path, 'last_epoch.npy'))
             epoch_list = [last_epoch]
         else:
-            epoch_list = range(self.save_step_size-1,
-                               self.epochs, self.save_step_size)
+            epoch_list = range(self.save_step_size-1, self.epochs, self.save_step_size)
 
         for epoch in epoch_list:
             try:
@@ -601,8 +607,7 @@ class DistinctReconstructor(object):
                 recon_datasets_dict = {}
 
                 for dataset_type, dataset in dataset_dict.items():
-                    loader = DataLoader(
-                        dataset, batch_size=self.test_batch_size, shuffle=False, num_workers=2)
+                    loader = DataLoader(dataset, batch_size=self.test_batch_size, shuffle=False, num_workers=2)
                     raws = []
                     recons = []
                     labels = []
@@ -669,8 +674,12 @@ class DistinctReconstructor(object):
 
     def get_loss_function(self):
         def loss_function(recon_x, x, mu, logvar):
-            MSE = F.mse_loss(recon_x, x, reduction='sum')
-            KLD = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp()).sum()
+            MSE = F.mse_loss(recon_x, x, reduction=self.reduction)
+            if self.reduction == 'sum':
+                KLD = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp()).sum()
+            elif self.reduction == 'mean':
+                KLD = -0.5 * torch.mean(1 + logvar - mu.pow(2) - logvar.exp()).mean()
+
             return MSE + self.beta * KLD, MSE, KLD
 
         return loss_function

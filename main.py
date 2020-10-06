@@ -24,17 +24,17 @@ parser = argparse.ArgumentParser()
 # ---- Common ---- #
 parser.add_argument('--base_path', type=str, default='/mnt/disk1/heonseok/MPMLD')
 parser.add_argument('--dataset', type=str, default='SVHN', choices=['MNIST', 'Fashion-MNIST', 'SVHN', 'CIFAR-10', 'adult', 'location', ])
-parser.add_argument('--setsize', type=int, default=5000)
+parser.add_argument('--setsize', type=int, default=500)
 parser.add_argument('--early_stop', type=str2bool, default='1')
-parser.add_argument('--early_stop_observation_period', type=int, default=20)
-parser.add_argument('--gpu_id', type=int, default=2)
-parser.add_argument('--epochs', type=int, default=100)
+parser.add_argument('--early_stop_observation_period', type=int, default=5)
+parser.add_argument('--gpu_id', type=int, default=0)
+parser.add_argument('--epochs', type=int, default=1000)
 parser.add_argument('--resume', type=str2bool, default='0')
 parser.add_argument('--print_training', type=str2bool, default='1')
 parser.add_argument('--use_rclone', type=str2bool, default='1')
 parser.add_argument('--test_batch_size', type=int, default=100)
 parser.add_argument('--non_iid_scenario', type=str2bool, default='0')
-parser.add_argument('--adversarial_loss_mode', type=str, default='gan', choices=['gan', 'wgan', 'wgan-gp'])
+parser.add_argument('--adversarial_loss_mode', type=str, default='wgan-gp', choices=['gan', 'wgan', 'wgan-gp'])
 parser.add_argument('--gradient_penalty_weight', type=float, default=10.0)
 
 # ---- Reconstruction ---- #
@@ -69,29 +69,29 @@ parser.add_argument('--attack_train_batch_size', type=int, default=32)
 
 # -------------------------------------------------------------------------------------------------------------------- #
 # -------- Control flags -------- #
-parser.add_argument('--description', type=str, default='0915')
+parser.add_argument('--description', type=str, default='1006debug')
 # parser.add_argument('--description', type=str, default='baseline')
 parser.add_argument('--repeat_start', type=int, default=0)
-parser.add_argument('--repeat_end', type=int, default=5)
+parser.add_argument('--repeat_end', type=int, default=1)
 parser.add_argument('--share_discriminator', type=str2bool, default='0')
 
 # ---- Reconstruction ---- #
 parser.add_argument('--share_encoder', type=str2bool, default='0')
-parser.add_argument('--train_reconstructor', type=str2bool, default='0')
-parser.add_argument('--reconstruct_datasets', type=str2bool, default='0')
+parser.add_argument('--train_reconstructor', type=str2bool, default='1')
+parser.add_argument('--reconstruct_datasets', type=str2bool, default='1')
 parser.add_argument('--plot_recons', type=str2bool, default='0')
-parser.add_argument('--early_stop_recon', type=str2bool, default='0')
+parser.add_argument('--early_stop_recon', type=str2bool, default='1')
 
 # ---- Classification ---- #
 parser.add_argument('--use_reconstructed_dataset', type=str2bool, default='0')
 
 parser.add_argument('--train_classifier', type=str2bool, default='0')
 parser.add_argument('--test_classifier', type=str2bool, default='0')
-parser.add_argument('--extract_classifier_features', type=str2bool, default='1')
+parser.add_argument('--extract_classifier_features', type=str2bool, default='0')
 
 # ---- Attack ---- #
-parser.add_argument('--train_attacker', type=str2bool, default='1')
-parser.add_argument('--test_attacker', type=str2bool, default='1')
+parser.add_argument('--train_attacker', type=str2bool, default='0')
+parser.add_argument('--test_attacker', type=str2bool, default='0')
 
 # ---- ---- #
 # parser.add_argument('--test_with_raw_classifier', type=str2bool, default='0')
@@ -186,9 +186,6 @@ for repeat_idx in range(args.repeat_start, args.repeat_end):
         args.class_num = 10
 
 
-    # todo : refactor for non-iid scenario
-
-
     if not args.non_iid_scenario:
         # Recon: Train, Class: Train, Attack: In(Train/Test)
         subset0 = Subset(merged_dataset, range(0, args.setsize))
@@ -201,6 +198,7 @@ for repeat_idx in range(args.repeat_start, args.repeat_end):
         # Recon: Train (Reference), Class: -, Attack: -
         subset4 = Subset(merged_dataset, range(int(2.4 * args.setsize), int((2.4 + args.ref_ratio) * args.setsize)))
     else:
+        # Todo: valid? 
         # Recon: Train, Class: Train, Attack: In(Train/Test)
         subset0 = Subset(in_dataset, range(0, args.setsize))
         # Recon: Valid, Class: Valid, Attack: -
@@ -211,6 +209,17 @@ for repeat_idx in range(args.repeat_start, args.repeat_end):
         subset3 = Subset(out_dataset, range(0, args.setsize))
         # Recon: Train (Reference), Class: -, Attack: -
         subset4 = Subset(out_dataset, range(int(1.0 * args.setsize), int((1.0 + args.ref_ratio) * args.setsize)))
+
+        # # Recon: Train, Class: Train, Attack: In(Train/Test)
+        # subset0 = Subset(in_dataset, range(0, args.setsize))
+        # # Recon: Valid, Class: Valid, Attack: -
+        # subset1 = Subset(in_dataset, range(args.setsize, int(1.2 * args.setsize)))
+        # # Recon: Test, Class: Test, Attack: -
+        # subset2 = Subset(in_dataset, range(int(1.2 * args.setsize), int(1.4 * args.setsize)))
+        # # Recon: -, Class: -,  Attack: Out(Train/Test) Todo: check valid
+        # subset3 = Subset(out_dataset, range(0, args.setsize))
+        # # Recon: Train (Reference), Class: -, Attack: -
+        # subset4 = Subset(out_dataset, range(int(1.0 * args.setsize), int((1.0 + args.ref_ratio) * args.setsize)))
 
     class_datasets = {
         'train': subset0,
@@ -248,8 +257,7 @@ for repeat_idx in range(args.repeat_start, args.repeat_end):
         ref_dataset = subset4
         for _ in range(int(1 / args.ref_ratio) - 1):
             ref_dataset = ConcatDataset((ref_dataset, subset4))
-        reconstructor.train(
-            class_datasets['train'], class_datasets['valid'], ref_dataset)
+        reconstructor.train(class_datasets['train'], class_datasets['valid'], ref_dataset)
 
     if args.reconstruct_datasets:
         reconstructor = Reconstructor(args)
@@ -289,14 +297,12 @@ for repeat_idx in range(args.repeat_start, args.repeat_end):
 
     print()
 
-    args.classification_name = '{}_lr{}_bs{}'.format(args.classification_model, args.class_lr,
-                                                     args.class_train_batch_size)
+    args.classification_name = '{}_lr{}_bs{}'.format(args.classification_model, args.class_lr, args.class_train_batch_size)
 
     # -------- Classification & Attack -------- #
     if args.use_reconstructed_dataset:
         for recon_type in reconstruction_type_list:
-            args.classification_path = os.path.join(args.recon_output_path, 'classification', args.classification_name,
-                                                    recon_type, 'repeat{}'.format(repeat_idx))
+            args.classification_path = os.path.join(args.recon_output_path, 'classification', args.classification_name, recon_type, 'repeat{}'.format(repeat_idx))
             print(args.classification_path)
             if args.train_classifier or args.test_classifier or args.extract_classifier_features:
                 classifier = Classifier(args)
@@ -310,8 +316,7 @@ for repeat_idx in range(args.repeat_start, args.repeat_end):
                     sys.exit(1)
 
                 if args.train_classifier:
-                    classifier.train(
-                        class_datasets['train'], class_datasets['valid'])
+                    classifier.train(class_datasets['train'], class_datasets['valid'])
 
                 if args.test_classifier:
                     classifier.test(class_datasets['test'])
@@ -344,8 +349,7 @@ for repeat_idx in range(args.repeat_start, args.repeat_end):
             print()
 
     else:
-        args.classification_path = os.path.join(args.raw_output_path, 'classification', args.classification_name,
-                                                'repeat{}'.format(repeat_idx))
+        args.classification_path = os.path.join(args.raw_output_path, 'classification', args.classification_name, 'repeat{}'.format(repeat_idx))
         print(args.classification_path)
         classifier = Classifier(args)
 
@@ -367,13 +371,11 @@ for repeat_idx in range(args.repeat_start, args.repeat_end):
         if args.train_attacker or args.test_attacker:
             for attack_type in attack_type_list:
                 args.attack_type = attack_type
-                args.attack_path = os.path.join(args.raw_output_path, 'attack', args.classification_name,
-                                                attack_type, 'repeat{}'.format(repeat_idx))
+                args.attack_path = os.path.join(args.raw_output_path, 'attack', args.classification_name, attack_type, 'repeat{}'.format(repeat_idx))
                 if not os.path.exists(args.attack_path):
                     os.makedirs(args.attack_path)
 
-                inout_feature_sets = utils.build_inout_feature_sets(
-                    args.classification_path, attack_type)
+                inout_feature_sets = utils.build_inout_feature_sets(args.classification_path, attack_type)
 
                 # for dataset_type, dataset in inout_feature_sets.items():
                 #     print('Inout {:<3} feature set: {}'.format(dataset_type, len(dataset)))

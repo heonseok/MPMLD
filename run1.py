@@ -51,6 +51,7 @@ recon_lr_list = [
 # recon, real_fake, class_pos, class_neg, membership_pos, membership_neg
 weight_list = [
     # [1, 1, 0, 0, 0, 0],
+    # [1, 0, 1, 1, 1, 1],
     [1, 1, 1, 1, 1, 1],
     # [1, 1, 1, 1, 2, 2],
     # [1, 1, 0.5, 0.5, 1, 1],
@@ -69,9 +70,9 @@ beta_list = [
 ]
 
 small_recon_weight_list =[
-    # 0.0,
-    0.001,
-    0.01,
+    0.0,
+    # 0.001,
+    # 0.01,
     # 0.1,
     # 1,
 ]
@@ -84,10 +85,11 @@ setup_dict = {
     'share_encoder': '0',
     'share_discriminator': '0',
     'early_stop_recon': '1',
+    'adversarial_loss_mode': 'wgan-gp',
 
     'recon_train_batch_size': 32,
-    'train_reconstructor': '0',
-    'reconstruct_datasets': '0',
+    'train_reconstructor': '1',
+    'reconstruct_datasets': '1',
     'plot_recons': '0',
 
     'use_reconstructed_dataset': '1',
@@ -95,28 +97,31 @@ setup_dict = {
 
     # Classification
     'class_train_batch_size': 32,
-    'train_classifier': '1',
-    'test_classifier': '1',
-    'extract_classifier_features': '1',
+    'train_classifier': '0',
+    'test_classifier': '0',
+    'extract_classifier_features': '0',
     'classification_model': 'ResNet18',
     # 'classification_model': 'FCClassifier',
 
     # Attack
-    'train_attacker': '1',
-    'test_attacker': '1',
+    'train_attacker': '0',
+    'test_attacker': '0',
 
     # Common
     'repeat_start': 0,
-    'repeat_end': 5,
-    'epochs': 100,
+    'repeat_end': 1,
+    
+    'epochs': 1000,
     'early_stop': '1',
-    'early_stop_observation_period': 20,
-    'gpu_id': 3,
+    'early_stop_observation_period': 10,
+    'gpu_id': 1,
     'print_training': '1',
     # 'description': '0825_4typesDisentanglement_small_recon',
-    'description': '0921',
+    # 'description': 'non_iid_strong_blue_wgan_update_total_loss',
     # 'description': 'baseline',
-    'resume': '1',
+    'description': '1006debug',
+    'resume': '0',
+    'non_iid_scenario': '0',
 }
 
 for dataset in dataset_list:
