@@ -13,7 +13,7 @@ from data import load_dataset, load_non_iid_dataset
 import torch
 from torch.utils.data import Subset, ConcatDataset
 
-from reconstruction_rf_wgan_update import DistinctReconstructor
+from reconstruction_no_early_stop import DistinctReconstructor
 from classification import Classifier
 from attack import Attacker
 
@@ -33,7 +33,7 @@ parser.add_argument('--resume', type=str2bool, default='0')
 parser.add_argument('--print_training', type=str2bool, default='1')
 parser.add_argument('--use_rclone', type=str2bool, default='1')
 parser.add_argument('--test_batch_size', type=int, default=100)
-parser.add_argument('--non_iid_scenario', type=str2bool, default='1')
+parser.add_argument('--non_iid_scenario', type=str2bool, default='0')
 parser.add_argument('--non_iid_scenario_detail', type=str, default='color_zero', choices=['color_zero', 'color_abs', 'color_rel', 'black_dot'])
 parser.add_argument('--adversarial_loss_mode', type=str, default='wgan-gp', choices=['gan', 'wgan', 'wgan-gp'])
 parser.add_argument('--gradient_penalty_weight', type=float, default=10.0)
@@ -42,9 +42,9 @@ parser.add_argument('--gradient_penalty_weight', type=float, default=10.0)
 parser.add_argument('--reconstruction_model', type=str, default='VAE', choices=['AE', 'VAE'])
 parser.add_argument('--beta', type=float, default=0.0001)
 parser.add_argument('--z_dim', type=int, default=64)
-parser.add_argument('--recon_lr', type=float, default=0.0001)
+parser.add_argument('--recon_lr', type=float, default=0.001)
 # parser.add_argument('--disc_lr', type=float, default=0.001)
-parser.add_argument('--recon_train_batch_size', type=int, default=32)
+parser.add_argument('--recon_train_batch_size', type=int, default=64)
 
 parser.add_argument('--recon_weight', type=float, default='1')
 parser.add_argument('--class_pos_weight', type=float, default='1')
@@ -69,7 +69,7 @@ parser.add_argument('--attack_train_batch_size', type=int, default=32)
 
 # -------------------------------------------------------------------------------------------------------------------- #
 # -------- Control flags -------- #
-parser.add_argument('--description', type=str, default='1007noniid')
+parser.add_argument('--description', type=str, default='1007no_early_stop')
 # parser.add_argument('--description', type=str, default='baseline')
 parser.add_argument('--repeat_start', type=int, default=0)
 parser.add_argument('--repeat_end', type=int, default=1)
