@@ -70,10 +70,10 @@ class DistinctReconstructor(object):
         self.class_discs = dict()
         self.membership_discs = dict()
         for encoder_name in self.encoder_name_list:
-            # self.class_discs[encoder_name] = module.ClassDiscriminator(self.base_z_dim, args.class_num)
-            # self.membership_discs[encoder_name] = module.MembershipDiscriminator(self.base_z_dim + args.class_num, 1)
-            self.class_discs[encoder_name] = module.ClassDiscriminatorImproved(self.base_z_dim, args.class_num)
-            self.membership_discs[encoder_name] = module.MembershipDiscriminatorImproved(self.base_z_dim, args.class_num)
+            self.class_discs[encoder_name] = module.ClassDiscriminator(self.base_z_dim, args.class_num)
+            self.membership_discs[encoder_name] = module.MembershipDiscriminator(self.base_z_dim + args.class_num, 1)
+            # self.class_discs[encoder_name] = module.ClassDiscriminatorImproved(self.base_z_dim, args.class_num)
+            # self.membership_discs[encoder_name] = module.MembershipDiscriminatorImproved(self.base_z_dim, args.class_num)
         self.rf_disc = module.Discriminator()
 
         # Optimizer
@@ -455,7 +455,7 @@ class DistinctReconstructor(object):
             self.rf_disc_opt_scheduler.step(loss)
 
             if loss < self.best_valid_loss:
-                print(loss, self.best_valid_loss)
+                # print(loss, self.best_valid_loss)
                 state = {
                     'best_valid_loss': loss,
                     'epoch': epoch,
@@ -478,8 +478,8 @@ class DistinctReconstructor(object):
                 vutils.save_image(recons, os.path.join( self.reconstruction_path, '{}.png'.format(epoch)), nrow=10)
                 np.save(os.path.join(self.reconstruction_path, 'last_epoch.npy'), epoch)
 
-                print(self.best_class_acc_dict)
-                print(self.best_membership_acc_dict)
+                # print(self.best_class_acc_dict)
+                # print(self.best_membership_acc_dict)
 
             else:
                 self.early_stop_count += 1

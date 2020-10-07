@@ -52,7 +52,7 @@ recon_lr_list = [
 weight_list = [
     # [1, 1, 0, 0, 0, 0],
     # [1, 0, 1, 1, 1, 1],
-    [1, 1, 0, 0, 0, 0],
+    [1, 0, 1, 1, 1, 1],
     # [1, 1, 1, 1, 2, 2],
     # [1, 1, 0.5, 0.5, 1, 1],
 ]
@@ -109,7 +109,7 @@ setup_dict = {
 
     # Common
     'repeat_start': 0,
-    'repeat_end': 1,
+    'repeat_end': 5,
     
     'epochs': 1000,
     'early_stop': '1',
@@ -119,7 +119,7 @@ setup_dict = {
     # 'description': '0825_4typesDisentanglement_small_recon',
     # 'description': 'non_iid_strong_blue_wgan_update_total_loss',
     # 'description': 'baseline',
-    'description': '1006debug',
+    'description': '1007noimproved',
     'resume': '0',
     'non_iid_scenario': '0',
 }
