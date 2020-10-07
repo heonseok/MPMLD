@@ -24,25 +24,25 @@ parser = argparse.ArgumentParser()
 # ---- Common ---- #
 parser.add_argument('--base_path', type=str, default='/mnt/disk1/heonseok/MPMLD')
 parser.add_argument('--dataset', type=str, default='SVHN', choices=['MNIST', 'Fashion-MNIST', 'SVHN', 'CIFAR-10', 'adult', 'location', ])
-parser.add_argument('--setsize', type=int, default=500)
+parser.add_argument('--setsize', type=int, default=5000)
 parser.add_argument('--early_stop', type=str2bool, default='1')
-parser.add_argument('--early_stop_observation_period', type=int, default=5)
-parser.add_argument('--gpu_id', type=int, default=0)
+parser.add_argument('--early_stop_observation_period', type=int, default=10)
+parser.add_argument('--gpu_id', type=int, default=2)
 parser.add_argument('--epochs', type=int, default=1000)
 parser.add_argument('--resume', type=str2bool, default='0')
 parser.add_argument('--print_training', type=str2bool, default='1')
 parser.add_argument('--use_rclone', type=str2bool, default='1')
 parser.add_argument('--test_batch_size', type=int, default=100)
-parser.add_argument('--non_iid_scenario', type=str2bool, default='0')
+parser.add_argument('--non_iid_scenario', type=str2bool, default='1')
+parser.add_argument('--non_iid_scenario_detail', type=str, default='color_zero', choices=['color_zero', 'color_abs', 'color_rel', 'black_dot'])
 parser.add_argument('--adversarial_loss_mode', type=str, default='wgan-gp', choices=['gan', 'wgan', 'wgan-gp'])
 parser.add_argument('--gradient_penalty_weight', type=float, default=10.0)
 
 # ---- Reconstruction ---- #
-parser.add_argument('--reconstruction_model', type=str,
-                    default='VAE', choices=['AE', 'VAE'])
+parser.add_argument('--reconstruction_model', type=str, default='VAE', choices=['AE', 'VAE'])
 parser.add_argument('--beta', type=float, default=0.0001)
 parser.add_argument('--z_dim', type=int, default=64)
-parser.add_argument('--recon_lr', type=float, default=0.001)
+parser.add_argument('--recon_lr', type=float, default=0.0001)
 # parser.add_argument('--disc_lr', type=float, default=0.001)
 parser.add_argument('--recon_train_batch_size', type=int, default=32)
 
@@ -69,7 +69,7 @@ parser.add_argument('--attack_train_batch_size', type=int, default=32)
 
 # -------------------------------------------------------------------------------------------------------------------- #
 # -------- Control flags -------- #
-parser.add_argument('--description', type=str, default='1006debug')
+parser.add_argument('--description', type=str, default='1007noniid')
 # parser.add_argument('--description', type=str, default='baseline')
 parser.add_argument('--repeat_start', type=int, default=0)
 parser.add_argument('--repeat_end', type=int, default=1)
@@ -135,10 +135,8 @@ for repeat_idx in range(args.repeat_start, args.repeat_end):
                                                                                                                          args.small_recon_weight,
                                                                                                                          )
 
-    args.recon_output_path = os.path.join(
-        args.base_path, args.dataset, args.description, args.reconstruction_name)
-    args.raw_output_path = os.path.join(
-        args.base_path, args.dataset, args.description, 'raw_setsize{}'.format(args.setsize))
+    args.recon_output_path = os.path.join(args.base_path, args.dataset, args.description, args.reconstruction_name)
+    args.raw_output_path = os.path.join(args.base_path, args.dataset, args.description, 'raw_setsize{}'.format(args.setsize))
 
     if not os.path.exists(args.recon_output_path):
         os.makedirs(args.recon_output_path)
@@ -148,15 +146,13 @@ for repeat_idx in range(args.repeat_start, args.repeat_end):
         os.makedirs(args.data_path)
 
     args.model_path = os.path
-    args.reconstruction_path = os.path.join(
-        args.recon_output_path, 'reconstruction/repeat{}'.format(repeat_idx))
+    args.reconstruction_path = os.path.join(args.recon_output_path, 'reconstruction/repeat{}'.format(repeat_idx))
     # print(args.reconstruction_path)
 
     # ---- Backup codes ---- #
     date = str(datetime.datetime.now())[:-16]
     time = str(datetime.datetime.now())[-15:-7]
-    backup_path = os.path.join(
-        'backup', date, time + ' ' + args.reconstruction_name)
+    backup_path = os.path.join('backup', date, time + ' ' + args.reconstruction_name)
     os.makedirs(backup_path)
     for file in os.listdir(os.getcwd()):
         if file.endswith('.py'):
@@ -166,7 +162,7 @@ for repeat_idx in range(args.repeat_start, args.repeat_end):
     # ---- Dataset ---- #
     if args.non_iid_scenario:
         # in: non-target color, out: target color
-        in_dataset, out_dataset = load_non_iid_dataset(args.dataset, args.data_path)
+        in_dataset, out_dataset = load_non_iid_dataset(args.dataset, args.data_path, args.non_iid_scenario_detail)
     else:
         merged_dataset = load_dataset(args.dataset, args.data_path)
         print(merged_dataset.__len__())

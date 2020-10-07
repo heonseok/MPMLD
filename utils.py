@@ -155,8 +155,8 @@ def classify_membership(data_in, data_out):
 
 class CustomDataset(Dataset):
     def __init__(self, data, targets):
-        self.data = data
-        self.targets = targets
+        self.data = torch.FloatTensor(data.copy())
+        self.targets = targets.copy()
 
     def __len__(self):
         return len(self.data)

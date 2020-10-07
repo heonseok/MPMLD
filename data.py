@@ -4,17 +4,24 @@ import sys
 import numpy as np
 import os
 from utils import CustomDataset
-from torch.utils.data import ConcatDataset, Dataset, Subset
+from torch.utils.data import Dataset, Subset, ConcatDataset
 import torch
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 import torchvision.utils as vutils
+from utils import CustomDataset
 
 THIRD_QUANTILE = np.int64(130560) * 1.5
 MEDIAN = np.int64(130560)
 
-def load_non_iid_dataset(dataset, data_path):
+RED = 0
+GREEN = 1
+BLUE = 2
+
+def load_non_iid_dataset(dataset, data_path, scenario):
     print('==> Preparing non-iid data..')
+    target_channel = BLUE
+
     if dataset == 'SVHN':
 
         transform_train = transforms.Compose([
@@ -30,17 +37,15 @@ def load_non_iid_dataset(dataset, data_path):
         trainset = torchvision.datasets.SVHN(root=data_path, split='train', download=True, transform=transform_train)
         testset = torchvision.datasets.SVHN(root=data_path, split='test', download=True, transform=transform_test)
 
-        # 2 : blue 
-        trainset_target_color, trainset_non_target_color = split_imgs_by_color(trainset, 2)
-        testset_target_color, testset_non_target_color = split_imgs_by_color(testset, 2)
+        # totalset = ConcatDataset((trainset, testset))
+        totalset = trainset
 
-        dataset_target_color = ConcatDataset((trainset_target_color, testset_target_color))
-        dataset_non_target_color = ConcatDataset((trainset_non_target_color, testset_non_target_color))
 
-        # print(dataset_target_color[0:100][0].shape)
-        # vutils.save_image(torch.FloatTensor(dataset_target_color[0:100][0]), 'blue.png', nrow=10, normalize=True)
-        # vutils.save_image(torch.FloatTensor(dataset_non_target_color[0:100][0]), 'non_blue.png', nrow=10, normalize=True)
-        # sys.exit(1)
+    else:
+        pass
+
+    if scenario == 'color_abs':
+        
 
        # raw = trainset.data[0:100]
                 # vutils.save_image(torch.FloatTensor(raw), 'raw.png', nrow=10, normalize=True)
@@ -79,33 +84,43 @@ def load_non_iid_dataset(dataset, data_path):
         # print(total_set.datasets[0:100])
         # vutils.save_image(torch.FloatTensor(total_set.datasets[0:100]), 'raw.png', nrow=10, normalize=True)
 
-    else:
-        pass
+        # print(dataset_target_color[0:100][0].shape)
+        # vutils.save_image(torch.FloatTensor(dataset_target_color[0:100][0]), 'blue.png', nrow=10, normalize=True)
+        # vutils.save_image(torch.FloatTensor(dataset_non_target_color[0:100][0]), 'non_blue.png', nrow=10, normalize=True)
+        # sys.exit(1)
 
-    return dataset_target_color, dataset_non_target_color 
+        in_dataset, out_dataset = split_imgs_by_color_abs(totalset, target_channel)
 
-def split_imgs_by_color(dataset, target_color_channel):
-    
+    elif scenario == 'color_zero':
+        in_dataset = totalset
+        out_dataset = extract_zero_color_imgs(totalset, target_channel)
+
+    vutils.save_image(torch.FloatTensor(in_dataset.data[0:100]), '{}_{}_in.png'.format(scenario, target_channel), nrow=10, normalize=True)
+    vutils.save_image(torch.FloatTensor(out_dataset.data[0:100]), '{}_{}_out.png'.format(scenario, target_channel), nrow=10, normalize=True)
+
+    return in_dataset, out_dataset  
+
+def split_imgs_by_color_abs(totalset, target_color_channel):
     target_color_sum_list = []
-    for i in range(dataset.data.shape[0]):
-        target_color_sum_list.append(np.sum(dataset.data[i, target_color_channel, :, :]))
-
-    # target_color_bool = (target_color_sum_list > BLUE_AVG)
-    # target_color_idx = [i for i, elem in enumerate(target_color_bool) if elem]
-    # non_target_color_idx = [i for i, elem in enumerate(target_color_bool) if not elem]
+    for i in range(totalset.data.shape[0]):
+        target_color_sum_list.append(np.sum(totalset.data[i, target_color_channel, :, :]))
 
     target_color_bool = (target_color_sum_list > THIRD_QUANTILE)
     non_target_color_bool = (target_color_sum_list < MEDIAN)
+
     target_color_idx = [i for i, elem in enumerate(target_color_bool) if elem]
     non_target_color_idx = [i for i, elem in enumerate(non_target_color_bool) if elem]
 
-    dataset_target_color = Subset(dataset, target_color_idx)
-    dataset_non_target_color = Subset(dataset, non_target_color_idx)
-
-    # print(dataset_target_color[0])
-    # print(dataset_target_color[1])
+    dataset_target_color = Subset(totalset, target_color_idx)
+    dataset_non_target_color = Subset(totalset, non_target_color_idx)
 
     return dataset_target_color, dataset_non_target_color
+
+def extract_zero_color_imgs(totalset, target_color_channel):    
+    out_dataset = CustomDataset(totalset.data, totalset.labels)
+    out_dataset.data[:, target_color_channel, :, :]  = 0
+
+    return out_dataset 
 
 def load_dataset(dataset, data_path):
     print('==> Preparing data..')
@@ -120,11 +135,9 @@ def load_dataset(dataset, data_path):
             # transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
         ])
 
-        trainset = torchvision.datasets.CIFAR10(
-            root=data_path, train=True, download=True, transform=transform_train)
+        trainset = torchvision.datasets.CIFAR10(root=data_path, train=True, download=True, transform=transform_train)
 
-        testset = torchvision.datasets.CIFAR10(
-            root=data_path, train=False, download=True, transform=transform_test)
+        testset = torchvision.datasets.CIFAR10(root=data_path, train=False, download=True, transform=transform_test)
 
         total_set = ConcatDataset((trainset, testset))
 
@@ -139,11 +152,9 @@ def load_dataset(dataset, data_path):
             # transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
         ])
 
-        trainset = torchvision.datasets.CIFAR100(
-            root=data_path, train=True, download=True, transform=transform_train)
+        trainset = torchvision.datasets.CIFAR100(root=data_path, train=True, download=True, transform=transform_train)
 
-        testset = torchvision.datasets.CIFAR100(
-            root=data_path, train=False, download=True, transform=transform_test)
+        testset = torchvision.datasets.CIFAR100(root=data_path, train=False, download=True, transform=transform_test)
 
         total_set = ConcatDataset((trainset, testset))
 
@@ -208,7 +219,6 @@ def load_dataset(dataset, data_path):
 
         total_set = ConcatDataset((trainset, testset))
 
-
     elif dataset == 'adult':
         # todo : import pre processing code
         dataset = np.load(os.path.join(data_path, 'preprocessed.npy'), allow_pickle=True).item()
@@ -233,3 +243,7 @@ class DoubleDataset(Dataset):
     def __getitem__(self, idx):
         return self.dataset1[idx][0], self.dataset1[idx][1], self.dataset2[idx][0], self.dataset2[idx][1]
         # return self.dataset1[idx], self.dataset2[idx]
+
+# class ConcatDataset(Dataset):
+#     def __init__(self, dataset1, dataset2):
+#         self.da

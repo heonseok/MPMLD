@@ -42,8 +42,8 @@ ref_ratio_list = [
 ]
 
 recon_lr_list = [
-    # 0.0001,
-    0.001,
+    0.0001,
+    # 0.001,
     # 0.01,
     # 0.1,
 ]
@@ -119,7 +119,7 @@ setup_dict = {
     # 'description': '0825_4typesDisentanglement_small_recon',
     # 'description': 'non_iid_strong_blue_wgan_update_total_loss',
     # 'description': 'baseline',
-    'description': '1007noimproved',
+    'description': '1007improved',
     'resume': '0',
     'non_iid_scenario': '0',
 }
