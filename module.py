@@ -469,6 +469,7 @@ class VAEConvDecoder(nn.Module):
             nn.ConvTranspose2d(256, num_channels,
                                kernel_size=4, stride=2, padding=1),
             # nn.sigmoid()
+            nn.Tanh(),
         )
 
         init_layers(self._modules)

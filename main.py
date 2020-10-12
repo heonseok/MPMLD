@@ -28,7 +28,7 @@ parser.add_argument('--setsize', type=int, default=5000)
 parser.add_argument('--early_stop', type=str2bool, default='1')
 parser.add_argument('--early_stop_observation_period', type=int, default=10)
 parser.add_argument('--gpu_id', type=int, default=2)
-parser.add_argument('--epochs', type=int, default=1000)
+parser.add_argument('--epochs', type=int, default=125)
 parser.add_argument('--resume', type=str2bool, default='0')
 parser.add_argument('--print_training', type=str2bool, default='1')
 parser.add_argument('--use_rclone', type=str2bool, default='1')
@@ -52,7 +52,7 @@ parser.add_argument('--class_neg_weight', type=float, default='1')
 parser.add_argument('--membership_pos_weight', type=float, default='1')
 parser.add_argument('--membership_neg_weight', type=float, default='1')
 parser.add_argument('--real_fake_weight', type=float, default='1')
-parser.add_argument('--small_recon_weight', type=float, default='0')
+parser.add_argument('--small_recon_weight', type=float, default='0.01')
 parser.add_argument('--ref_ratio', type=float, default=1.0)
 
 parser.add_argument('--disentangle_with_reparameterization', type=str2bool, default='1')
@@ -69,18 +69,18 @@ parser.add_argument('--attack_train_batch_size', type=int, default=32)
 
 # -------------------------------------------------------------------------------------------------------------------- #
 # -------- Control flags -------- #
-parser.add_argument('--description', type=str, default='1007no_early_stop')
+parser.add_argument('--description', type=str, default='1012debug')
 # parser.add_argument('--description', type=str, default='baseline')
 parser.add_argument('--repeat_start', type=int, default=0)
 parser.add_argument('--repeat_end', type=int, default=1)
 parser.add_argument('--share_discriminator', type=str2bool, default='0')
 
 # ---- Reconstruction ---- #
-parser.add_argument('--share_encoder', type=str2bool, default='0')
 parser.add_argument('--train_reconstructor', type=str2bool, default='1')
 parser.add_argument('--reconstruct_datasets', type=str2bool, default='1')
 parser.add_argument('--plot_recons', type=str2bool, default='0')
-parser.add_argument('--early_stop_recon', type=str2bool, default='1')
+parser.add_argument('--early_stop_recon', type=str2bool, default='0')
+parser.add_argument('--share_encoder', type=str2bool, default='0')
 
 # ---- Classification ---- #
 parser.add_argument('--use_reconstructed_dataset', type=str2bool, default='0')
@@ -147,7 +147,7 @@ for repeat_idx in range(args.repeat_start, args.repeat_end):
 
     args.model_path = os.path
     args.reconstruction_path = os.path.join(args.recon_output_path, 'reconstruction/repeat{}'.format(repeat_idx))
-    # print(args.reconstruction_path)
+    print(args.reconstruction_path)
 
     # ---- Backup codes ---- #
     date = str(datetime.datetime.now())[:-16]

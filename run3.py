@@ -114,7 +114,7 @@ setup_dict = {
     'epochs': 200,
     'early_stop': '0',
     'early_stop_observation_period': 10,
-    'gpu_id': 2,
+    'gpu_id': 3,
     'print_training': '1',
     # 'description': '0825_4typesDisentanglement_small_recon',
     # 'description': 'non_iid_strong_blue_wgan_update_total_loss',

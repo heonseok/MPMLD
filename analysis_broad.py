@@ -1,10 +1,41 @@
-# %%
+#  %%
 import os
 import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
+
+# %%
+def collate_recon_results(recon_path, recon_dict):
+    df = pd.DataFrame()
+    for repeat_idx in range(5):
+        repeat_path = os.path.join(recon_path, 'repeat{}'.format(repeat_idx))
+
+        if not early_stop_flag:
+            class_acc_dict = np.load(os.path.join(repeat_path, 'class_acc{:03d}.npy'.format(target_epoch)), allow_pickle=True).item()
+            membership_acc_dict = np.load(os.path.join(repeat_path, 'membership_acc{:03d}.npy'.format(target_epoch)), allow_pickle=True).item()
+        else:
+            class_acc_dict = np.load(os.path.join(repeat_path, 'class_acc.npy'), allow_pickle=True).item()
+            membership_acc_dict = np.load(os.path.join(repeat_path, 'membership_acc.npy'), allow_pickle=True).item()
+
+        for z_type in ['pn', 'pp', 'np', 'nn']:
+            acc_dict = {'disc_type': 'class', 'z_type': z_type, 'acc': class_acc_dict[z_type]}
+            df = df.append({**recon_dict, **acc_dict}, ignore_index=True)
+            acc_dict = {'disc_type': 'membership', 'z_type': z_type, 'acc': membership_acc_dict[z_type]}
+            df = df.append({**recon_dict, **acc_dict}, ignore_index=True)
+    
+    return df 
+
+def collate_class_results(class_path, class_dict):
+    df = pd.DataFrame()
+    for repeat_idx in range(5):
+        pass
+
+def collate_attack_results(class_path, class_dict):
+    df = pd.DataFrame()
+    for repeat_idx in range(5):
+        pass
 
 # %%
 dataset_list = [
@@ -56,7 +87,8 @@ recon_lr_list = [
 
 # recon, real_fake, class_pos, class_neg, membership_pos, membership_neg
 weight_list = [
-    [1., 0., 0., 0., 0., 0.],
+    # [1., 0., 0., 0., 0., 0.],
+    # [1., 1., 1., 1., 1., 1.],
     [1., 0., 1., 1., 1., 1.],
     [1., 1., 1., 1., 1., 1.],
 ]
@@ -74,9 +106,9 @@ beta_list = [
 ]
 
 small_recon_weight_list = [
-    0.,
+    # 0.,
     # 0.001,
-    # 0.01,
+    0.01,
     # 0.1,
     # 1.,
 ]
@@ -96,37 +128,16 @@ recon_type_list = [
 
 base_path = '/mnt/disk1/heonseok/MPMLD'
 description_list = [
-    '1006debug',
+    # '1006debug',
+    '1008',
 ]
 
 
-recon_train_batch_size = 32
+recon_train_batch_size = 64
 
-# %%
-def collate_recon_results(recon_path, recon_dict):
-    df = pd.DataFrame()
-    for repeat_idx in range(5):
-        repeat_path = os.path.join(recon_path, 'repeat{}'.format(repeat_idx))
+early_stop_flag = False
+target_epoch = 200
 
-        class_acc_dict = np.load(os.path.join(repeat_path, 'class_acc.npy'), allow_pickle=True).item()
-        membership_acc_dict = np.load(os.path.join(repeat_path, 'membership_acc.npy'), allow_pickle=True).item()
-        for z_type in ['pn', 'pp', 'np', 'nn']:
-            acc_dict = {'disc_type': 'class', 'z_type': z_type, 'acc': class_acc_dict[z_type]}
-            df = df.append({**recon_dict, **acc_dict}, ignore_index=True)
-            acc_dict = {'disc_type': 'membership', 'z_type': z_type, 'acc': membership_acc_dict[z_type]}
-            df = df.append({**recon_dict, **acc_dict}, ignore_index=True)
-    
-    return df 
-
-def collate_class_results(class_path, class_dict):
-    df = pd.DataFrame()
-    for repeat_idx in range(5):
-        pass
-
-def collate_attack_results(class_path, class_dict):
-    df = pd.DataFrame()
-    for repeat_idx in range(5):
-        pass
 
 # %%
 recon_df = pd.DataFrame()
@@ -180,16 +191,31 @@ for dataset in dataset_list:
                                         'weights' : weight_str, 
                                         'small_recon_weight': small_recon_weight,
                                     }
-                                    recon_path = os.path.join(base_path, dataset, description, reconstruction_name, 'reconstruction')
-                                    recon_df = pd.concat([recon_df, collate_recon_results(recon_path, recon_dict)])
 
+                                    try:
+                                        recon_path = os.path.join(base_path, dataset, description, reconstruction_name, 'reconstruction')
+                                        recon_df = pd.concat([recon_df, collate_recon_results(recon_path, recon_dict)])
+
+                                    except FileNotFoundError:
+                                        pass
 
 
 # %%
 # small recon weight 
-sns.catplot(data=recon_df, x='small_recon_weight', y='acc', hue='z_type', col='disc_type', kind='box')
-sns.catplot(data=recon_df, x='disc_type', y='acc', hue='z_type', col='small_recon_weight', kind='box')
+target_df = recon_df 
+# target_df = recon_df.query('small_recon_weight == 0')
+# print(weight_str)
+# target_df = recon_df.query('weights == [1.0, 0.0, 1.0, 1.0, 1.0, 1.0]')
+# print(target_df)
+sns.catplot(data=target_df, x='small_recon_weight', y='acc', hue='z_type', col='disc_type', kind='box')
+sns.catplot(data=target_df, x='disc_type', y='acc', hue='z_type', col='small_recon_weight', kind='box')
+
+# target_df = recon_df.query('small_recon_weight == 0')
+# sns.catplot(data=target_df, x='small_recon_weight', y='acc', hue='z_type', col='disc_type', kind='box')
+# sns.catplot(data=target_df, x='disc_type', y='acc', hue='z_type', col='small_recon_weight', kind='box')
+
 # %%
-# 
-sns.catplot(data=recon_df, x='disc_type', y='acc', hue='z_type', col='weights', kind='box')
+target_df = recon_df 
+sns.catplot(data=target_df, x='disc_type', y='acc', hue='z_type', col='weights', kind='box')
+
 # %%

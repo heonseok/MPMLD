@@ -203,21 +203,21 @@ def load_dataset(dataset, data_path):
     elif dataset == 'SVHN':
         transform_train = transforms.Compose([
             transforms.ToTensor(),
-            # transforms.Normalize(mean=[0.5], std=[0.5]),
+            transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
         ])
 
         transform_test = transforms.Compose([
             transforms.ToTensor(),
-            # transforms.Normalize(mean=[0.5], std=[0.5]),
+            transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
         ])
 
-        trainset = torchvision.datasets.SVHN(
-            root=data_path, split='train', download=True, transform=transform_train)
+        trainset = torchvision.datasets.SVHN( root=data_path, split='train', download=True, transform=transform_train)
 
-        testset = torchvision.datasets.SVHN(
-            root=data_path, split='test', download=True, transform=transform_test)
+        testset = torchvision.datasets.SVHN( root=data_path, split='test', download=True, transform=transform_test)
 
         total_set = ConcatDataset((trainset, testset))
+
+        
 
     elif dataset == 'adult':
         # todo : import pre processing code
