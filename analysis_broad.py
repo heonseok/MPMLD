@@ -65,7 +65,7 @@ setsize_list = [
 z_dim_list = [
     # '16',
     # '32',
-    # '64',
+    '64',
     '128',
     # '256',
 ]
@@ -129,7 +129,8 @@ recon_type_list = [
 base_path = '/mnt/disk1/heonseok/MPMLD'
 description_list = [
     # '1006debug',
-    '1008',
+    # '1008',
+    '1012normalized_tanh',
 ]
 
 
@@ -176,12 +177,12 @@ for dataset in dataset_list:
                                     recon_dict = {
                                         'dataset': dataset,
                                         'description': description,
-                                        'beta': beta, 
-                                        'z_dim' : z_dim,
-                                        'setsize' : setsize,
-                                        'recon_lr': recon_lr,
-                                        'recon_train_batch_size': recon_train_batch_size,
-                                        'ref_ratio': ref_ratio,
+                                        'beta': float(beta), 
+                                        'z_dim' : int(z_dim),
+                                        'setsize' : int(setsize),
+                                        'recon_lr': float(recon_lr),
+                                        'recon_train_batch_size': int(recon_train_batch_size),
+                                        'ref_ratio': float(ref_ratio),
                                         #    'recon_weight': weight[0],
                                         #    'realfake_weight': weight[1],
                                         #    'class_pos_weight': weight[2],
@@ -189,11 +190,12 @@ for dataset in dataset_list:
                                         #    'membership_pos_weight': weight[4],
                                         #    'membership_neg_weight': weight[5],
                                         'weights' : weight_str, 
-                                        'small_recon_weight': small_recon_weight,
+                                        'small_recon_weight': float(small_recon_weight),
                                     }
 
                                     try:
                                         recon_path = os.path.join(base_path, dataset, description, reconstruction_name, 'reconstruction')
+                                        print(recon_path)
                                         recon_df = pd.concat([recon_df, collate_recon_results(recon_path, recon_dict)])
 
                                     except FileNotFoundError:
@@ -215,7 +217,15 @@ sns.catplot(data=target_df, x='disc_type', y='acc', hue='z_type', col='small_rec
 # sns.catplot(data=target_df, x='disc_type', y='acc', hue='z_type', col='small_recon_weight', kind='box')
 
 # %%
-target_df = recon_df 
+target_df = recon_df.copy()
+print(recon_df)
+target_df = target_df.query('z_dim == 64')
+print(target_df)
 sns.catplot(data=target_df, x='disc_type', y='acc', hue='z_type', col='weights', kind='box')
 
 # %%
+target_df = recon_df.copy()
+print(recon_df)
+target_df = target_df.query('z_dim == 128')
+print(target_df)
+sns.catplot(data=target_df, x='disc_type', y='acc', hue='z_type', col='weights', kind='box')
