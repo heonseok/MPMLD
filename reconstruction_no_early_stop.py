@@ -41,8 +41,6 @@ class DistinctReconstructor(object):
         self.reduction = 'sum'
         # self.reduction = 'mean'
 
-        # self.transform = transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
-
         self.disentanglement_start_epoch = 0
         self.save_step_size = 100 
         self.scheduler_step_size = 100 

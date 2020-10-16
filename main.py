@@ -235,10 +235,10 @@ for repeat_idx in range(args.repeat_start, args.repeat_end):
         'pn_nn',  # [1, 0, 0, 1],
         'pp_np',  # [0, 1, 1, 0]
         'np_nn',  # [0, 0, 1, 1]
-        'pn',  # [1, 0, 0, 0]
-        'pp',  # [1, 0, 0, 0]
-        'np',  # [1, 0, 0, 0]
-        'nn',  # [1, 0, 0, 0]
+        # 'pn',  # [1, 0, 0, 0]
+        # 'pp',  # [1, 0, 0, 0]
+        # 'np',  # [1, 0, 0, 0]
+        # 'nn',  # [1, 0, 0, 0]
     ]
 
     attack_type_list = [
