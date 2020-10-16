@@ -304,7 +304,10 @@ for repeat_idx in range(args.repeat_start, args.repeat_end):
                 classifier = Classifier(args)
 
                 try:
-                    reconstructed_data_path = os.path.join(args.reconstruction_path, 'recon_{}.pt'.format(recon_type))
+                    if args.early_stop_recon:
+                        reconstructed_data_path = os.path.join(args.reconstruction_path, 'recon_{}.pt'.format(recon_type))
+                    else:
+                        reconstructed_data_path = os.path.join(args.reconstruction_path, 'recon_{}{:03d}.pt'.format(recon_type, args.epochs))
                     recon_datasets = utils.build_reconstructed_datasets(reconstructed_data_path)
                     class_datasets['train'] = recon_datasets['train']
                 except FileNotFoundError:

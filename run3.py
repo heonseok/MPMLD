@@ -119,9 +119,10 @@ setup_dict = {
     # 'description': '0825_4typesDisentanglement_small_recon',
     # 'description': 'non_iid_strong_blue_wgan_update_total_loss',
     # 'description': 'baseline',
-    'description': '1012normalized_tanh',
+    'description': '1013non_iid_color_zero',
     'resume': '0',
-    'non_iid_scenario': '0',
+    'non_iid_scenario': '1',
+    'non_iid_scenario_detail': 'color_zero',
 }
 
 for dataset in dataset_list:

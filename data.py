@@ -9,7 +9,7 @@ import torch
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 import torchvision.utils as vutils
-from utils import CustomDataset
+from utils import CustomDataset, NonIIDCustomDataset
 
 THIRD_QUANTILE = np.int64(130560) * 1.5
 MEDIAN = np.int64(130560)
@@ -26,12 +26,12 @@ def load_non_iid_dataset(dataset, data_path, scenario):
 
         transform_train = transforms.Compose([
             transforms.ToTensor(),
-            # transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+            transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
         ])
 
         transform_test = transforms.Compose([
             transforms.ToTensor(),
-            # transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+            transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
         ])
 
         trainset = torchvision.datasets.SVHN(root=data_path, split='train', download=True, transform=transform_train)
@@ -40,13 +40,10 @@ def load_non_iid_dataset(dataset, data_path, scenario):
         # totalset = ConcatDataset((trainset, testset))
         totalset = trainset
 
-
     else:
         pass
 
     if scenario == 'color_abs':
-        
-
        # raw = trainset.data[0:100]
                 # vutils.save_image(torch.FloatTensor(raw), 'raw.png', nrow=10, normalize=True)
 
@@ -92,8 +89,22 @@ def load_non_iid_dataset(dataset, data_path, scenario):
         in_dataset, out_dataset = split_imgs_by_color_abs(totalset, target_channel)
 
     elif scenario == 'color_zero':
+        # print(totalset)
+        # print(totalset.data)
+        # sys.exit(1)
+
         in_dataset = totalset
-        out_dataset = extract_zero_color_imgs(totalset, target_channel)
+        out_dataset = torchvision.datasets.SVHN(root=data_path, split='train', download=True, transform=transform_train)
+        out_dataset.data[:, target_channel, :, :]  = 0.0
+
+        # in_dataset = totalset
+        # transform_op = transforms.Compose([
+        #     # transforms.ToTensor(),
+        #     transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
+        # ])
+        # in_dataset, out_dataset = extract_zero_color_imgs(totalset, target_channel, transform_op)
+        # print(in_dataset)
+        # print(out_dataset)
 
     vutils.save_image(torch.FloatTensor(in_dataset.data[0:100]), '{}_{}_in.png'.format(scenario, target_channel), nrow=10, normalize=True)
     vutils.save_image(torch.FloatTensor(out_dataset.data[0:100]), '{}_{}_out.png'.format(scenario, target_channel), nrow=10, normalize=True)
@@ -116,11 +127,15 @@ def split_imgs_by_color_abs(totalset, target_color_channel):
 
     return dataset_target_color, dataset_non_target_color
 
-def extract_zero_color_imgs(totalset, target_color_channel):    
-    out_dataset = CustomDataset(totalset.data, totalset.labels)
-    out_dataset.data[:, target_color_channel, :, :]  = 0
+def extract_zero_color_imgs(totalset, target_color_channel, transform_op):    
+    in_dataset = NonIIDCustomDataset(totalset.data, totalset.labels, transform_op)
+    out_dataset = NonIIDCustomDataset(totalset.data, totalset.labels, transform_op)
+    # print(out_dataset.data[:, target_color_channel, :, :])
+    # out_dataset.data[:, target_color_channel, :, :]  = out_dataset.data[:, target_color_channel, :, :] / 2
+    # out_dataset.data[:, target_color_channel, :, :]  = 0.0out_dataset.data[:, target_color_channel, :, :]
+    # print(out_dataset.data[:, target_color_channel, :, :])
 
-    return out_dataset 
+    return in_dataset, out_dataset 
 
 def load_dataset(dataset, data_path):
     print('==> Preparing data..')

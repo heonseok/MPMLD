@@ -29,6 +29,8 @@ class Classifier(object):
         # Model
         # print('==> Building {}'.format(self.classification_path))
 
+        
+
         if args.dataset in ['CIFAR-10', 'SVHN']:
             if 'VGG' in args.classification_model:
                 # print('VGG(\'' + args.classification_model + '\')')

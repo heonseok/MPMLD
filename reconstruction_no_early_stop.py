@@ -13,6 +13,7 @@ import torchvision.utils as vutils
 from torch.utils.data import Subset, DataLoader
 from torch.autograd import Variable
 import torch.autograd as autograd
+import torchvision.transforms as transforms
 
 
 # Distinct Encoders + Distinct Discriminators
@@ -39,6 +40,8 @@ class DistinctReconstructor(object):
         self.gradient_penalty_weight = args.gradient_penalty_weight
         self.reduction = 'sum'
         # self.reduction = 'mean'
+
+        # self.transform = transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
 
         self.disentanglement_start_epoch = 0
         self.save_step_size = 100 
@@ -673,6 +676,8 @@ class DistinctReconstructor(object):
         if self.early_stop:
             valid_loader = DataLoader(valid_set, batch_size=self.test_batch_size, shuffle=True, num_workers=2)
 
+        # if ref_set is not None:
+            # ref_set = self.transform(ref_set)
         for epoch in range(self.start_epoch, self.start_epoch + self.epochs):
             permutated_idx = np.random.permutation(ref_set.__len__())
             ref_set = Subset(ref_set, permutated_idx)

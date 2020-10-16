@@ -54,8 +54,8 @@ class Attacker(object):
 
         self.train_flag = False
 
-        self.criterion = nn.BCELoss()
-        # self.criterion = nn.BCEWithLogitsLoss()
+        # self.criterion = nn.BCELoss()
+        self.criterion = nn.BCEWithLogitsLoss()
         self.optimizer = optim.Adam(net.parameters(), lr=args.attack_lr, betas=(0.5, 0.999))
         # self.optimizer = optim.SGD(net.parameters(), lr=args.attack_lr, momentum=0.9, weight_decay=5e-4)
 
@@ -89,13 +89,22 @@ class Attacker(object):
             features = features.view(features.size(0), -1) # hard coded
             outputs = self.net(features, class_labels)
 
+            # print(outputs.shape)
+            # print(membership_labels.shape)
+
+            # print(outputs)
+            # print(membership_labels)
+
+            # sys.exit(1)
+
+
             loss = self.criterion(outputs.squeeze(), membership_labels)
             loss.backward()
             self.optimizer.step()
 
             train_loss += loss.item()
 
-            predicted_batch = outputs.cpu().detach().squeeze().numpy()
+            predicted_batch = torch.sigmoid(outputs).cpu().detach().squeeze().numpy()
             labels_batch = membership_labels.cpu().detach().numpy()
 
             if batch_idx == 0:
@@ -121,7 +130,7 @@ class Attacker(object):
                 loss = self.criterion(outputs.squeeze(), membership_labels)
 
                 test_loss += loss.item()
-                predicted_batch = outputs.cpu().detach().squeeze().numpy()
+                predicted_batch = torch.sigmoid(outputs).cpu().detach().squeeze().numpy()
                 labels_batch = membership_labels.cpu().detach().numpy()
 
                 if batch_idx == 0:

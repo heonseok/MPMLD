@@ -58,8 +58,12 @@ def collate_disentanglement_result(dataset, description, model):
     df = pd.DataFrame()
     for repeat_idx in range(REPEAT):
         repeat_path = os.path.join(model_path, 'repeat{}'.format(repeat_idx))
-        class_acc_dict = np.load(os.path.join( repeat_path, 'class_acc.npy'), allow_pickle=True).item()
-        membership_acc_dict = np.load(os.path.join( repeat_path, 'membership_acc.npy'), allow_pickle=True).item()
+        if not early_stop_flag:
+            class_acc_dict = np.load(os.path.join(repeat_path, 'class_acc{:03d}.npy'.format(target_epoch)), allow_pickle=True).item()
+            membership_acc_dict = np.load(os.path.join(repeat_path, 'membership_acc{:03d}.npy'.format(target_epoch)), allow_pickle=True).item()
+        else:
+            class_acc_dict = np.load(os.path.join(repeat_path, 'class_acc.npy'), allow_pickle=True).item()
+            membership_acc_dict = np.load(os.path.join(repeat_path, 'membership_acc.npy'), allow_pickle=True).item()
         for z_type in ['pn', 'pp', 'np', 'nn']:
             df = df.append({'description': description, 'disc_type': 'class', 'z_type': z_type, 'acc': class_acc_dict[z_type]}, ignore_index=True)
             df = df.append({'description': description, 'disc_type': 'membership', 'z_type': z_type, 'acc': membership_acc_dict[z_type]}, ignore_index=True)
@@ -165,7 +169,11 @@ dataset = 'SVHN'
 # description = '0825_4typesDisentanglement_small_recon'
 # description = '0915'
 # description = '0924'
-description = '1008'
+description = '1012normalized_tanh'
+
+early_stop_flag = False
+target_epoch = 200
+
 model_list = [
     # 'VAE0.0_distinctEnc_distinctDisc_z128_setsize5000_lr0.001_bs32_ref1.0_rw1.0_rf1.0_cp0.0_cn0.0_mp0.0_mn0.0_sr0.0',
     # 'VAE0.01_distinctEnc_distinctDisc_z128_setsize5000_lr0.001_bs32_ref1.0_rw1.0_rf1.0_cp0.0_cn0.0_mp0.0_mn0.0_sr0.0',
@@ -187,6 +195,13 @@ model_list = [
     # 'VAE0.01_distinctEnc_distinctDisc_z128_setsize5000_lr0.001_bs64_ref1.0_rw1.0_rf0.0_cp1.0_cn1.0_mp1.0_mn2.0_sr0.0',
     # 'VAE0.01_distinctEnc_distinctDisc_z128_setsize5000_lr0.001_bs64_ref1.0_rw1.0_rf0.0_cp1.0_cn1.0_mp2.0_mn1.0_sr0.0',
     # 'VAE0.01_distinctEnc_distinctDisc_z128_setsize5000_lr0.001_bs64_ref1.0_rw1.0_rf0.0_cp1.0_cn1.0_mp2.0_mn2.0_sr0.0',
+
+    # 'VAE0.01_distinctEnc_distinctDisc_z64_setsize5000_lr0.001_bs64_ref1.0_rw1.0_rf0.0_cp1.0_cn1.0_mp1.0_mn1.0_sr0.01',
+    'VAE0.01_distinctEnc_distinctDisc_z64_setsize5000_lr0.001_bs64_ref1.0_rw1.0_rf1.0_cp1.0_cn1.0_mp1.0_mn1.0_sr0.01',
+
+    # 'VAE0.01_distinctEnc_distinctDisc_z32_setsize5000_lr0.001_bs64_ref1.0_rw1.0_rf0.0_cp1.0_cn1.0_mp1.0_mn1.0_sr0.01',
+    # 'VAE0.01_distinctEnc_distinctDisc_z32_setsize5000_lr0.001_bs64_ref1.0_rw1.0_rf1.0_cp1.0_cn1.0_mp1.0_mn1.0_sr0.01',
+    # 'VAE0.01_distinctEnc_distinctDisc_z128_setsize5000_lr0.001_bs64_ref1.0_rw1.0_rf1.0_cp1.0_cn1.0_mp1.0_mn1.0_sr0.01',
 ]
 
 
@@ -206,10 +221,11 @@ recon_type_list = [
 for model in model_list:
     print(model)
     if 'raw' not in model:
-        collate_reconstructions(dataset, description, model, recon_type_list)
-        # recon_df = collate_disentanglement_result(dataset, description, model)
-    # class_df = collate_classification_result(dataset, description, model, recon_type_list)
-    # attack_df = collate_attack_result(dataset, description, model, recon_type_list)
+        # collate_reconstructions(dataset, description, model, recon_type_list)
+        recon_df = collate_disentanglement_result(dataset, description, model)
+        pass
+    class_df = collate_classification_result(dataset, description, model, recon_type_list)
+    attack_df = collate_attack_result(dataset, description, model, recon_type_list)
 
 print('Finish!')
 

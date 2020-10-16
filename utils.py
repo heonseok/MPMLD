@@ -153,15 +153,34 @@ def classify_membership(data_in, data_out):
     return acc, auroc
 
 
-class CustomDataset(Dataset):
-    def __init__(self, data, targets):
-        self.data = torch.FloatTensor(data.copy())
-        self.targets = targets.copy()
+class NonIIDCustomDataset(Dataset):
+    def __init__(self, data, targets, transform=None):
+        self.data = torch.FloatTensor(data)
+        self.targets = targets
+        # self.data = data.copy()
+        # self.targets = targets.copy()
+        self.transform = transform 
 
     def __len__(self):
         return len(self.data)
 
-    def __getitem__(self, idx):
+    def __getitem__(self, idx): 
+        if self.transform is not None:
+            return self.transform(self.data[idx]), self.targets[idx]
+        else:
+            return self.data[idx], self.targets[idx]
+
+class CustomDataset(Dataset):
+    def __init__(self, data, targets):
+        self.data = torch.FloatTensor(data)
+        self.targets = targets
+        # self.data = torch.FloatTensor(data).copy()
+        # self.targets = targets.copy()
+
+    def __len__(self):
+        return len(self.data)
+
+    def __getitem__(self, idx): 
         return self.data[idx], self.targets[idx]
 
 class MIDataset(Dataset):
@@ -204,8 +223,7 @@ def build_reconstructed_datasets(reconstruction_path):
     recon_datasets_ = torch.load(reconstruction_path)
     recon_datasets = {}
     for dataset_type, dataset in recon_datasets_.items():
-        recon_datasets[dataset_type] = CustomDataset(
-            dataset['recons'], dataset['labels'])
+        recon_datasets[dataset_type] = CustomDataset(dataset['recons'], dataset['labels'])
     return recon_datasets
 
 

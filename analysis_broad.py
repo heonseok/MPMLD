@@ -64,9 +64,9 @@ setsize_list = [
 
 z_dim_list = [
     # '16',
-    # '32',
+    '32',
     '64',
-    '128',
+    # '128',
     # '256',
 ]
 
@@ -218,14 +218,13 @@ sns.catplot(data=target_df, x='disc_type', y='acc', hue='z_type', col='small_rec
 
 # %%
 target_df = recon_df.copy()
-print(recon_df)
 target_df = target_df.query('z_dim == 64')
-print(target_df)
+print('z_dim : 64')
 sns.catplot(data=target_df, x='disc_type', y='acc', hue='z_type', col='weights', kind='box')
 
 # %%
 target_df = recon_df.copy()
-print(recon_df)
-target_df = target_df.query('z_dim == 128')
-print(target_df)
+target_df = target_df.query('z_dim == 32')
+print('z_dim : 32')
 sns.catplot(data=target_df, x='disc_type', y='acc', hue='z_type', col='weights', kind='box')
+# %%

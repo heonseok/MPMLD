@@ -97,22 +97,22 @@ setup_dict = {
 
     # Classification
     'class_train_batch_size': 32,
-    'train_classifier': '0',
-    'test_classifier': '0',
-    'extract_classifier_features': '0',
+    'train_classifier': '1',
+    'test_classifier': '1',
+    'extract_classifier_features': '1',
     'classification_model': 'ResNet18',
     # 'classification_model': 'FCClassifier',
 
     # Attack
-    'train_attacker': '0',
-    'test_attacker': '0',
+    'train_attacker': '1',
+    'test_attacker': '1',
 
     # Common
     'repeat_start': 0,
     'repeat_end': 5,
     
     'epochs': 200,
-    'early_stop': '0',
+    'early_stop': '1',
     'early_stop_observation_period': 10,
     'gpu_id': 1,
     'print_training': '1',
