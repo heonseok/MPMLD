@@ -13,7 +13,7 @@ from data import load_dataset, load_non_iid_dataset
 import torch
 from torch.utils.data import Subset, ConcatDataset
 
-from reconstruction_no_early_stop import DistinctReconstructor
+from reconstruction import DistinctReconstructor
 from classification import Classifier
 from attack import Attacker
 

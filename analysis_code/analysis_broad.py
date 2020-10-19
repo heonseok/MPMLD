@@ -46,7 +46,6 @@ def collate_class_results(class_path, class_dict, recon_type):
     return df
 
 
-
 def collate_attack_results(attack_path, attack_dict, recon_type, attack_type):
     df = pd.DataFrame()
     for repeat_idx in range(5):
@@ -244,52 +243,24 @@ for dataset in dataset_list:
                                             pass
 
 
-
 # %%
-# small recon weight 
-# target_df = recon_df 
-# target_df = recon_df.query('small_recon_weight == 0')
-# print(weight_str)
-# target_df = recon_df.query('weights == [1.0, 0.0, 1.0, 1.0, 1.0, 1.0]')
-# print(target_df):243
+def draw_results(reocn_df, claas_df, attack_df, expr, column_type):
+    target_recon_df = recon_df.copy()
+    target_recon_df = target_recon_df.query(expr)
+    sns.catplot(data=target_recon_df, x='disc_type', y='acc', hue='z_type', col=column_type, kind='box')
 
-# sns.catplot(data=target_df, x='small_recon_weight', y='acc', hue='z_type', col='disc_type', kind='box')
-# sns.catplot(data=target_df, x='disc_type', y='acc', hue='z_type', col='small_recon_weight', kind='box')
+    target_class_df = class_df.copy()
+    target_class_df = target_class_df.query(expr)
+    sns.catplot(data=target_class_df, x='recon_type', y='acc', hue='dataset', col=column_type, kind='box')
 
-# target_df = recon_df.query('small_recon_weight == 0')
-# sns.catplot(data=target_df, x='small_recon_weight', y='acc', hue='z_type', col='disc_type', kind='box')
-# sns.catplot(data=target_df, x='disc_type', y='acc', hue='z_type', col='small_recon_weight', kind='box')
+    target_attack_df = attack_df.copy()
+    target_attack_df = target_attack_df.query(expr)
+    sns.catplot(data=target_attack_df, x='recon_type', y='acc', hue='attack_type', col=column_type, kind='box')
 
-# %%
-## WEIGHTS
-target_recon_df = recon_df.copy()
-target_recon_df = target_recon_df.query('z_dim == 64')
-print('z_dim : 64')
-sns.catplot(data=target_recon_df, x='disc_type', y='acc', hue='z_type', col='weights', kind='box')
-
-target_recon_df = recon_df.copy()
-target_recon_df = target_recon_df.query('z_dim == 32')
-print('z_dim : 32')
-sns.catplot(data=target_recon_df, x='disc_type', y='acc', hue='z_type', col='weights', kind='box')
 
 # %%
 ## BETA
-target_recon_df = recon_df.copy()
-target_recon_df = target_recon_df.query('small_recon_weight == 0.01')
-sns.catplot(data=target_recon_df, x='disc_type', y='acc', hue='z_type', col='beta', kind='box')
+expr = 'small_recon_weight == 0.01'
+column_type = 'beta'
 
-target_class_df = class_df.copy()
-target_class_df = target_class_df.query('small_recon_weight == 0.01')
-print(target_class_df)
-sns.catplot(data=target_class_df, x='recon_type', y='acc', hue='dataset', col='beta', kind='box')
-
-
-target_attack_df = attack_df.copy()
-target_attack_df = target_attack_df.query('small_recon_weight == 0.01')
-print(target_attack_df)
-sns.catplot(data=target_attack_df, x='recon_type', y='acc', hue='attack_type', col='beta', kind='box')
-
-
-# %%
-## Description 
-
+draw_results(recon_df, class_df, attack_df, expr, column_type)

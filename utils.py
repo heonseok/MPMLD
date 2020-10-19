@@ -140,12 +140,10 @@ def str2bool(s):
 def classify_membership(data_in, data_out):
     data_concat = np.concatenate((data_in, data_out))
     sorted_idx = np.argsort(data_concat)
-    inout_truth = np.concatenate(
-        (np.ones_like(data_in), np.zeros_like(data_out)))
+    inout_truth = np.concatenate((np.ones_like(data_in), np.zeros_like(data_out)))
     inout_truth_sorted = inout_truth[sorted_idx]
 
-    inout_pred = np.concatenate(
-        (np.ones_like(data_out), np.zeros_like(data_in)))
+    inout_pred = np.concatenate((np.ones_like(data_out), np.zeros_like(data_in)))
 
     acc = metrics.accuracy_score(inout_truth_sorted, inout_pred)
     auroc = metrics.roc_auc_score(inout_truth_sorted, inout_pred)
@@ -205,8 +203,7 @@ def concat_datasets(in_dataset, out_dataset, start, end):
 
 
 def statistical_attack(cls_path, attack_path):
-    features = np.load(os.path.join(cls_path, 'features.npy'),
-                       allow_pickle=True).item()
+    features = np.load(os.path.join(cls_path, 'features.npy'), allow_pickle=True).item()
 
     print('==> Statistical attack')
     in_entropy = entropy(features['in']['preds'], base=2, axis=1)
