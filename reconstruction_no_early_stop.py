@@ -7,7 +7,7 @@ import torch.backends.cudnn as cudnn
 import sys
 import os
 import data
-from torch.optim.lr_scheduler import ReduceLROnPlateau, StepLR
+from torch.optim.lr_scheduler import ReduceLROnPlateau, StepLR, CosineAnnealingWarmRestarts
 from torch.nn import functional as F
 import torchvision.utils as vutils
 from torch.utils.data import Subset, DataLoader
@@ -40,6 +40,7 @@ class DistinctReconstructor(object):
         self.gradient_penalty_weight = args.gradient_penalty_weight
         self.reduction = 'sum'
         # self.reduction = 'mean'
+        self.scheduler_type = args.scheduler_type 
 
         self.disentanglement_start_epoch = 0
         self.save_step_size = 100 
@@ -106,12 +107,17 @@ class DistinctReconstructor(object):
             self.rf_disc_opt_scheduler = ReduceLROnPlateau(self.rf_disc_opt, 'min', patience=self.early_stop_observation_period, threshold=0)
         else:
             for encoder_name in self.encoder_name_list:
-                self.encoders_opt_scheduler[encoder_name] = StepLR(self.encoders_opt[encoder_name], self.scheduler_step_size)
-                self.class_discs_opt_scheduler[encoder_name] = StepLR(self.class_discs_opt[encoder_name], self.scheduler_step_size)
-                self.membership_discs_opt_scheduler[encoder_name] = StepLR(self.membership_discs_opt[encoder_name], self.scheduler_step_size)
+                # self.encoders_opt_scheduler[encoder_name] = StepLR(self.encoders_opt[encoder_name], self.scheduler_step_size)
+                # self.class_discs_opt_scheduler[encoder_name] = StepLR(self.class_discs_opt[encoder_name], self.scheduler_step_size)
+                # self.membership_discs_opt_scheduler[encoder_name] = StepLR(self.membership_discs_opt[encoder_name], self.scheduler_step_size)
+                self.encoders_opt_scheduler[encoder_name] = self.get_scheduler(self.encoders_opt[encoder_name])
+                self.class_discs_opt_scheduler[encoder_name] = self.get_scheduler(self.class_discs_opt[encoder_name])
+                self.membership_discs_opt_scheduler[encoder_name] = self.get_scheduler(self.membership_discs_opt[encoder_name])
 
-            self.decoder_opt_scheduler = StepLR(self.decoder_opt, self.scheduler_step_size)
-            self.rf_disc_opt_scheduler = StepLR(self.rf_disc_opt, self.scheduler_step_size)
+            # self.decoder_opt_scheduler = StepLR(self.decoder_opt, self.scheduler_step_size)
+            # self.rf_disc_opt_scheduler = StepLR(self.rf_disc_opt, self.scheduler_step_size)
+            self.decoder_opt_scheduler = self.get_scheduler(self.decoder_opt)
+            self.rf_disc_opt_scheduler = self.get_scheduler(self.rf_disc_opt)
 
 
         # Loss
@@ -182,6 +188,16 @@ class DistinctReconstructor(object):
 
         self.start_epoch = checkpoint['epoch']
         print('====> Load checkpoint {} (Epoch: {})'.format(self.reconstruction_path, self.start_epoch+1))
+
+    def get_scheduler(self, opt):
+        if self.scheduler_type == 'StepLR':
+            return StepLR(opt, self.scheduler_step_size)
+        elif self.scheduler_type == 'CosineAnnealingWarmRestarts':
+            return CosineAnnealingWarmRestarts(opt, T_0=10, T_mult=2, eta_min=0.0)
+        else:
+            return None
+
+
 
     def train_epoch(self, train_ref_loader, epoch):
         for encoder_name in self.encoder_name_list:
@@ -603,12 +619,20 @@ class DistinctReconstructor(object):
 
         if inference_type == 'valid':
             # update schedulers
-            for encoder_name in self.encoder_name_list:
-                self.encoders_opt_scheduler[encoder_name].step(loss)
-                self.class_discs_opt_scheduler[encoder_name].step(loss)
-                self.membership_discs_opt_scheduler[encoder_name].step(loss)
-            self.decoder_opt_scheduler.step(loss)
-            self.rf_disc_opt_scheduler.step(loss)
+            if self.shceduler_type == 'ReduceLROnPlateau':
+                for encoder_name in self.encoder_name_list:
+                    self.encoders_opt_scheduler[encoder_name].step(loss, epoch)
+                    self.class_discs_opt_scheduler[encoder_name].step(loss, epoch)
+                    self.membership_discs_opt_scheduler[encoder_name].step(loss, epoch)
+                self.decoder_opt_scheduler.step(loss, epoch)
+                self.rf_disc_opt_scheduler.step(loss, epoch)
+            else:
+                for encoder_name in self.encoder_name_list:
+                    self.encoders_opt_scheduler[encoder_name].step(epoch)
+                    self.class_discs_opt_scheduler[encoder_name].step(epoch)
+                    self.membership_discs_opt_scheduler[encoder_name].step(epoch)
+                self.decoder_opt_scheduler.step(epoch)
+                self.rf_disc_opt_scheduler.step(epoch)
 
             if loss < self.best_valid_loss:
                 # print(loss, self.best_valid_loss)

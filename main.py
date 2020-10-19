@@ -37,6 +37,7 @@ parser.add_argument('--non_iid_scenario', type=str2bool, default='0')
 parser.add_argument('--non_iid_scenario_detail', type=str, default='color_zero', choices=['color_zero', 'color_abs', 'color_rel', 'black_dot'])
 parser.add_argument('--adversarial_loss_mode', type=str, default='wgan-gp', choices=['gan', 'wgan', 'wgan-gp'])
 parser.add_argument('--gradient_penalty_weight', type=float, default=10.0)
+parser.add_argument('--scheduler_type', type=str, default='StepLR', choices=['StepLR', 'ReduceLROnPlateau', 'CosineAnnealingWarmRestarts'])
 
 # ---- Reconstruction ---- #
 parser.add_argument('--reconstruction_model', type=str, default='VAE', choices=['AE', 'VAE'])

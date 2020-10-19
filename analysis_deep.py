@@ -69,7 +69,7 @@ def collate_disentanglement_result(dataset, description, model):
             df = df.append({'description': description, 'disc_type': 'membership', 'z_type': z_type, 'acc': membership_acc_dict[z_type]}, ignore_index=True)
 
     sns.boxplot(x='disc_type', y='acc', hue='z_type', data=df)
-    plt.ylim(0., 1.)
+    plt.ylim(-0.01, 1.01)
     plt.tight_layout()
 
     img_dir = os.path.join('Figs', dataset, description,
@@ -107,7 +107,7 @@ def collate_classification_result(dataset, description, model, recon_type_list):
             break
 
     sns.boxplot(x='recon', y='acc', hue='dataset', data=df)
-    plt.ylim(0., 1.01)
+    plt.ylim(-0.01, 1.01)
     plt.tight_layout()
 
     img_dir = os.path.join('Figs', dataset, description, 'classification_collated')
@@ -170,6 +170,9 @@ dataset = 'SVHN'
 # description = '0915'
 # description = '0924'
 description = '1012normalized_tanh'
+# description = '1013non_iid_color_zero'
+# description = '1016_cosine_opt'
+print(description)
 
 early_stop_flag = False
 target_epoch = 200
@@ -197,11 +200,13 @@ model_list = [
     # 'VAE0.01_distinctEnc_distinctDisc_z128_setsize5000_lr0.001_bs64_ref1.0_rw1.0_rf0.0_cp1.0_cn1.0_mp2.0_mn2.0_sr0.0',
 
     # 'VAE0.01_distinctEnc_distinctDisc_z64_setsize5000_lr0.001_bs64_ref1.0_rw1.0_rf0.0_cp1.0_cn1.0_mp1.0_mn1.0_sr0.01',
-    'VAE0.01_distinctEnc_distinctDisc_z64_setsize5000_lr0.001_bs64_ref1.0_rw1.0_rf1.0_cp1.0_cn1.0_mp1.0_mn1.0_sr0.01',
+    # 'VAE0.01_distinctEnc_distinctDisc_z64_setsize5000_lr0.001_bs64_ref1.0_rw1.0_rf1.0_cp1.0_cn1.0_mp1.0_mn1.0_sr0.01',
 
     # 'VAE0.01_distinctEnc_distinctDisc_z32_setsize5000_lr0.001_bs64_ref1.0_rw1.0_rf0.0_cp1.0_cn1.0_mp1.0_mn1.0_sr0.01',
     # 'VAE0.01_distinctEnc_distinctDisc_z32_setsize5000_lr0.001_bs64_ref1.0_rw1.0_rf1.0_cp1.0_cn1.0_mp1.0_mn1.0_sr0.01',
     # 'VAE0.01_distinctEnc_distinctDisc_z128_setsize5000_lr0.001_bs64_ref1.0_rw1.0_rf1.0_cp1.0_cn1.0_mp1.0_mn1.0_sr0.01',
+
+    'VAE0.01_distinctEnc_distinctDisc_z64_setsize5000_lr0.001_bs64_ref1.0_rw1.0_rf0.0_cp1.0_cn2.0_mp1.0_mn2.0_sr0.01',
 ]
 
 
@@ -212,11 +217,12 @@ recon_type_list = [
     'pn_nn',  # [1, 0, 0, 1]
     'pp_np',  # [0, 1, 1, 0]
     'np_nn',  # [0, 0, 1, 1]
-    'pn',  # [1, 0, 0, 0]
-    'pp',  # [1, 0, 0, 0]
-    'np',  # [1, 0, 0, 0]
-    'nn',  # [1, 0, 0, 0]
+    # 'pn',  # [1, 0, 0, 0]
+    # 'pp',  # [1, 0, 0, 0]
+    # 'np',  # [1, 0, 0, 0]
+    # 'nn',  # [1, 0, 0, 0]
 ]
+
 
 for model in model_list:
     print(model)

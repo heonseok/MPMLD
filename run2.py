@@ -52,7 +52,7 @@ recon_lr_list = [
 weight_list = [
     # [1, 1, 0, 0, 0, 0],
     # [1, 0, 1, 1, 1, 1],
-    [1, 0, 1, 2, 1, 2],
+    [1, 0, 1, 1, 1, 1],
     # [1, 1, 1, 1, 2, 2],
     # [1, 1, 0.5, 0.5, 1, 1],
 ]
@@ -63,10 +63,10 @@ beta_list = [
     # 0.00001,
     # 0.0001,
     # 0.001,
-    0.01,
+    # 0.01,
     # 0.05,
     # 0.1,
-    # 1.0,
+    1.0,
 ]
 
 small_recon_weight_list =[
@@ -119,9 +119,11 @@ setup_dict = {
     # 'description': '0825_4typesDisentanglement_small_recon',
     # 'description': 'non_iid_strong_blue_wgan_update_total_loss',
     # 'description': 'baseline',
-    'description': '1012normalized_tanh',
+    # 'description': '1012normalized_tanh',
+    'description': '1019_fixed_scheduler',
     'resume': '0',
     'non_iid_scenario': '0',
+    'scheduler_type': 'StepLR', 
 }
 
 for dataset in dataset_list:

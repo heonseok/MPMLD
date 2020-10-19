@@ -52,7 +52,7 @@ recon_lr_list = [
 weight_list = [
     # [1, 1, 0, 0, 0, 0],
     # [1, 0, 1, 1, 1, 1],
-    [1, 1, 1, 1, 1, 1],
+    [1, 0, 1, 1, 1, 1],
     # [1, 1, 1, 1, 2, 2],
     # [1, 1, 0.5, 0.5, 1, 1],
 ]
@@ -88,8 +88,8 @@ setup_dict = {
     'adversarial_loss_mode': 'wgan-gp',
 
     'recon_train_batch_size': 64,
-    'train_reconstructor': '1',
-    'reconstruct_datasets': '1',
+    'train_reconstructor': '0',
+    'reconstruct_datasets': '0',
     'plot_recons': '0',
 
     'use_reconstructed_dataset': '1',
@@ -97,32 +97,34 @@ setup_dict = {
 
     # Classification
     'class_train_batch_size': 32,
-    'train_classifier': '0',
-    'test_classifier': '0',
-    'extract_classifier_features': '0',
+    'train_classifier': '1',
+    'test_classifier': '1',
+    'extract_classifier_features': '1',
     'classification_model': 'ResNet18',
     # 'classification_model': 'FCClassifier',
 
     # Attack
-    'train_attacker': '0',
-    'test_attacker': '0',
+    'train_attacker': '1',
+    'test_attacker': '1',
 
     # Common
-    'repeat_start': 0,
+    'repeat_start': 1,
     'repeat_end': 5,
     
     'epochs': 200,
-    'early_stop': '0',
+    'early_stop': '1',
     'early_stop_observation_period': 10,
     'gpu_id': 3,
     'print_training': '1',
     # 'description': '0825_4typesDisentanglement_small_recon',
     # 'description': 'non_iid_strong_blue_wgan_update_total_loss',
     # 'description': 'baseline',
-    'description': '1013non_iid_color_zero',
+    'description': '1016_cosine_opt',
     'resume': '0',
-    'non_iid_scenario': '1',
+    'non_iid_scenario': '0',
     'non_iid_scenario_detail': 'color_zero',
+    # 'scheduler_type': 'StepLR', 
+    'scheduler_type': 'CosineAnnealingWarmRestarts', 
 }
 
 for dataset in dataset_list:
