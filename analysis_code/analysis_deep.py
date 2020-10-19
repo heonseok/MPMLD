@@ -72,8 +72,7 @@ def collate_disentanglement_result(dataset, description, model):
     plt.ylim(-0.01, 1.01)
     plt.tight_layout()
 
-    img_dir = os.path.join('Figs', dataset, description,
-                           'disentanglement_collated')
+    img_dir = os.path.join('Figs', dataset, description, 'disentanglement_collated')
     if not os.path.exists(img_dir):
         os.makedirs(img_dir)
     img_path = os.path.join(img_dir, '{}.png'.format(model))
@@ -88,8 +87,7 @@ def collate_disentanglement_result(dataset, description, model):
 
 
 def collate_classification_result(dataset, description, model, recon_type_list):
-    model_path = os.path.join(base_path, dataset, description,
-                              model, 'classification', 'ResNet18_lr0.0001_bs32')
+    model_path = os.path.join(base_path, dataset, description, model, 'classification', 'ResNet18_lr0.0001_bs32')
     df = pd.DataFrame()
 
     for recon_idx, recon_type in enumerate(recon_type_list):
