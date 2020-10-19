@@ -27,10 +27,25 @@ def collate_recon_results(recon_path, recon_dict):
     
     return df 
 
-def collate_class_results(class_path, class_dict):
+def collate_class_results(class_path, class_dict, recon_type):
     df = pd.DataFrame()
     for repeat_idx in range(5):
-        pass
+
+        if 'raw' in class_path:
+            repeat_path = os.path.join(class_path, 'repeat' + str(repeat_idx), 'acc.npy')
+            recon_type = 'raw'
+        else:
+            repeat_path = os.path.join(class_path, recon_type, 'repeat' + str(repeat_idx), 'acc.npy')
+
+        result_dict = np.load(repeat_path, allow_pickle=True).item()
+        for dataset_type in ['train', 'valid', 'test']:
+            acc_dict = {'recon_type': recon_type, 'dataset': dataset_type, 'acc': result_dict[dataset_type]}
+            df = df.append({**class_dict, **acc_dict}, ignore_index=True)
+
+
+    return df
+
+
 
 def collate_attack_results(class_path, class_dict):
     df = pd.DataFrame()
@@ -46,6 +61,7 @@ dataset_list = [
     'SVHN',
     # 'CIFAR-10',
 ]
+
 
 setsize_list = [
     # 50,
@@ -90,7 +106,8 @@ weight_list = [
     # [1., 0., 0., 0., 0., 0.],
     # [1., 1., 1., 1., 1., 1.],
     [1., 0., 1., 1., 1., 1.],
-    [1., 1., 1., 1., 1., 1.],
+    # [1., 1., 1., 1., 1., 1.],
+    [1., 0., 1., 2., 1., 2.],
 ]
 
 beta_list = [
@@ -100,8 +117,7 @@ beta_list = [
     # 0.0001,
     # 0.001,
     0.01,
-    # 0.05,
-    # 0.1,
+    0.1,
     # 1.0,
 ]
 
@@ -109,7 +125,7 @@ small_recon_weight_list = [
     # 0.,
     # 0.001,
     0.01,
-    # 0.1,
+    0.1,
     # 1.,
 ]
 
@@ -142,6 +158,7 @@ target_epoch = 200
 
 # %%
 recon_df = pd.DataFrame()
+class_df = pd.DataFrame()
 
 for dataset in dataset_list:
     for description in description_list:
@@ -195,36 +212,64 @@ for dataset in dataset_list:
 
                                     try:
                                         recon_path = os.path.join(base_path, dataset, description, reconstruction_name, 'reconstruction')
-                                        print(recon_path)
+                                        # print(recon_path)
                                         recon_df = pd.concat([recon_df, collate_recon_results(recon_path, recon_dict)])
 
                                     except FileNotFoundError:
                                         pass
 
+                                    for recon_type in recon_type_list:
+                                        try:
+                                            # print(recon_path)
+                                            # class_path = os.path.join(base_path, dataset, description)
+                                            class_path = os.path.join(base_path, dataset, description, reconstruction_name, 'classification', 'ResNet18_lr0.0001_bs32')
+                                            # print(class_path)
+                                            class_df = pd.concat([class_df, collate_class_results(class_path, recon_dict, recon_type)])
+
+                                        except FileNotFoundError:
+                                            # print('There is no file : {}'.format(class_path))
+                                            pass
+
+
 
 # %%
 # small recon weight 
-target_df = recon_df 
+# target_df = recon_df 
 # target_df = recon_df.query('small_recon_weight == 0')
 # print(weight_str)
 # target_df = recon_df.query('weights == [1.0, 0.0, 1.0, 1.0, 1.0, 1.0]')
 # print(target_df)
-sns.catplot(data=target_df, x='small_recon_weight', y='acc', hue='z_type', col='disc_type', kind='box')
-sns.catplot(data=target_df, x='disc_type', y='acc', hue='z_type', col='small_recon_weight', kind='box')
+# sns.catplot(data=target_df, x='small_recon_weight', y='acc', hue='z_type', col='disc_type', kind='box')
+# sns.catplot(data=target_df, x='disc_type', y='acc', hue='z_type', col='small_recon_weight', kind='box')
 
 # target_df = recon_df.query('small_recon_weight == 0')
 # sns.catplot(data=target_df, x='small_recon_weight', y='acc', hue='z_type', col='disc_type', kind='box')
 # sns.catplot(data=target_df, x='disc_type', y='acc', hue='z_type', col='small_recon_weight', kind='box')
 
 # %%
-target_df = recon_df.copy()
-target_df = target_df.query('z_dim == 64')
+## WEIGHTS
+target_recon_df = recon_df.copy()
+target_recon_df = target_recon_df.query('z_dim == 64')
 print('z_dim : 64')
-sns.catplot(data=target_df, x='disc_type', y='acc', hue='z_type', col='weights', kind='box')
+sns.catplot(data=target_recon_df, x='disc_type', y='acc', hue='z_type', col='weights', kind='box')
+
+target_recon_df = recon_df.copy()
+target_recon_df = target_recon_df.query('z_dim == 32')
+print('z_dim : 32')
+sns.catplot(data=target_recon_df, x='disc_type', y='acc', hue='z_type', col='weights', kind='box')
 
 # %%
-target_df = recon_df.copy()
-target_df = target_df.query('z_dim == 32')
-print('z_dim : 32')
-sns.catplot(data=target_df, x='disc_type', y='acc', hue='z_type', col='weights', kind='box')
+## BETA
+target_recon_df = recon_df.copy()
+target_recon_df = target_recon_df.query('small_recon_weight == 0.01')
+sns.catplot(data=target_recon_df, x='disc_type', y='acc', hue='z_type', col='beta', kind='box')
+
+target_class_df = class_df.copy()
+target_class_df = target_class_df.query('small_recon_weight == 0.01')
+print(target_class_df)
+sns.catplot(data=target_class_df, x='recon_type', y='acc', hue='dataset', col='beta', kind='box')
+
+
 # %%
+## Description 
+

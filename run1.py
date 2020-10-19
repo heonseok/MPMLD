@@ -108,7 +108,7 @@ setup_dict = {
     'test_attacker': '1',
 
     # Common
-    'repeat_start': 0,
+    'repeat_start': 1,
     'repeat_end': 5,
     
     'epochs': 200,

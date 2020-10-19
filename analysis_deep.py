@@ -10,7 +10,7 @@ base_path = os.path.join('/mnt/disk1/heonseok/MPMLD')
 if not os.path.exists('Figs'):
     os.mkdir('Figs')
 
-REPEAT = 5 
+REPEAT = range(1,5) 
 unit_length = 10
 
 eartly_stop_flag = False
@@ -23,7 +23,7 @@ def collate_reconstructions(dataset, description, model, recon_type_list):
     model_path = os.path.join( base_path, dataset, description, model, 'reconstruction')
 
     fig, axes = plt.subplots(nrows=REPEAT, ncols=len(recon_type_list), figsize=( unit_length*len(recon_type_list), unit_length*REPEAT))
-    for repeat_idx in range(REPEAT):
+    for repeat_idx in REPEAT:
         for recon_idx, recon_type in enumerate(recon_type_list):
             ax = axes[repeat_idx][recon_idx]
             if eartly_stop_flag:
@@ -56,7 +56,7 @@ def collate_reconstructions(dataset, description, model, recon_type_list):
 def collate_disentanglement_result(dataset, description, model):
     model_path = os.path.join( base_path, dataset, description, model, 'reconstruction')
     df = pd.DataFrame()
-    for repeat_idx in range(REPEAT):
+    for repeat_idx in REPEAT:
         repeat_path = os.path.join(model_path, 'repeat{}'.format(repeat_idx))
         if not early_stop_flag:
             class_acc_dict = np.load(os.path.join(repeat_path, 'class_acc{:03d}.npy'.format(target_epoch)), allow_pickle=True).item()
@@ -93,7 +93,7 @@ def collate_classification_result(dataset, description, model, recon_type_list):
     df = pd.DataFrame()
 
     for recon_idx, recon_type in enumerate(recon_type_list):
-        for repeat_idx in range(REPEAT):
+        for repeat_idx in REPEAT:
             if 'raw' in model:
                 repeat_path = os.path.join( model_path, 'repeat' + str(repeat_idx), 'acc.npy')
                 recon_type = 'raw'
@@ -135,7 +135,7 @@ def collate_attack_result(dataset, description, model, recon_type_list):
     df = pd.DataFrame()
     for recon_idx, recon_type in enumerate(recon_type_list):
         for attack_type in attack_type_list:
-            for repeat_idx in range(REPEAT):
+            for repeat_idx in REPEAT:
                 if 'raw' in model:
                     repeat_path = os.path.join(model_path, attack_type, 'repeat' + str(repeat_idx), 'acc.npy')
                     recon_type = 'raw'
@@ -169,9 +169,9 @@ dataset = 'SVHN'
 # description = '0825_4typesDisentanglement_small_recon'
 # description = '0915'
 # description = '0924'
-description = '1012normalized_tanh'
+# description = '1012normalized_tanh'
 # description = '1013non_iid_color_zero'
-# description = '1016_cosine_opt'
+description = '1016_cosine_opt'
 print(description)
 
 early_stop_flag = False
@@ -206,7 +206,8 @@ model_list = [
     # 'VAE0.01_distinctEnc_distinctDisc_z32_setsize5000_lr0.001_bs64_ref1.0_rw1.0_rf1.0_cp1.0_cn1.0_mp1.0_mn1.0_sr0.01',
     # 'VAE0.01_distinctEnc_distinctDisc_z128_setsize5000_lr0.001_bs64_ref1.0_rw1.0_rf1.0_cp1.0_cn1.0_mp1.0_mn1.0_sr0.01',
 
-    'VAE0.01_distinctEnc_distinctDisc_z64_setsize5000_lr0.001_bs64_ref1.0_rw1.0_rf0.0_cp1.0_cn2.0_mp1.0_mn2.0_sr0.01',
+    'VAE0.01_distinctEnc_distinctDisc_z64_setsize5000_lr0.001_bs64_ref1.0_rw1.0_rf0.0_cp1.0_cn1.0_mp1.0_mn1.0_sr0.01',
+    # 'VAE0.01_distinctEnc_distinctDisc_z64_setsize5000_lr0.001_bs64_ref1.0_rw1.0_rf0.0_cp1.0_cn2.0_mp1.0_mn2.0_sr0.01',
 ]
 
 
