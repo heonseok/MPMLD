@@ -47,10 +47,22 @@ def collate_class_results(class_path, class_dict, recon_type):
 
 
 
-def collate_attack_results(class_path, class_dict):
+def collate_attack_results(attack_path, attack_dict, recon_type, attack_type):
     df = pd.DataFrame()
     for repeat_idx in range(5):
-        pass
+        if 'raw' in class_path:
+            repeat_path = os.path.join(attack_path, 'repeat' + str(repeat_idx), 'acc.npy')
+            recon_type = 'raw'
+        else:
+
+            repeat_path = os.path.join(attack_path, recon_type, attack_type, 'repeat' + str(repeat_idx), 'acc.npy')
+
+            result_dict = np.load(repeat_path, allow_pickle=True).item()
+            acc_dict = {'recon_type': recon_type, 'attack_type': attack_type, 'acc': result_dict['test']}
+            df = df.append({**attack_dict, **acc_dict}, ignore_index=True)
+
+    return df 
+
 
 # %%
 dataset_list = [
@@ -159,6 +171,7 @@ target_epoch = 200
 # %%
 recon_df = pd.DataFrame()
 class_df = pd.DataFrame()
+attack_df = pd.DataFrame()
 
 for dataset in dataset_list:
     for description in description_list:
@@ -212,7 +225,6 @@ for dataset in dataset_list:
 
                                     try:
                                         recon_path = os.path.join(base_path, dataset, description, reconstruction_name, 'reconstruction')
-                                        # print(recon_path)
                                         recon_df = pd.concat([recon_df, collate_recon_results(recon_path, recon_dict)])
 
                                     except FileNotFoundError:
@@ -220,11 +232,12 @@ for dataset in dataset_list:
 
                                     for recon_type in recon_type_list:
                                         try:
-                                            # print(recon_path)
-                                            # class_path = os.path.join(base_path, dataset, description)
                                             class_path = os.path.join(base_path, dataset, description, reconstruction_name, 'classification', 'ResNet18_lr0.0001_bs32')
-                                            # print(class_path)
                                             class_df = pd.concat([class_df, collate_class_results(class_path, recon_dict, recon_type)])
+
+                                            for attack_type in ['black', 'white']:
+                                                attack_path =  os.path.join(base_path, dataset, description, reconstruction_name, 'attack', 'ResNet18_lr0.0001_bs32')
+                                                attack_df = pd.concat([attack_df, collate_attack_results(attack_path, recon_dict, recon_type, attack_type)])
 
                                         except FileNotFoundError:
                                             # print('There is no file : {}'.format(class_path))
@@ -238,7 +251,8 @@ for dataset in dataset_list:
 # target_df = recon_df.query('small_recon_weight == 0')
 # print(weight_str)
 # target_df = recon_df.query('weights == [1.0, 0.0, 1.0, 1.0, 1.0, 1.0]')
-# print(target_df)
+# print(target_df):243
+
 # sns.catplot(data=target_df, x='small_recon_weight', y='acc', hue='z_type', col='disc_type', kind='box')
 # sns.catplot(data=target_df, x='disc_type', y='acc', hue='z_type', col='small_recon_weight', kind='box')
 
@@ -268,6 +282,12 @@ target_class_df = class_df.copy()
 target_class_df = target_class_df.query('small_recon_weight == 0.01')
 print(target_class_df)
 sns.catplot(data=target_class_df, x='recon_type', y='acc', hue='dataset', col='beta', kind='box')
+
+
+target_attack_df = attack_df.copy()
+target_attack_df = target_attack_df.query('small_recon_weight == 0.01')
+print(target_attack_df)
+sns.catplot(data=target_attack_df, x='recon_type', y='acc', hue='attack_type', col='beta', kind='box')
 
 
 # %%
